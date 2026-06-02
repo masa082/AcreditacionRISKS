@@ -1,0 +1,1164 @@
+// ============================================================================
+//  AcreditaPro — SaaS multitenant de evaluación y certificación de personas
+//  Basado en principios de ISO/IEC 17024
+//  Estrategia multitenant: BD compartida + subscriberId por fila (+ RLS opcional)
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+//  ENUMS
+// ============================================================================
+
+enum SubscriberStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+}
+
+enum UserType {
+  PLATFORM // SUPERADMIN / soporte del SaaS
+  SUBSCRIBER // miembros de una entidad certificadora (subroles)
+  CANDIDATE // persona que presenta pruebas
+}
+
+enum UserStatus {
+  PENDING_VERIFICATION
+  ACTIVE
+  INVITED
+  SUSPENDED
+}
+
+enum QuestionType {
+  SINGLE_CHOICE // selección múltiple, única respuesta
+  MULTIPLE_CHOICE // selección múltiple, varias respuestas
+  TRUE_FALSE
+  OPEN // pregunta abierta (calificación manual)
+  CASE_STUDY // caso práctico
+  MATCHING // emparejamiento
+  ORDERING // ordenamiento
+  FILE_UPLOAD // pregunta con archivo adjunto
+  MULTIMEDIA // insumo imagen/audio/video
+  SCALE // escala de valoración
+}
+
+enum QuestionStatus {
+  DRAFT
+  IN_REVIEW
+  APPROVED
+  REJECTED
+  INACTIVE
+}
+
+enum DifficultyLevel {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum ExamType {
+  ADMISSION
+  CERTIFICATION
+  RECERTIFICATION
+  DIAGNOSTIC
+  KNOWLEDGE
+  PRACTICAL
+  DOCUMENTARY
+  COMPETENCY
+  MOCK
+  FINAL
+}
+
+enum ExamModality {
+  ONLINE
+  ONSITE
+  HYBRID
+}
+
+enum ExamStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum EnrollmentStatus {
+  STARTED
+  CONSENT_PENDING
+  DOCS_PENDING
+  PAYMENT_PENDING
+  SCHEDULING
+  READY // listo para presentar
+  IN_PROGRESS
+  GRADING
+  COMMITTEE
+  APPROVED
+  REJECTED
+  CERTIFIED
+  EXPIRED
+  CANCELLED
+}
+
+enum EnrollmentType {
+  ADMISSION
+  CERTIFICATION
+  RECERTIFICATION
+  EVALUATION
+}
+
+enum PaymentConcept {
+  ENROLLMENT
+  EXAM
+  CERTIFICATION
+  RECERTIFICATION
+  RETAKE
+  DUPLICATE
+  OTHER
+}
+
+enum PaymentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  EXPIRED
+  REFUNDED
+}
+
+enum AttemptStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  SUBMITTED
+  AUTO_GRADED
+  MANUAL_GRADING
+  GRADED
+  PASSED
+  FAILED
+  PENDING_COMMITTEE
+  VOID
+}
+
+enum AnswerStatus {
+  PENDING
+  AUTO_SCORED
+  MANUALLY_SCORED
+  NEEDS_REVIEW
+}
+
+enum DocumentStatus {
+  PENDING
+  SUBMITTED
+  APPROVED
+  REJECTED
+}
+
+enum CommitteeDecision {
+  PENDING
+  APPROVED
+  REJECTED
+  REREVIEW
+}
+
+enum CertificateType {
+  EXAM_PRESENTATION // certificado de presentación del examen
+  CERTIFICATION // diploma / certificado de certificación
+}
+
+enum CertificateStatus {
+  VALID
+  EXPIRED
+  SUSPENDED
+  WITHDRAWN
+  CANCELLED
+}
+
+enum SlotModality {
+  ONLINE
+  ONSITE
+}
+
+enum BookingStatus {
+  BOOKED
+  CONFIRMED
+  ATTENDED
+  NO_SHOW
+  CANCELLED
+  RESCHEDULED
+}
+
+enum AppealType {
+  APPEAL // apelación
+  COMPLAINT // queja
+  REQUEST // solicitud
+  CORRECTION // corrección
+}
+
+enum AppealStatus {
+  OPEN
+  IN_REVIEW
+  RESOLVED
+  REJECTED
+}
+
+enum ReminderChannel {
+  EMAIL
+  IN_APP
+  WHATSAPP
+  SMS
+}
+
+enum ReminderStatus {
+  SCHEDULED
+  SENT
+  FAILED
+  CANCELLED
+}
+
+// ============================================================================
+//  NIVEL PLATAFORMA (SaaS) — sin subscriberId
+// ============================================================================
+
+/// Planes comerciales del SaaS configurados por el SUPERADMIN.
+model Plan {
+  id            String  @id @default(cuid())
+  key           String  @unique // e.g. "starter", "pro", "enterprise"
+  name          String
+  description   String?
+  priceMonthly  Decimal @default(0) @db.Decimal(12, 2)
+  priceYearly   Decimal @default(0) @db.Decimal(12, 2)
+  currency      String  @default("COP")
+  // Límites por plan
+  maxUsers        Int @default(5)
+  maxCandidates   Int @default(100)
+  maxExams        Int @default(10)
+  maxCertificates Int @default(100)
+  maxStorageMb    Int @default(1024)
+  maxEmailsMonth  Int @default(1000)
+  // Módulos habilitados (claves de feature flags)
+  modules     String[] @default([])
+  isActive    Boolean  @default(true)
+  isPublic    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscribers Subscriber[]
+}
+
+/// Entidad certificadora / cliente del SaaS (TENANT).
+model Subscriber {
+  id          String           @id @default(cuid())
+  slug        String           @unique // subdominio / identificador URL
+  legalName   String
+  tradeName   String?
+  taxId       String? // NIT / identificación tributaria
+  status      SubscriberStatus @default(TRIAL)
+  // Branding
+  logoUrl       String?
+  primaryColor  String? @default("#1e3a8a")
+  secondaryColor String? @default("#0ea5e9")
+  // Datos legales / firma autorizada
+  legalRepName      String?
+  authorizedSigner  String?
+  signatureImageUrl String?
+  contactEmail      String?
+  contactPhone      String?
+  address           String?
+  country           String? @default("CO")
+  // Plan / suscripción
+  planId        String?
+  plan          Plan?     @relation(fields: [planId], references: [id])
+  trialEndsAt   DateTime?
+  // Config flexible (módulos activos, preferencias)
+  settings    Json     @default("{}")
+  modules     String[] @default([])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users              User[]
+  roles              Role[]
+  candidates         Candidate[]
+  schemes            CertificationScheme[]
+  programs           Program[]
+  competencies       Competency[]
+  topics             Topic[]
+  questionBanks      QuestionBank[]
+  questions          Question[]
+  exams              Exam[]
+  enrollments        Enrollment[]
+  payments           Payment[]
+  feeConfigs         FeeConfig[]
+  examSessions       ExamSession[]
+  attempts           ExamAttempt[]
+  certificates       Certificate[]
+  privacyPolicies    PrivacyPolicyVersion[]
+  consentPurposes    ConsentPurpose[]
+  dataConsents       DataConsent[]
+  committeeReviews   CommitteeReview[]
+  requiredDocuments  RequiredDocument[]
+  appeals            Appeal[]
+
+  @@index([status])
+}
+
+/// Rol con permisos. subscriberId nulo => rol del sistema/plataforma.
+model Role {
+  id           String  @id @default(cuid())
+  subscriberId String?
+  subscriber   Subscriber? @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  key          String // e.g. SUPERADMIN, SUBSCRIBER_ADMIN, QUESTION_AUTHOR...
+  name         String
+  description  String?
+  isSystem     Boolean  @default(false)
+  permissions  String[] @default([]) // claves de permiso (ver lib/permissions)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  users User[]
+
+  @@unique([subscriberId, key])
+  @@index([subscriberId])
+}
+
+/// Identidad de autenticación. Puede ser de plataforma, de suscriptor o candidato.
+model User {
+  id             String     @id @default(cuid())
+  subscriberId   String? // null => usuario de plataforma
+  subscriber     Subscriber? @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  type           UserType
+  email          String
+  passwordHash   String
+  firstName      String
+  lastName       String
+  status         UserStatus @default(PENDING_VERIFICATION)
+  roleId         String?
+  role           Role?      @relation(fields: [roleId], references: [id])
+  emailVerifiedAt DateTime?
+  verificationToken String?
+  resetToken        String?
+  resetTokenExpires DateTime?
+  lastLoginAt    DateTime?
+  lastLoginIp    String?
+  phone          String?
+  locale         String     @default("es")
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  candidate     Candidate?
+  notifications Notification[]
+  sessions      Session[]
+
+  @@unique([email, subscriberId])
+  @@index([subscriberId])
+  @@index([type])
+}
+
+/// Sesión persistente (JWT con jti revocable).
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jti        String   @unique
+  userAgent  String?
+  ip         String?
+  expiresAt  DateTime
+  revokedAt  DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+}
+
+/// Bitácora de auditoría / trazabilidad global y por tenant.
+model AuditLog {
+  id           String   @id @default(cuid())
+  subscriberId String? // null => evento de plataforma
+  actorId      String? // userId que ejecuta la acción
+  actorType    UserType?
+  action       String // e.g. "certificate.issue", "attempt.grade"
+  entity       String // tabla/entidad afectada
+  entityId     String?
+  before       Json?
+  after        Json?
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  @@index([subscriberId, entity])
+  @@index([actorId])
+  @@index([createdAt])
+}
+
+// ============================================================================
+//  CONSENTIMIENTO / PROTECCIÓN DE DATOS PERSONALES
+// ============================================================================
+
+model PrivacyPolicyVersion {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  version      String // e.g. "v1.0"
+  title        String
+  content      String   @db.Text
+  effectiveAt  DateTime @default(now())
+  isCurrent    Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  consents DataConsent[]
+
+  @@unique([subscriberId, version])
+  @@index([subscriberId])
+}
+
+/// Finalidades configurables de tratamiento de datos.
+model ConsentPurpose {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  key          String // emails, evaluacion, verificacion, conservacion, recordatorios...
+  label        String
+  description  String?
+  required     Boolean  @default(true)
+  isActive     Boolean  @default(true)
+
+  @@unique([subscriberId, key])
+}
+
+/// Evidencia digital de aceptación del tratamiento de datos.
+model DataConsent {
+  id            String   @id @default(cuid())
+  subscriberId  String
+  subscriber    Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  candidateId   String
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  policyId      String
+  policy        PrivacyPolicyVersion @relation(fields: [policyId], references: [id])
+  holderName    String // nombre del titular
+  documentType  String?
+  documentNumber String?
+  acceptedAt    DateTime @default(now())
+  ip            String?
+  userAgent     String?
+  policyVersion String
+  purposes      Json // finalidades aceptadas (snapshot)
+  evidenceHash  String? // hash de evidencia digital
+  createdAt     DateTime @default(now())
+
+  @@index([subscriberId, candidateId])
+}
+
+// ============================================================================
+//  CANDIDATOS
+// ============================================================================
+
+model Candidate {
+  id             String   @id @default(cuid())
+  subscriberId   String
+  subscriber     Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  userId         String?  @unique
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  firstName      String
+  lastName       String
+  email          String
+  documentType   String? // CC, CE, PASAPORTE...
+  documentNumber String?
+  phone          String?
+  birthDate      DateTime?
+  country        String?
+  city           String?
+  address        String?
+  profile        Json     @default("{}") // campos extendidos
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  enrollments  Enrollment[]
+  consents     DataConsent[]
+  certificates Certificate[]
+  attempts     ExamAttempt[]
+  appeals      Appeal[]
+
+  @@unique([subscriberId, documentNumber])
+  @@index([subscriberId])
+  @@index([email])
+}
+
+// ============================================================================
+//  ESTRUCTURA DE CERTIFICACIÓN
+// ============================================================================
+
+model CertificationScheme {
+  id             String   @id @default(cuid())
+  subscriberId   String
+  subscriber     Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  code           String
+  name           String
+  description    String?  @db.Text
+  scope          String?  @db.Text // alcance de la certificación
+  normReference  String? // norma o referencia (ISO 17024, etc.)
+  validityMonths Int      @default(36) // vigencia del certificado
+  recertRules    Json     @default("{}") // reglas de recertificación
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  programs          Program[]
+  questionBanks     QuestionBank[]
+  exams             Exam[]
+  enrollments       Enrollment[]
+  certificates      Certificate[]
+  requiredDocuments RequiredDocument[]
+  feeConfigs        FeeConfig[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId])
+}
+
+model Program {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  schemeId     String?
+  scheme       CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: SetNull)
+  code         String
+  name         String
+  description  String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  questionBanks QuestionBank[]
+  exams         Exam[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId])
+}
+
+model Competency {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  code         String
+  name         String
+  description  String?
+
+  questions Question[]
+  topics    Topic[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId])
+}
+
+model Topic {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  competencyId String?
+  competency   Competency? @relation(fields: [competencyId], references: [id], onDelete: SetNull)
+  code         String
+  name         String
+
+  questions Question[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId])
+}
+
+// ============================================================================
+//  BANCO DE PREGUNTAS
+// ============================================================================
+
+model QuestionBank {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  schemeId     String?
+  scheme       CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: SetNull)
+  programId    String?
+  program      Program? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  code         String
+  name         String
+  description  String?
+  normReference String?
+  version      String   @default("v1")
+  validFrom    DateTime?
+  validTo      DateTime?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  questions      Question[]
+  examSections   ExamSection[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId])
+}
+
+model Question {
+  id             String          @id @default(cuid())
+  subscriberId   String
+  subscriber     Subscriber      @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  bankId         String
+  bank           QuestionBank    @relation(fields: [bankId], references: [id], onDelete: Cascade)
+  code           String
+  type           QuestionType
+  statement      String          @db.Text
+  // Insumo multimedia / contexto (caso práctico)
+  mediaUrl       String?
+  contextText    String?         @db.Text
+  // Calificación
+  points         Decimal         @default(1) @db.Decimal(8, 2)
+  partialScoring Boolean         @default(false) // calificación parcial (multi-respuesta)
+  // Clasificación
+  difficulty     DifficultyLevel @default(INTERMEDIATE)
+  competencyId   String?
+  competency     Competency?     @relation(fields: [competencyId], references: [id], onDelete: SetNull)
+  topicId        String?
+  topic          Topic?          @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  normReference  String?
+  tags           String[]        @default([])
+  suggestedTimeSec Int?
+  isCritical     Boolean         @default(false)
+  // Flujo editorial
+  status         QuestionStatus  @default(DRAFT)
+  authorId       String?
+  reviewerId     String?
+  version        Int             @default(1)
+  approvedAt     DateTime?
+  // Contenido específico por tipo
+  rubric         Json? // rúbrica para preguntas abiertas/caso
+  scaleConfig    Json? // configuración de escala
+  correctAnswer  Json? // respuesta correcta para tipos sin opciones (V/F, orden, escala)
+  feedback       String?         @db.Text // retroalimentación / explicación
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  options   QuestionOption[]
+  revisions QuestionRevision[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId, status])
+  @@index([bankId])
+  @@index([type])
+}
+
+/// Opciones para preguntas de selección, emparejamiento y ordenamiento.
+model QuestionOption {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  text       String   @db.Text
+  isCorrect  Boolean  @default(false) // selección / V-F
+  order      Int      @default(0) // ordenamiento (posición correcta)
+  matchLeft  String? // emparejamiento: columna A
+  matchRight String? // emparejamiento: columna B
+  mediaUrl   String?
+  feedback   String?
+
+  @@index([questionId])
+}
+
+/// Historial de cambios / versionado de una pregunta.
+model QuestionRevision {
+  id         String   @id @default(cuid())
+  questionId String
+  question   Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  version    Int
+  action     String // created | updated | approved | rejected | inactivated
+  snapshot   Json
+  changedById String?
+  createdAt  DateTime @default(now())
+
+  @@index([questionId])
+}
+
+// ============================================================================
+//  EVALUACIONES
+// ============================================================================
+
+model Exam {
+  id             String   @id @default(cuid())
+  subscriberId   String
+  subscriber     Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  schemeId       String?
+  scheme         CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: SetNull)
+  programId      String?
+  program        Program? @relation(fields: [programId], references: [id], onDelete: SetNull)
+  code           String
+  name           String
+  description    String?  @db.Text
+  type           ExamType @default(CERTIFICATION)
+  modality       ExamModality @default(ONLINE)
+  status         ExamStatus   @default(DRAFT)
+  // Configuración de prueba
+  durationMin    Int      @default(60)
+  totalPoints    Decimal  @default(100) @db.Decimal(8, 2)
+  passingScore   Decimal  @default(70) @db.Decimal(8, 2) // umbral aprobatorio
+  numQuestions   Int      @default(0) // 0 => suma de secciones
+  attemptsAllowed Int     @default(1)
+  randomizeQuestions Boolean @default(true)
+  randomizeOptions   Boolean @default(true)
+  // Disponibilidad
+  availableFrom  DateTime?
+  availableTo    DateTime?
+  // Flags de comportamiento
+  showResultImmediately Boolean @default(false)
+  showCorrectAnswers    Boolean @default(false)
+  allowReview           Boolean @default(false)
+  requireCommittee      Boolean @default(false)
+  requirePayment        Boolean @default(true)
+  requireSchedule       Boolean @default(false)
+  autoCertificate       Boolean @default(false)
+  gradingRules          Json    @default("{}")
+  instructions          String? @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  sections    ExamSection[]
+  questions   ExamQuestion[]
+  enrollments Enrollment[]
+  sessions    ExamSession[]
+  attempts    ExamAttempt[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId, status])
+}
+
+/// Sección de un examen con reglas de selección de preguntas.
+model ExamSection {
+  id            String   @id @default(cuid())
+  examId        String
+  exam          Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  bankId        String?
+  bank          QuestionBank? @relation(fields: [bankId], references: [id], onDelete: SetNull)
+  title         String
+  order         Int      @default(0)
+  // Selección aleatoria
+  questionCount Int      @default(0)
+  difficulty    DifficultyLevel?
+  topicFilter   String? // topicId opcional
+  pointsPerQuestion Decimal? @db.Decimal(8, 2)
+
+  questions ExamQuestion[]
+
+  @@index([examId])
+}
+
+/// Asignación de una pregunta específica a un examen/sección (modo fijo).
+model ExamQuestion {
+  id         String   @id @default(cuid())
+  examId     String
+  exam       Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  sectionId  String?
+  section    ExamSection? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+  questionId String
+  order      Int      @default(0)
+  pointsOverride Decimal? @db.Decimal(8, 2)
+
+  @@unique([examId, questionId])
+  @@index([examId])
+}
+
+// ============================================================================
+//  REQUISITOS DOCUMENTALES Y TARIFAS
+// ============================================================================
+
+model RequiredDocument {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  schemeId     String?
+  scheme       CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  code         String
+  name         String
+  description  String?
+  required     Boolean  @default(true)
+  acceptedTypes String[] @default([]) // mime/extensiones
+  isActive     Boolean  @default(true)
+
+  documents CandidateDocument[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId])
+}
+
+model FeeConfig {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  schemeId     String?
+  scheme       CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: Cascade)
+  concept      PaymentConcept
+  label        String
+  amount       Decimal  @db.Decimal(12, 2)
+  currency     String   @default("COP")
+  isActive     Boolean  @default(true)
+
+  @@index([subscriberId])
+}
+
+// ============================================================================
+//  INSCRIPCIÓN (spine del flujo del candidato)
+// ============================================================================
+
+model Enrollment {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  candidateId  String
+  candidate    Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  schemeId     String?
+  scheme       CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: SetNull)
+  examId       String?
+  exam         Exam?    @relation(fields: [examId], references: [id], onDelete: SetNull)
+  type         EnrollmentType   @default(CERTIFICATION)
+  status       EnrollmentStatus @default(STARTED)
+  code         String // folio de inscripción
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  documents    CandidateDocument[]
+  payments     Payment[]
+  bookings     ScheduleBooking[]
+  attempts     ExamAttempt[]
+  certificates Certificate[]
+  reviews      CommitteeReview[]
+  appeals      Appeal[]
+
+  @@unique([subscriberId, code])
+  @@index([subscriberId, status])
+  @@index([candidateId])
+}
+
+model CandidateDocument {
+  id            String   @id @default(cuid())
+  enrollmentId  String
+  enrollment    Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  requiredDocumentId String?
+  requiredDocument   RequiredDocument? @relation(fields: [requiredDocumentId], references: [id], onDelete: SetNull)
+  fileUrl       String
+  fileName      String?
+  status        DocumentStatus @default(SUBMITTED)
+  reviewedById  String?
+  reviewNotes   String?
+  reviewedAt    DateTime?
+  uploadedAt    DateTime @default(now())
+
+  @@index([enrollmentId])
+}
+
+// ============================================================================
+//  PAGOS
+// ============================================================================
+
+model Payment {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  enrollmentId String?
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  concept      PaymentConcept
+  description  String?
+  amount       Decimal  @db.Decimal(12, 2)
+  currency     String   @default("COP")
+  status       PaymentStatus @default(PENDING)
+  provider     String   @default("mock")
+  providerRef  String? // id de transacción en la pasarela
+  checkoutUrl  String?
+  receiptUrl   String?
+  invoiceUrl   String?
+  metadata     Json     @default("{}")
+  paidAt       DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([subscriberId, status])
+  @@index([enrollmentId])
+  @@index([providerRef])
+}
+
+// ============================================================================
+//  AGENDA DE PRUEBAS
+// ============================================================================
+
+model ExamSession {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  examId       String
+  exam         Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  title        String?
+  startsAt     DateTime
+  endsAt       DateTime?
+  durationMin  Int?
+  capacity     Int      @default(0) // 0 => ilimitado
+  modality     SlotModality @default(ONLINE)
+  location     String?
+  meetingLink  String?
+  rescheduleRules Json  @default("{}")
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  bookings ScheduleBooking[]
+
+  @@index([subscriberId, examId])
+  @@index([startsAt])
+}
+
+model ScheduleBooking {
+  id           String   @id @default(cuid())
+  sessionId    String
+  session      ExamSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  status       BookingStatus @default(BOOKED)
+  confirmedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  @@unique([sessionId, enrollmentId])
+  @@index([enrollmentId])
+}
+
+// ============================================================================
+//  PRESENTACIÓN DE PRUEBAS / INTENTOS
+// ============================================================================
+
+model ExamAttempt {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  examId       String
+  exam         Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  candidateId  String
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  attemptNumber Int     @default(1)
+  status       AttemptStatus @default(NOT_STARTED)
+  startedAt    DateTime?
+  dueAt        DateTime?
+  submittedAt  DateTime?
+  // Resultado
+  rawScore     Decimal? @db.Decimal(8, 2)
+  maxScore     Decimal? @db.Decimal(8, 2)
+  scorePercent Decimal? @db.Decimal(6, 2)
+  passed       Boolean?
+  gradedAt     DateTime?
+  gradedById   String?
+  // Evidencias / antifraude
+  ip           String?
+  userAgent    String?
+  lastSavedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  questions AttemptQuestion[]
+  answers   AttemptAnswer[]
+  events    AttemptEvent[]
+  reviews   CommitteeReview[]
+  certificates Certificate[]
+
+  @@unique([enrollmentId, attemptNumber])
+  @@index([subscriberId, status])
+  @@index([examId])
+}
+
+/// Snapshot de las preguntas servidas (para aleatorización + integridad).
+model AttemptQuestion {
+  id         String   @id @default(cuid())
+  attemptId  String
+  attempt    ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId String
+  order      Int
+  points     Decimal  @db.Decimal(8, 2)
+  snapshot   Json // enunciado + opciones congeladas
+  sectionTitle String?
+
+  answers AttemptAnswer[]
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+}
+
+model AttemptAnswer {
+  id               String   @id @default(cuid())
+  attemptId        String
+  attempt          ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attemptQuestionId String
+  attemptQuestion  AttemptQuestion @relation(fields: [attemptQuestionId], references: [id], onDelete: Cascade)
+  response         Json? // respuesta del candidato (formato según tipo)
+  fileUrl          String? // para FILE_UPLOAD / caso práctico
+  autoScore        Decimal? @db.Decimal(8, 2)
+  manualScore      Decimal? @db.Decimal(8, 2)
+  finalScore       Decimal? @db.Decimal(8, 2)
+  status           AnswerStatus @default(PENDING)
+  gradedById       String?
+  graderComment    String?  @db.Text
+  rubricResult     Json?
+  updatedAt        DateTime @updatedAt
+
+  @@unique([attemptQuestionId])
+  @@index([attemptId])
+}
+
+/// Eventos de proctoring / evidencias de la presentación.
+model AttemptEvent {
+  id        String   @id @default(cuid())
+  attemptId String
+  attempt   ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  type      String // started | autosave | focus_lost | blur | submit | timeout | abandon
+  data      Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([attemptId])
+}
+
+// ============================================================================
+//  COMITÉ EVALUADOR / REVISIÓN POR TERCEROS
+// ============================================================================
+
+model CommitteeReview {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  enrollmentId String
+  enrollment   Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  attemptId    String?
+  attempt      ExamAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  decision     CommitteeDecision @default(PENDING)
+  observations String?  @db.Text
+  actUrl       String? // acta generada
+  closedAt     DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  votes CommitteeVote[]
+
+  @@index([subscriberId, decision])
+  @@index([enrollmentId])
+}
+
+model CommitteeVote {
+  id           String   @id @default(cuid())
+  reviewId     String
+  review       CommitteeReview @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  memberId     String // userId del evaluador / miembro
+  decision     CommitteeDecision @default(PENDING)
+  conflictOfInterest Boolean @default(false)
+  comment      String?  @db.Text
+  signedAt     DateTime?
+  signatureRef String? // firma digital / aceptación electrónica
+  createdAt    DateTime @default(now())
+
+  @@unique([reviewId, memberId])
+  @@index([reviewId])
+}
+
+// ============================================================================
+//  CERTIFICADOS Y DIPLOMAS
+// ============================================================================
+
+model Certificate {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  candidateId  String
+  candidate    Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  enrollmentId String?
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  schemeId     String?
+  scheme       CertificationScheme? @relation(fields: [schemeId], references: [id], onDelete: SetNull)
+  attemptId    String?
+  attempt      ExamAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+  type         CertificateType
+  code         String   @unique // código único público
+  verifyToken  String   @unique // token del QR de verificación
+  title        String
+  scope        String?  @db.Text
+  holderName   String
+  documentNumber String?
+  status       CertificateStatus @default(VALID)
+  issuedAt     DateTime @default(now())
+  expiresAt    DateTime?
+  issuedById   String?
+  signatureRef String?
+  pdfUrl       String?
+  // Reemisión / anulación con trazabilidad
+  supersedesId String?  @unique
+  supersedes   Certificate? @relation("CertSupersede", fields: [supersedesId], references: [id])
+  supersededBy Certificate? @relation("CertSupersede")
+  revocationReason String?
+  revokedAt    DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  reminders CertificateReminder[]
+
+  @@index([subscriberId, status])
+  @@index([candidateId])
+  @@index([expiresAt])
+}
+
+/// Recordatorios programados de vencimiento / recertificación.
+model CertificateReminder {
+  id            String   @id @default(cuid())
+  certificateId String
+  certificate   Certificate @relation(fields: [certificateId], references: [id], onDelete: Cascade)
+  offsetDays    Int // días respecto al vencimiento (negativo = antes)
+  channel       ReminderChannel @default(EMAIL)
+  scheduledFor  DateTime
+  status        ReminderStatus  @default(SCHEDULED)
+  sentAt        DateTime?
+
+  @@index([certificateId])
+  @@index([scheduledFor, status])
+}
+
+// ============================================================================
+//  QUEJAS / APELACIONES
+// ============================================================================
+
+model Appeal {
+  id           String   @id @default(cuid())
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  candidateId  String?
+  candidate    Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  enrollmentId String?
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  type         AppealType
+  subject      String
+  body         String   @db.Text
+  status       AppealStatus @default(OPEN)
+  resolution   String?  @db.Text
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([subscriberId, status])
+}
+
+// ============================================================================
+//  NOTIFICACIONES
+// ============================================================================
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  title     String
+  body      String?
+  channel   ReminderChannel @default(IN_APP)
+  readAt    DateTime?
+  createdAt DateTime @default(now())
+
+  @@index([userId, readAt])
+}
