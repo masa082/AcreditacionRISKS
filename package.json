@@ -17,6 +17,7 @@
     "prisma:deploy": "prisma migrate deploy",
     "prisma:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
+    "db:seed:ocp": "tsx prisma/seed-ocp.ts",
     "db:reset": "prisma migrate reset --force"
   },
   "prisma": {

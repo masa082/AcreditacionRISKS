@@ -21,6 +21,9 @@ export default function Home() {
             <Link href="/verificar" className="text-slate-600 hover:text-brand-800">
               Verificar certificado
             </Link>
+            <Link href="/registro" className="text-slate-600 hover:text-brand-800">
+              Registrarme
+            </Link>
             <Link
               href="/login"
               className="rounded-lg bg-brand-800 px-4 py-2 font-semibold text-white hover:bg-brand-900"

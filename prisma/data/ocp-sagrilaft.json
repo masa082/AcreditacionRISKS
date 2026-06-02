@@ -1,0 +1,3502 @@
+[
+ {
+  "code": "SG-P001",
+  "statement": "¿Cuál es la norma principal que regula el SAGRILAFT para las empresas vigiladas por la Superintendencia de Sociedades?",
+  "options": [
+   "Decreto 830 de 2021",
+   "Circular Externa 100-000016 de 2020 (Capítulo X de la Circular Básica Jurídica)",
+   "Circular Externa 027 de 2020",
+   "Ley 100 de 1993"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P002",
+  "statement": "¿Qué significa la sigla SAGRILAFT?",
+  "options": [
+   "Sistema de Administración del Riesgo de Lavado de Activos",
+   "Sistema de Autocontrol y Gestión del Riesgo Integral de LA/FT/FPADM",
+   "Sistema de Auditoría y Gestión del Riesgo",
+   "Sistema de Alerta y Gestión Reglamentaria"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P003",
+  "statement": "¿Qué entidad ejerce la supervisión del SAGRILAFT en el sector real?",
+  "options": [
+   "UIAF",
+   "Superintendencia Financiera",
+   "Superintendencia de Sociedades",
+   "DIAN"
+  ],
+  "answerIndex": 2,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P004",
+  "statement": "¿Qué es el PTEE en el marco de la Superintendencia de Sociedades?",
+  "options": [
+   "Plan de Tesorería Empresarial",
+   "Programa de Transparencia y Ética Empresarial",
+   "Política de Trabajo en Equipo",
+   "Plan Técnico de Evaluación Externa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P005",
+  "statement": "¿Qué significa la sigla FPADM dentro del SAGRILAFT?",
+  "options": [
+   "Fondo de Provisión de Activos",
+   "Financiación de la Proliferación de Armas de Destrucción Masiva",
+   "Formato de Pago de Anticipos",
+   "Factor de Población de Alto Riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P006",
+  "statement": "¿Cuál es el umbral general (ingresos o activos en SMMLV) que obliga a una empresa a adoptar el SAGRILAFT?",
+  "options": [
+   "10.000 SMMLV",
+   "30.000 SMMLV",
+   "40.000 SMMLV",
+   "100.000 SMMLV"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P007",
+  "statement": "¿Quién designa al Oficial de Cumplimiento en el marco del SAGRILAFT?",
+  "options": [
+   "El gerente comercial",
+   "La junta directiva o el máximo órgano social",
+   "El revisor fiscal",
+   "La UIAF"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P008",
+  "statement": "¿Ante qué entidad se reportan las operaciones sospechosas en el SAGRILAFT?",
+  "options": [
+   "DIAN",
+   "UIAF",
+   "Superintendencia de Sociedades",
+   "Fiscalía"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P009",
+  "statement": "¿Qué porcentaje de participación se utiliza para identificar al beneficiario final en el Registro Único de Beneficiarios Finales (RUB)?",
+  "options": [
+   "10%",
+   "15%",
+   "25%",
+   "5%"
+  ],
+  "answerIndex": 3,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P010",
+  "statement": "¿Cuál es el tiempo mínimo de conservación de los documentos y soportes del SAGRILAFT?",
+  "options": [
+   "2 años",
+   "5 años",
+   "10 años",
+   "20 años"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P011",
+  "statement": "¿Cuál de los siguientes NO corresponde a un factor de riesgo del SAGRILAFT?",
+  "options": [
+   "Contraparte",
+   "Producto",
+   "Canal",
+   "Color corporativo"
+  ],
+  "answerIndex": 3,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P012",
+  "statement": "¿Quién debe aprobar la política SAGRILAFT y la matriz de riesgos LA/FT/FPADM?",
+  "options": [
+   "El Oficial de Cumplimiento",
+   "La junta directiva o máximo órgano social",
+   "El revisor fiscal",
+   "El área comercial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P013",
+  "statement": "¿Quién NO puede ser designado como Oficial de Cumplimiento del SAGRILAFT?",
+  "options": [
+   "Un abogado",
+   "El revisor fiscal de la misma empresa",
+   "Un administrador",
+   "Un contador"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P014",
+  "statement": "¿Qué debe reportarse a la UIAF cuando, en el periodo, no se detectan operaciones sospechosas?",
+  "options": [
+   "Nada",
+   "El Reporte de Ausencia de Operaciones Sospechosas",
+   "Un ROE",
+   "Un informe a Supersociedades"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P015",
+  "statement": "¿Qué ley tipifica el delito de lavado de activos en Colombia?",
+  "options": [
+   "Ley 1581 de 2012",
+   "Ley 599 de 2000 (Código Penal)",
+   "Ley 1778 de 2016",
+   "Decreto 1074 de 2015"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P016",
+  "statement": "¿Qué norma protege los datos personales en Colombia?",
+  "options": [
+   "Ley 1581 de 2012",
+   "Ley 2195 de 2022",
+   "Decreto 830 de 2021",
+   "Circular 100-000016 de 2020"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P017",
+  "statement": "¿Cuál es la plataforma utilizada para reportar operaciones sospechosas en línea ante la UIAF?",
+  "options": [
+   "SIREL",
+   "RUES",
+   "SECOP",
+   "SUI"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P018",
+  "statement": "¿Qué constituye el Régimen de Medidas Mínimas frente al soborno transnacional vinculado al PTEE?",
+  "options": [
+   "Ley 1581 de 2012",
+   "Ley 1778 de 2016",
+   "Ley 100 de 1993",
+   "Decreto 410 de 1971"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P019",
+  "statement": "¿Con qué frecuencia mínima debe el Oficial de Cumplimiento rendir informes a la junta directiva?",
+  "options": [
+   "Semanal",
+   "Trimestral",
+   "Cada dos años",
+   "Nunca"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P020",
+  "statement": "¿Qué riesgo, además del LA/FT, debe gestionar expresamente el SAGRILAFT?",
+  "options": [
+   "Riesgo de mercado",
+   "Riesgo de financiación de la proliferación de armas de destrucción masiva (FPADM)",
+   "Riesgo cambiario",
+   "Riesgo de liquidez"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T1",
+  "topicName": "Marco Normativo"
+ },
+ {
+  "code": "SG-P021",
+  "statement": "¿Cuál es el primer paso para construir una matriz de riesgos?",
+  "options": [
+   "Definir controles",
+   "Identificar factores de riesgo",
+   "Calificar riesgo residual",
+   "Aprobar por Junta"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P022",
+  "statement": "¿Cuál de los siguientes constituye un factor de alto riesgo de LA/FT?",
+  "options": [
+   "Uso de tecnología",
+   "Pago en efectivo de origen no justificado",
+   "Certificación ISO 9001",
+   "Contrato laboral formal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P023",
+  "statement": "¿Qué resultado se obtiene al restar los controles al riesgo inherente?",
+  "options": [
+   "Riesgo aceptable",
+   "Riesgo residual",
+   "Riesgo reputacional",
+   "Riesgo operativo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P024",
+  "statement": "¿Cuál es una metodología aceptada para medir riesgos según la GTC 137?",
+  "options": [
+   "Juicio experto únicamente",
+   "Probabilidad × Impacto (1-5)",
+   "Solo análisis financiero",
+   "Método aleatorio"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P025",
+  "statement": "¿Qué significa que un riesgo residual permanezca alto?",
+  "options": [
+   "No requiere controles",
+   "Los controles no mitigan suficientemente el riesgo",
+   "El riesgo desapareció",
+   "Debe cerrarse la empresa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P026",
+  "statement": "¿Con qué frecuencia debe actualizarse la matriz de riesgos?",
+  "options": [
+   "Mensual",
+   "Trimestral",
+   "Anual",
+   "Cada 3 años"
+  ],
+  "answerIndex": 2,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P027",
+  "statement": "¿Para qué sirve un mapa de calor en gestión de riesgos?",
+  "options": [
+   "Calcular impuestos",
+   "Priorizar riesgos",
+   "Medir satisfacción cliente",
+   "Controlar asistencia"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P028",
+  "statement": "¿Quién define el apetito de riesgo de la organización?",
+  "options": [
+   "Oficial de Cumplimiento",
+   "Junta Directiva",
+   "UIAF",
+   "Revisor Fiscal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P029",
+  "statement": "¿Cuál de los siguientes NO corresponde a un factor de riesgo SAGRILAFT?",
+  "options": [
+   "Cliente",
+   "Producto",
+   "Canal",
+   "Color de vehículos"
+  ],
+  "answerIndex": 3,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P030",
+  "statement": "¿Qué se entiende por riesgo de contagio en SAGRILAFT?",
+  "options": [
+   "Enfermedades",
+   "Ser utilizado por terceros para LA/FT",
+   "Virus informático",
+   "Huelga"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P031",
+  "statement": "En una escala de 1 a 5, ¿qué representa una probabilidad de nivel 5?",
+  "options": [
+   "Muy baja",
+   "Baja",
+   "Media",
+   "Muy alta"
+  ],
+  "answerIndex": 3,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P032",
+  "statement": "¿Qué puede representar un impacto de nivel 5 para una empresa?",
+  "options": [
+   "Amonestación",
+   "Sanción leve",
+   "Sanción grave superior a 100 SMMLV",
+   "Cierre temporal"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P033",
+  "statement": "¿Cuál es un ejemplo de control preventivo?",
+  "options": [
+   "Auditoría",
+   "Capacitación",
+   "Monitoreo",
+   "Investigación"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P034",
+  "statement": "¿Cuál es un ejemplo de control detectivo?",
+  "options": [
+   "Políticas",
+   "Segregación de funciones",
+   "Monitoreo transaccional",
+   "Capacitación"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P035",
+  "statement": "¿Quién consolida la matriz de riesgos de LA/FT?",
+  "options": [
+   "Comercial",
+   "Oficial de Cumplimiento",
+   "Contabilidad",
+   "Operaciones"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P036",
+  "statement": "¿Cuál de las siguientes zonas presenta un alto riesgo de LA/FT?",
+  "options": [
+   "Bogotá",
+   "Medellín",
+   "Maicao",
+   "Cali"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P037",
+  "statement": "Si un cliente representa más del 60% de las ventas, ¿qué nivel de riesgo de concentración existe?",
+  "options": [
+   "Bajo",
+   "Medio",
+   "Alto",
+   "No aplica"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P038",
+  "statement": "¿Qué nivel de riesgo implica tercerizar procesos sin aplicar debida diligencia?",
+  "options": [
+   "Bajo",
+   "Medio",
+   "Alto",
+   "No aplica"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P039",
+  "statement": "¿Qué nivel de riesgo implica manejar más de $10 millones en efectivo en zona de frontera?",
+  "options": [
+   "Bajo",
+   "Medio",
+   "Alto",
+   "No aplica"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P040",
+  "statement": "¿Cuál de las siguientes contrapartes se considera de mayor riesgo?",
+  "options": [
+   "Cliente local recurrente",
+   "Proveedor nacional formal",
+   "Sociedad domiciliada en jurisdicción no cooperante",
+   "Empleado de nómina"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P041",
+  "statement": "¿A qué tipo de clientes debe aplicarse la debida diligencia intensificada?",
+  "options": [
+   "Todos los clientes",
+   "PEP, clientes de alto riesgo y zonas de frontera",
+   "Solo internacionales",
+   "Solo quienes pagan en efectivo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P042",
+  "statement": "¿Cuál es un documento obligatorio para la vinculación de una persona jurídica?",
+  "options": [
+   "EPS",
+   "Certificado de Cámara de Comercio",
+   "Diploma",
+   "Registro civil"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P043",
+  "statement": "¿Qué significa la sigla PEP?",
+  "options": [
+   "Persona con Experiencia Profesional",
+   "Persona Expuesta Políticamente",
+   "Persona Empresa Pública",
+   "Persona Evaluada Previa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P044",
+  "statement": "¿Cuál es el propósito principal de la declaración de origen de fondos?",
+  "options": [
+   "Llevar contabilidad",
+   "Mitigar el riesgo de recursos ilícitos",
+   "Calcular IVA",
+   "Reportar a la DIAN"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P045",
+  "statement": "¿Cada cuánto debe actualizarse la información de un cliente clasificado como de alto riesgo?",
+  "options": [
+   "6 meses",
+   "12 meses",
+   "24 meses",
+   "36 meses"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P046",
+  "statement": "¿Cuál de las siguientes situaciones constituye una señal de alerta en debida diligencia?",
+  "options": [
+   "Entrega documentos completos",
+   "Niega informar beneficiario final",
+   "Firma contrato",
+   "Paga con cheque"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P047",
+  "statement": "¿Cuándo deben consultarse las listas vinculantes y restrictivas?",
+  "options": [
+   "Solo al vincular",
+   "Al vincular y periódicamente",
+   "Solo si lo solicita el cliente",
+   "Nunca"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P048",
+  "statement": "¿Qué porcentaje de participación se utiliza para identificar al beneficiario final en el RUB?",
+  "options": [
+   "10%",
+   "15%",
+   "25%",
+   "5%"
+  ],
+  "answerIndex": 3,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P049",
+  "statement": "¿Qué debe verificarse respecto de una contraparte persona jurídica?",
+  "options": [
+   "Solo el NIT",
+   "Cámara de comercio, beneficiario final, listas restrictivas y antecedentes",
+   "No se verifica",
+   "Solo el RUT"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P050",
+  "statement": "¿Qué acción debe tomarse si un cliente se niega a actualizar su información?",
+  "options": [
+   "Continuar normalmente",
+   "Bloquear y reportar según procedimiento",
+   "Ignorar situación",
+   "Disminuir cupo de crédito"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P051",
+  "statement": "¿Qué información debe contener el perfil de un cliente?",
+  "options": [
+   "Solo nombre",
+   "Actividad económica, ingresos y volumen esperado",
+   "Solo dirección",
+   "Solo teléfono"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P052",
+  "statement": "¿A quién aplica la debida diligencia simplificada?",
+  "options": [
+   "Clientes de alto riesgo",
+   "Clientes de bajo riesgo y montos bajos",
+   "Todos los clientes",
+   "PEP"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P053",
+  "statement": "¿Cómo debe realizarse la verificación de identidad?",
+  "options": [
+   "Telefónicamente",
+   "Presencial o mediante validación biométrica",
+   "Por correo electrónico",
+   "Por WhatsApp"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P054",
+  "statement": "¿Dónde deben conservarse los soportes de debida diligencia?",
+  "options": [
+   "Correo personal",
+   "Carpeta física o digital segura",
+   "WhatsApp",
+   "No es necesario archivarlos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P055",
+  "statement": "¿A quién debe aplicarse la debida diligencia en procesos de contratación laboral?",
+  "options": [
+   "Solo gerentes",
+   "Todos los empleados según el riesgo del cargo",
+   "Solo OC",
+   "A nadie"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P056",
+  "statement": "¿Qué tipo de debida diligencia requiere un proveedor crítico?",
+  "options": [
+   "Básica",
+   "Ampliada",
+   "Ninguna",
+   "Solo factura"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P057",
+  "statement": "¿Cuándo debe identificarse el beneficiario final de una persona jurídica?",
+  "options": [
+   "Solo si lo solicita",
+   "Siempre",
+   "Nunca",
+   "Solo extranjeros"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P058",
+  "statement": "¿Después de cuánto tiempo un PEP nacional pierde dicha condición?",
+  "options": [
+   "1 año",
+   "2 años",
+   "3 años",
+   "Nunca"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P059",
+  "statement": "¿Cuál documento sirve para validar el domicilio de una persona?",
+  "options": [
+   "Factura de servicios públicos",
+   "Recibo de caja",
+   "Memorando interno",
+   "Chat de WhatsApp"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P060",
+  "statement": "¿Qué debe hacer una organización cuando un cliente no supera la debida diligencia?",
+  "options": [
+   "Vincularlo igualmente",
+   "Rechazar la vinculación",
+   "Vincularlo con autorización gerencial",
+   "Vincularlo temporalmente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P061",
+  "statement": "¿Cuál es el objetivo principal del monitoreo transaccional?",
+  "options": [
+   "Calcular nómina",
+   "Detectar desviaciones frente al perfil del cliente",
+   "Emitir facturas",
+   "Controlar inventarios"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P062",
+  "statement": "¿Qué umbral debe aplicarse al monitoreo de operaciones en efectivo?",
+  "options": [
+   "$10 millones fijo",
+   "El definido por la empresa según su enfoque basado en riesgo",
+   "$1 millón",
+   "No se monitorea el efectivo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P063",
+  "statement": "Si un cliente mueve diez veces su volumen habitual sin justificación, se considera una:",
+  "options": [
+   "Operación estándar",
+   "Operación fraccionada",
+   "Inusualidad cuantitativa",
+   "Error contable"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P064",
+  "statement": "¿Con qué frecuencia debe revisarse el monitoreo de clientes de alto riesgo?",
+  "options": [
+   "Diariamente",
+   "Mensualmente",
+   "Anualmente",
+   "No es obligatorio"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P065",
+  "statement": "¿Qué debe generar un sistema de monitoreo efectivo?",
+  "options": [
+   "Alertas con trazabilidad",
+   "Solo reportes impresos",
+   "Correos de felicitación",
+   "Ninguna evidencia"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P066",
+  "statement": "¿Qué es el fraccionamiento de operaciones?",
+  "options": [
+   "Dividir carga",
+   "Dividir una operación grande en varias pequeñas",
+   "Pago por cuotas",
+   "Facturar servicios"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P067",
+  "statement": "¿Qué debe hacerse al recibir una alerta?",
+  "options": [
+   "Reportarla inmediatamente",
+   "Analizarla, documentarla y concluirla",
+   "Ignorarla",
+   "Llamar a la policía"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P068",
+  "statement": "¿Qué aspecto debe monitorearse en las contrapartes vinculadas?",
+  "options": [
+   "Solo el nombre",
+   "Cambios en su comportamiento, operaciones y vínculos",
+   "Nada",
+   "El logotipo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P069",
+  "statement": "¿Cuál es un indicador clave de monitoreo?",
+  "options": [
+   "Número de facturas",
+   "Porcentaje de alertas cerradas oportunamente",
+   "Horas trabajadas",
+   "Kilómetros recorridos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P070",
+  "statement": "¿Cuál es la herramienta mínima recomendada para monitoreo?",
+  "options": [
+   "Excel manual",
+   "Sistema automatizado con reglas",
+   "WhatsApp",
+   "Ninguna herramienta"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P071",
+  "statement": "¿Para qué sirve segmentar clientes?",
+  "options": [
+   "Cobrar más",
+   "Aplicar controles diferenciados",
+   "Marketing únicamente",
+   "No tiene utilidad"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P072",
+  "statement": "¿Cuál constituye una señal de alerta operativa?",
+  "options": [
+   "Operación habitual",
+   "Operación sin justificación económica aparente",
+   "Pago respaldado con factura",
+   "Operación debidamente documentada"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P073",
+  "statement": "¿Qué riesgo puede indicar una alta frecuencia de operaciones de un mismo cliente?",
+  "options": [
+   "Normalidad",
+   "Riesgo de concentración",
+   "No aplica",
+   "Bajo riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P074",
+  "statement": "¿Cómo se considera una operación realizada fuera del horario comercial habitual?",
+  "options": [
+   "Normal",
+   "Señal de alerta operativa",
+   "No aplica",
+   "Bajo riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P075",
+  "statement": "¿Cuál es el plazo recomendado para cerrar una alerta de alto riesgo?",
+  "options": [
+   "24 horas",
+   "5 días hábiles",
+   "30 días",
+   "90 días"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P076",
+  "statement": "¿Cómo debe redactarse un ROS?",
+  "options": [
+   "Acusatorio",
+   "Objetivo y sin tipificar delitos",
+   "Técnico jurídico",
+   "Coloquial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P077",
+  "statement": "¿Qué caracteriza una operación sospechosa?",
+  "options": [
+   "Superar $100 millones",
+   "Salirse del perfil sin justificación lícita",
+   "Ser en efectivo",
+   "Ser realizada por un PEP"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P078",
+  "statement": "¿Cuál es el canal oficial para reportar ROS?",
+  "options": [
+   "Correo electrónico",
+   "SIREL UIAF",
+   "Oficio a Fiscalía",
+   "Llamada telefónica"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P079",
+  "statement": "¿Qué elemento NO debe incluir un ROS?",
+  "options": [
+   "Hechos observados",
+   "Análisis de inusualidad",
+   "Acusación de lavado de activos",
+   "Documentos soporte"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P080",
+  "statement": "¿Cuál es el plazo para reportar un ROE?",
+  "options": [
+   "5 días hábiles",
+   "10 días calendario",
+   "Inmediato",
+   "30 días hábiles"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P081",
+  "statement": "¿Qué debe hacerse cuando una alerta no resulta sospechosa?",
+  "options": [
+   "Eliminar registro",
+   "Documentar análisis y archivar",
+   "Reportarla igualmente",
+   "Informar al cliente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P082",
+  "statement": "¿Qué implica la reserva de un ROS?",
+  "options": [
+   "Compartirlo con el cliente",
+   "Acceso restringido a OC, UIAF y autoridades",
+   "Publicarlo",
+   "Divulgarlo internamente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P083",
+  "statement": "¿Cuándo una operación inusual pasa a considerarse sospechosa?",
+  "options": [
+   "Cuando supera un umbral",
+   "Cuando no tiene justificación lícita",
+   "Cuando es extranjera",
+   "Cuando ocurre en fin de semana"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P084",
+  "statement": "¿Qué debe anexarse a un ROS?",
+  "options": [
+   "Solo formato",
+   "Hechos, documentos y análisis",
+   "Solo sospecha",
+   "Nada"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P085",
+  "statement": "¿Quién firma el ROS ante la UIAF?",
+  "options": [
+   "Gerente",
+   "Oficial de Cumplimiento Principal",
+   "Contador",
+   "Revisor Fiscal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P086",
+  "statement": "El fraccionamiento suele ser una señal de:",
+  "options": [
+   "Alto volumen",
+   "Evasión de umbrales",
+   "Fidelidad del cliente",
+   "Rapidez de pago"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P087",
+  "statement": "Una operación realizada por un PEP sin soporte de origen de fondos constituye una:",
+  "options": [
+   "Operación normal",
+   "Inusualidad cualitativa",
+   "Situación irrelevante",
+   "Bajo riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P088",
+  "statement": "Una operación en efectivo en zona de frontera representa:",
+  "options": [
+   "Normalidad",
+   "Alto riesgo de LA/FT",
+   "Bajo riesgo",
+   "Ningún riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P089",
+  "statement": "¿Qué constituye una señal de alerta documental?",
+  "options": [
+   "Documentos consistentes",
+   "Inconsistencia entre la operación y la capacidad económica declarada",
+   "Información verificable",
+   "Soportes completos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P090",
+  "statement": "¿Qué implica la reincidencia de un cliente en operaciones inusuales?",
+  "options": [
+   "Normalidad",
+   "Agrava el nivel de riesgo",
+   "No tiene efecto",
+   "Reduce el riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P091",
+  "statement": "¿Cuál de las siguientes NO es una función del Oficial de Cumplimiento?",
+  "options": [
+   "Diseñar procedimientos",
+   "Capacitar personal",
+   "Aprobar créditos de clientes",
+   "Monitorear operaciones"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P092",
+  "statement": "¿Cuándo actúa el Oficial de Cumplimiento Suplente?",
+  "options": [
+   "Vacaciones o impedimento del principal",
+   "Cuando lo solicita el gerente",
+   "Cuando hay muchas operaciones",
+   "Nunca"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P093",
+  "statement": "¿Qué acceso a información debe tener el Oficial de Cumplimiento?",
+  "options": [
+   "Solo información contable",
+   "Toda la necesaria sin restricciones indebidas",
+   "Solo clientes nuevos",
+   "Ninguna información confidencial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P094",
+  "statement": "¿Cuál constituye una inhabilidad por conflicto de interés para el OC?",
+  "options": [
+   "Tener familiar empleado",
+   "Tener vínculo con miembro de Junta en situación conflictiva",
+   "Tener conductor conocido",
+   "Tener clientes conocidos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P095",
+  "statement": "¿Cómo debe ser la dedicación del Oficial de Cumplimiento?",
+  "options": [
+   "Accionista mayoritario",
+   "Exclusiva o con tiempo suficiente",
+   "Proveedor externo",
+   "Pasante"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P096",
+  "statement": "¿Por qué puede responder disciplinariamente el Oficial de Cumplimiento?",
+  "options": [
+   "No prevenir delitos",
+   "Incumplir deberes funcionales SAGRILAFT",
+   "Error contable menor",
+   "Llegar tarde"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P097",
+  "statement": "¿Cómo participa el OC en el comité correspondiente?",
+  "options": [
+   "No participa",
+   "Con voz y sin voto",
+   "Con voto dirimente",
+   "Solo escucha"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P098",
+  "statement": "¿Qué situación afecta la independencia del Oficial de Cumplimiento?",
+  "options": [
+   "Reportar a Junta",
+   "Ser evaluado por el área comercial",
+   "Tener acceso a SIREL",
+   "Asistir a Junta"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P099",
+  "statement": "¿A quién debe capacitar el Oficial de Cumplimiento?",
+  "options": [
+   "Solo directivos",
+   "Todo el personal según riesgo del cargo",
+   "Solo personal nuevo",
+   "A nadie"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P100",
+  "statement": "¿Qué debe incluir el informe anual del Oficial de Cumplimiento?",
+  "options": [
+   "Solo ROS",
+   "Gestión SAGRILAFT, riesgos y mejoras",
+   "Solo gastos",
+   "Solo personal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P101",
+  "statement": "¿Qué implica el principio de confidencialidad?",
+  "options": [
+   "Informar al cliente reportado",
+   "No divulgar información sin autorización",
+   "Publicar en intranet",
+   "Compartir con competidores"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P102",
+  "statement": "¿Cuándo se presenta un conflicto de interés para el OC?",
+  "options": [
+   "Capacitar personal",
+   "Evaluar a un familiar cercano",
+   "Asistir a capacitación",
+   "Leer normativa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P103",
+  "statement": "¿Qué situación compromete la independencia del Oficial de Cumplimiento?",
+  "options": [
+   "Reportar a Junta",
+   "Ser evaluado por el área comercial",
+   "Tener acceso a SIREL",
+   "Asistir a Junta"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P104",
+  "statement": "¿Qué principios integran un Código de Ética para el Oficial de Cumplimiento?",
+  "options": [
+   "Integridad, objetividad, confidencialidad e imparcialidad",
+   "Solo cumplimiento legal",
+   "Metas comerciales",
+   "Horario laboral"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P105",
+  "statement": "¿Qué debe hacer el OC si recibe presión para no reportar una operación?",
+  "options": [
+   "Ceder a la presión",
+   "Documentar y reportar al comité de ética",
+   "Ignorar situación",
+   "Renunciar inmediatamente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P106",
+  "statement": "¿Qué significa “tipping off”?",
+  "options": [
+   "Dar propina",
+   "Advertir al cliente sobre una investigación o reporte",
+   "Enviar ROS",
+   "Archivar documentos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P107",
+  "statement": "¿Por cuánto tiempo debe mantenerse la reserva de la información relacionada con ROS?",
+  "options": [
+   "1 año",
+   "5 años",
+   "10 años",
+   "Indefinidamente"
+  ],
+  "answerIndex": 3,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P108",
+  "statement": "¿Qué significa actuar con imparcialidad?",
+  "options": [
+   "Favorecer amigos",
+   "No favorecer intereses particulares",
+   "Favorecer la empresa",
+   "Favorecer la UIAF"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P109",
+  "statement": "¿Qué debe hacerse ante un conflicto de interés?",
+  "options": [
+   "Ocultarlo",
+   "Declararlo y abstenerse de participar",
+   "Decidir igualmente",
+   "Delegarlo al gerente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P110",
+  "statement": "¿Ante qué instancia debe presentarse una denuncia interna por mala conducta del OC?",
+  "options": [
+   "Gerente",
+   "Comité de Ética o Imparcialidad",
+   "Cliente",
+   "Competencia"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P111",
+  "statement": "¿Cuál es la primera etapa para construir una matriz de riesgos LA/FT?",
+  "options": [
+   "Diseñar indicadores",
+   "Identificar factores de riesgo",
+   "Reportar ROS",
+   "Asignar responsables"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P112",
+  "statement": "¿Qué se entiende por riesgo inherente?",
+  "options": [
+   "Riesgo después de controles",
+   "Riesgo antes de aplicar controles",
+   "Riesgo eliminado",
+   "Riesgo asegurado"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P113",
+  "statement": "¿Cuál es el propósito de identificar factores de riesgo?",
+  "options": [
+   "Calcular impuestos",
+   "Determinar fuentes potenciales de exposición LA/FT",
+   "Diseñar contratos",
+   "Elaborar estados financieros"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P114",
+  "statement": "¿Cuál de los siguientes corresponde a un factor de riesgo?",
+  "options": [
+   "Cliente",
+   "Utilidad neta",
+   "Nómina",
+   "Vacaciones"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P115",
+  "statement": "¿Cuál de los siguientes corresponde a un factor de riesgo de producto?",
+  "options": [
+   "Tipo de producto o servicio ofrecido",
+   "Edad del representante legal",
+   "Antigüedad de la empresa",
+   "Horario laboral"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P116",
+  "statement": "¿Cuál de los siguientes corresponde a un factor de riesgo de canal?",
+  "options": [
+   "Plataforma digital de contratación",
+   "Capital social",
+   "Utilidad operacional",
+   "Organigrama"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P117",
+  "statement": "¿Cuál de los siguientes corresponde a un factor de riesgo geográfico?",
+  "options": [
+   "Zona fronteriza",
+   "Número empleados",
+   "Patrimonio",
+   "Antigüedad OC"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P118",
+  "statement": "¿Qué permite la segmentación de clientes?",
+  "options": [
+   "Aplicar controles diferenciados",
+   "Reducir impuestos",
+   "Eliminar auditorías",
+   "Sustituir DD"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P119",
+  "statement": "¿Qué variable suele emplearse para segmentar clientes?",
+  "options": [
+   "Nivel de riesgo",
+   "Color corporativo",
+   "Número de oficinas",
+   "Horario de atención"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P120",
+  "statement": "¿Cuál es el objetivo de la segmentación geográfica?",
+  "options": [
+   "Identificar jurisdicciones de mayor exposición",
+   "Reducir combustible",
+   "Optimizar rutas",
+   "Calcular peajes"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P121",
+  "statement": "En una escala de riesgo de 1 a 5, ¿qué representa una probabilidad de 1?",
+  "options": [
+   "Muy alta",
+   "Alta",
+   "Media",
+   "Muy baja"
+  ],
+  "answerIndex": 3,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P122",
+  "statement": "¿Qué representa el impacto en una matriz de riesgos?",
+  "options": [
+   "Posibilidad de ocurrencia",
+   "Consecuencia del evento",
+   "Tiempo de respuesta",
+   "Número de clientes"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P123",
+  "statement": "¿Cómo se calcula normalmente el riesgo inherente?",
+  "options": [
+   "Probabilidad × Impacto",
+   "Impacto − Control",
+   "Probabilidad + Controles",
+   "Riesgo ÷ Tiempo"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P124",
+  "statement": "¿Qué herramienta gráfica muestra la distribución de riesgos según probabilidad e impacto?",
+  "options": [
+   "Organigrama",
+   "Mapa de calor",
+   "Flujo de caja",
+   "Balance general"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P125",
+  "statement": "¿Qué color suele representar los riesgos más críticos en un mapa de calor?",
+  "options": [
+   "Verde",
+   "Azul",
+   "Amarillo",
+   "Rojo"
+  ],
+  "answerIndex": 3,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P126",
+  "statement": "¿Qué debe hacerse con un riesgo ubicado en zona roja?",
+  "options": [
+   "Ignorarlo",
+   "Priorizar acciones de mitigación",
+   "Eliminar controles",
+   "Archivar registro"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P127",
+  "statement": "¿Qué es un control preventivo?",
+  "options": [
+   "Detecta eventos ocurridos",
+   "Reduce la posibilidad de ocurrencia",
+   "Corrige errores posteriores",
+   "Sustituye monitoreo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P128",
+  "statement": "¿Cuál es un ejemplo de control preventivo?",
+  "options": [
+   "Capacitación",
+   "Investigación posterior",
+   "ROS",
+   "Auditoría forense"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P129",
+  "statement": "¿Qué es un control detectivo?",
+  "options": [
+   "Previene eventos",
+   "Identifica eventos ocurridos o en curso",
+   "Sustituye DD",
+   "Elimina riesgos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P130",
+  "statement": "¿Cuál es un ejemplo de control detectivo?",
+  "options": [
+   "Monitoreo transaccional",
+   "Código de ética",
+   "Capacitación",
+   "Política interna"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P131",
+  "statement": "¿Qué es un control correctivo?",
+  "options": [
+   "Evita ocurrencia",
+   "Detecta operaciones",
+   "Reduce consecuencias posteriores",
+   "Identifica clientes"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P132",
+  "statement": "¿Cuál es un ejemplo de control correctivo?",
+  "options": [
+   "Actualización de procedimiento después de incidente",
+   "Capacitación inicial",
+   "Segmentación",
+   "Consulta listas"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P133",
+  "statement": "¿Qué resultado se obtiene después de aplicar controles al riesgo inherente?",
+  "options": [
+   "Riesgo residual",
+   "Riesgo legal",
+   "Riesgo reputacional",
+   "Riesgo bruto"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P134",
+  "statement": "¿Qué indica un riesgo residual alto?",
+  "options": [
+   "Controles eficaces",
+   "Riesgo eliminado",
+   "Controles insuficientes",
+   "Riesgo aceptado automáticamente"
+  ],
+  "answerIndex": 2,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P135",
+  "statement": "¿Quién suele aprobar la metodología de la matriz de riesgos?",
+  "options": [
+   "Contabilidad",
+   "Junta Directiva",
+   "Conductores",
+   "Clientes"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P136",
+  "statement": "¿Quién lidera técnicamente la consolidación de la matriz de riesgos?",
+  "options": [
+   "Comercial",
+   "Oficial de Cumplimiento",
+   "Tesorería",
+   "Recursos Humanos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P137",
+  "statement": "¿Cuál es el objetivo del apetito de riesgo?",
+  "options": [
+   "Eliminar riesgos",
+   "Definir nivel de riesgo aceptable",
+   "Incrementar ventas",
+   "Reducir personal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P138",
+  "statement": "¿Quién define el apetito de riesgo?",
+  "options": [
+   "OC",
+   "Junta Directiva",
+   "Auditor externo",
+   "UIAF"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P139",
+  "statement": "¿Qué es la tolerancia al riesgo?",
+  "options": [
+   "Riesgo prohibido",
+   "Variación permitida frente al apetito",
+   "Riesgo residual",
+   "Riesgo reputacional"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P140",
+  "statement": "¿Cuál es el objetivo principal de los indicadores de riesgo (KRI)?",
+  "options": [
+   "Medir exposición y alertar desviaciones",
+   "Medir ventas",
+   "Calcular impuestos",
+   "Medir satisfacción"
+  ],
+  "answerIndex": 0,
+  "difficulty": "ADVANCED",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P141",
+  "statement": "¿Cuál es un ejemplo de indicador KRI?",
+  "options": [
+   "% de clientes alto riesgo",
+   "Número de vacaciones",
+   "Consumo de papel",
+   "Tiempo de almuerzo"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P142",
+  "statement": "¿Qué riesgo existe cuando una empresa depende de un solo cliente para más del 60% de sus ingresos?",
+  "options": [
+   "Riesgo de concentración",
+   "Riesgo de crédito",
+   "Riesgo laboral",
+   "Riesgo tecnológico"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P143",
+  "statement": "¿Qué riesgo se genera al operar en zonas de frontera con alta informalidad?",
+  "options": [
+   "Riesgo geográfico",
+   "Riesgo tecnológico",
+   "Riesgo climático",
+   "Riesgo financiero"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P144",
+  "statement": "¿Cuál es el propósito de evaluar controles existentes?",
+  "options": [
+   "Conocer su efectividad",
+   "Eliminar auditorías",
+   "Sustituir DD",
+   "Reducir capacitación"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P145",
+  "statement": "¿Qué característica debe tener un control eficaz?",
+  "options": [
+   "Ser documentado y verificable",
+   "Ser verbal",
+   "No tener evidencia",
+   "Ser opcional"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P146",
+  "statement": "¿Qué ocurre cuando la probabilidad aumenta y el impacto permanece constante?",
+  "options": [
+   "Riesgo disminuye",
+   "Riesgo aumenta",
+   "Riesgo desaparece",
+   "No cambia"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P147",
+  "statement": "¿Qué ocurre cuando el impacto aumenta y la probabilidad permanece constante?",
+  "options": [
+   "Riesgo disminuye",
+   "Riesgo aumenta",
+   "Riesgo desaparece",
+   "No cambia"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P148",
+  "statement": "¿Cuál es el objetivo de revisar periódicamente la matriz de riesgos?",
+  "options": [
+   "Mantenerla actualizada frente a cambios internos y externos",
+   "Reducir documentos",
+   "Evitar auditorías",
+   "Reemplazar monitoreo"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P149",
+  "statement": "¿Qué situación obliga a actualizar la matriz de riesgos?",
+  "options": [
+   "Cambio significativo en operaciones o mercado",
+   "Cambio de logo",
+   "Compra de mobiliario",
+   "Cambio de uniforme"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P150",
+  "statement": "¿Qué principio debe regir toda metodología de gestión del riesgo LA/FT?",
+  "options": [
+   "Enfoque Basado en Riesgo",
+   "Máxima rentabilidad",
+   "Mínima documentación",
+   "Automatización total"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T2",
+  "topicName": "Enfoque Basado en Riesgo"
+ },
+ {
+  "code": "SG-P151",
+  "statement": "¿Cuál es el objetivo principal de la debida diligencia intensificada?",
+  "options": [
+   "Reducir costos",
+   "Profundizar el conocimiento de clientes de mayor riesgo",
+   "Agilizar vinculación",
+   "Sustituir monitoreo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P152",
+  "statement": "¿Qué característica suele justificar DD intensificada?",
+  "options": [
+   "Cliente frecuente",
+   "Condición PEP",
+   "Cliente antiguo",
+   "Bajo volumen"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P153",
+  "statement": "¿Qué debe verificarse adicionalmente en un PEP?",
+  "options": [
+   "Color corporativo",
+   "Origen de fondos y patrimonio",
+   "Nivel académico",
+   "Estado civil"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P154",
+  "statement": "¿Cuál es la finalidad de identificar al beneficiario final?",
+  "options": [
+   "Conocer representante legal",
+   "Identificar persona natural que ejerce control o recibe beneficios",
+   "Calcular impuestos",
+   "Definir cupo de crédito"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P155",
+  "statement": "¿Qué ocurre si no es posible identificar al beneficiario final?",
+  "options": [
+   "Vincular sin análisis",
+   "Escalar y documentar la situación",
+   "Ignorar requisito",
+   "Aprobar automáticamente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P156",
+  "statement": "¿Qué documento ayuda a identificar beneficiarios finales?",
+  "options": [
+   "Organigrama societario",
+   "Factura de servicios",
+   "Extracto bancario personal",
+   "Diploma"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P157",
+  "statement": "¿Qué riesgo presentan las estructuras societarias complejas?",
+  "options": [
+   "Menor supervisión",
+   "Ocultamiento de propiedad real",
+   "Mayor transparencia",
+   "Menor exposición"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P158",
+  "statement": "¿Cuál es una señal de alerta documental?",
+  "options": [
+   "Información consistente",
+   "Inconsistencias entre documentos",
+   "Certificados vigentes",
+   "Información verificable"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P159",
+  "statement": "¿Qué debe hacerse cuando existe inconsistencia documental?",
+  "options": [
+   "Continuar proceso",
+   "Solicitar aclaración y evidencia adicional",
+   "Ignorar hallazgo",
+   "Aprobar excepcionalmente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P160",
+  "statement": "¿Cuál es el propósito de consultar listas restrictivas?",
+  "options": [
+   "Promocionar clientes",
+   "Identificar vinculaciones con riesgos LA/FT",
+   "Calcular impuestos",
+   "Medir satisfacción"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P161",
+  "statement": "¿Con qué frecuencia deben actualizarse listas de control internas?",
+  "options": [
+   "Nunca",
+   "Periódicamente",
+   "Cada 10 años",
+   "Solo auditoría"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P162",
+  "statement": "¿Qué tipo de cliente requiere mayor profundidad de análisis?",
+  "options": [
+   "Riesgo bajo",
+   "Riesgo alto",
+   "Cliente frecuente",
+   "Cliente nacional"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P163",
+  "statement": "¿Qué debe verificarse respecto al origen de fondos?",
+  "options": [
+   "Que sea razonable y verificable",
+   "Que sea verbal",
+   "Que sea confidencial",
+   "Que sea opcional"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P164",
+  "statement": "¿Qué constituye una alerta sobre origen de fondos?",
+  "options": [
+   "Información soportada",
+   "Ingresos incompatibles con actividad económica",
+   "Declaración completa",
+   "Certificados vigentes"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P165",
+  "statement": "¿Cuál es una fuente independiente de verificación?",
+  "options": [
+   "Declaración verbal",
+   "Registro público oficial",
+   "Comentario informal",
+   "Redes sociales sin validar"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P166",
+  "statement": "¿Qué se busca mediante el conocimiento del cliente?",
+  "options": [
+   "Incrementar ventas",
+   "Comprender perfil transaccional esperado",
+   "Reducir nómina",
+   "Diseñar publicidad"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P167",
+  "statement": "¿Qué riesgo implica aceptar documentos vencidos?",
+  "options": [
+   "Bajo",
+   "Validación inadecuada de identidad",
+   "Ninguno",
+   "Riesgo operativo menor"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P168",
+  "statement": "¿Qué acción procede cuando un cliente se niega a entregar información requerida?",
+  "options": [
+   "Vincular normalmente",
+   "Aplicar medidas de rechazo o restricción",
+   "Ignorar situación",
+   "Reducir requisitos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P169",
+  "statement": "¿Qué se entiende por perfil transaccional?",
+  "options": [
+   "Historial académico",
+   "Comportamiento económico esperado del cliente",
+   "Organigrama",
+   "Estructura salarial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P170",
+  "statement": "¿Qué ocurre si el comportamiento real supera ampliamente el perfil esperado?",
+  "options": [
+   "Operación normal",
+   "Posible inusualidad",
+   "Beneficio comercial",
+   "Menor riesgo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P171",
+  "statement": "¿Qué debe documentarse durante DD?",
+  "options": [
+   "Solo decisión final",
+   "Todo el análisis realizado",
+   "Solo formularios",
+   "Solo consultas listas"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P172",
+  "statement": "¿Cuál es una ventaja de la validación biométrica?",
+  "options": [
+   "Reduce confiabilidad",
+   "Fortalece autenticación de identidad",
+   "Sustituye monitoreo",
+   "Elimina DD"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P173",
+  "statement": "¿Qué debe revisarse en clientes extranjeros?",
+  "options": [
+   "Jurisdicción de origen y riesgo país",
+   "Idioma únicamente",
+   "Número telefónico",
+   "Tipo de vehículo"
+  ],
+  "answerIndex": 0,
+  "difficulty": "ADVANCED",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P174",
+  "statement": "¿Qué significa enfoque basado en riesgo aplicado a DD?",
+  "options": [
+   "Mismo análisis para todos",
+   "Intensidad proporcional al riesgo identificado",
+   "Eliminar requisitos",
+   "Automatizar todo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P175",
+  "statement": "¿Quién es responsable de asegurar la ejecución de DD?",
+  "options": [
+   "Cliente",
+   "Organización y áreas responsables definidas",
+   "Auditor externo",
+   "Autoridad estatal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T3",
+  "topicName": "Debida Diligencia"
+ },
+ {
+  "code": "SG-P176",
+  "statement": "¿Cuál es el objetivo principal del monitoreo transaccional?",
+  "options": [
+   "Generar facturas",
+   "Detectar comportamientos inusuales",
+   "Calcular impuestos",
+   "Elaborar contratos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P177",
+  "statement": "¿Qué debe compararse durante el monitoreo?",
+  "options": [
+   "Ventas y nómina",
+   "Operaciones reales frente al perfil esperado",
+   "Gastos y activos",
+   "Horarios laborales"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P178",
+  "statement": "¿Qué constituye una inusualidad cuantitativa?",
+  "options": [
+   "Operación emocional",
+   "Incremento significativo en montos o frecuencias",
+   "Cambio de gerente",
+   "Modificación logo empresa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P179",
+  "statement": "¿Qué constituye una inusualidad cualitativa?",
+  "options": [
+   "Variación volumen",
+   "Comportamiento sin justificación razonable",
+   "Error matemático",
+   "Cambio tributario"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P180",
+  "statement": "¿Qué debe hacerse al identificar una alerta?",
+  "options": [
+   "Ignorarla",
+   "Analizarla y documentarla",
+   "Reportarla automáticamente",
+   "Informar al cliente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P181",
+  "statement": "¿Cuál es una señal de alerta geográfica?",
+  "options": [
+   "Operación en zona de bajo riesgo",
+   "Operación frecuente en zona de frontera",
+   "Operación local habitual",
+   "Ruta autorizada"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P182",
+  "statement": "¿Qué representa el fraccionamiento?",
+  "options": [
+   "Pago financiado",
+   "División de operaciones para evadir controles",
+   "Descuento comercial",
+   "Plan de pagos"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P183",
+  "statement": "¿Qué riesgo genera una operación repetitiva justo por debajo de un umbral?",
+  "options": [
+   "Riesgo tecnológico",
+   "Posible fraccionamiento",
+   "Riesgo climático",
+   "Riesgo laboral"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P184",
+  "statement": "¿Qué debe verificarse cuando un cliente incrementa abruptamente su actividad?",
+  "options": [
+   "Uniformes",
+   "Justificación económica y documental",
+   "Color vehículos",
+   "Número empleados"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P185",
+  "statement": "¿Cuál es una señal de alerta en las operaciones de una contraparte?",
+  "options": [
+   "Operación habitual",
+   "Desviaciones recurrentes no justificadas del comportamiento esperado",
+   "Entrega puntual",
+   "Uso de medios formales"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P186",
+  "statement": "¿Qué herramienta fortalece el monitoreo?",
+  "options": [
+   "Sistema automatizado de alertas",
+   "Calculadora",
+   "Correo personal",
+   "Agenda física"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P187",
+  "statement": "¿Qué permite la segmentación en monitoreo?",
+  "options": [
+   "Aplicar mismos controles",
+   "Diferenciar reglas según nivel de riesgo",
+   "Reducir registros",
+   "Eliminar alertas"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P188",
+  "statement": "¿Qué significa trazabilidad de una alerta?",
+  "options": [
+   "Ocultar evidencia",
+   "Mantener registro completo del análisis",
+   "Eliminar soportes",
+   "Compartir datos cliente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P189",
+  "statement": "¿Qué debe contener el expediente de una alerta?",
+  "options": [
+   "Solo fecha",
+   "Evidencias, análisis y conclusión",
+   "Solo correo",
+   "Solo ROS"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P190",
+  "statement": "¿Cuál es una alerta relacionada con las contrapartes?",
+  "options": [
+   "Información actualizada",
+   "Cambios frecuentes e injustificados en su estructura o representación",
+   "Documentación vigente",
+   "Operaciones consistentes"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P191",
+  "statement": "¿Cuál es una señal de alerta en una operación comercial?",
+  "options": [
+   "Coincidencia entre precio y valor de mercado",
+   "Diferencia significativa entre el valor declarado y el valor real",
+   "Factura completa",
+   "Operación documentada"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P192",
+  "statement": "¿Qué se busca con indicadores de monitoreo?",
+  "options": [
+   "Medir riesgo y desempeño de controles",
+   "Aumentar ventas",
+   "Reducir combustible",
+   "Diseñar publicidad"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P193",
+  "statement": "¿Cuál es un ejemplo de KRI?",
+  "options": [
+   "% alertas investigadas fuera de plazo",
+   "Número cafeterías",
+   "Consumo energía",
+   "Horas almuerzo"
+  ],
+  "answerIndex": 0,
+  "difficulty": "ADVANCED",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P194",
+  "statement": "¿Qué debe hacerse con alertas cerradas?",
+  "options": [
+   "Eliminarse",
+   "Conservar evidencia documental",
+   "Publicarse",
+   "Compartirse con cliente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P195",
+  "statement": "¿Qué riesgo existe si no se documenta el análisis?",
+  "options": [
+   "Ninguno",
+   "Debilidad de control y auditoría",
+   "Riesgo tributario",
+   "Riesgo comercial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P196",
+  "statement": "¿Qué situación requiere monitoreo reforzado?",
+  "options": [
+   "Cliente bajo riesgo",
+   "Cliente alto riesgo o PEP",
+   "Cliente ocasional",
+   "Cliente antiguo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P197",
+  "statement": "¿Qué debe evaluarse en operaciones internacionales?",
+  "options": [
+   "Riesgo país y jurisdicción",
+   "Color bandera",
+   "Idioma cliente",
+   "Número empleados"
+  ],
+  "answerIndex": 0,
+  "difficulty": "ADVANCED",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P198",
+  "statement": "¿Qué indica una alerta reincidente?",
+  "options": [
+   "Riesgo decreciente",
+   "Mayor exposición al riesgo",
+   "Operación normal",
+   "Error sistema"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P199",
+  "statement": "¿Qué debe hacer el Oficial de Cumplimiento ante una alerta compleja?",
+  "options": [
+   "Ignorarla",
+   "Escalar y profundizar análisis",
+   "Informar cliente",
+   "Archivar inmediato"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P200",
+  "statement": "¿Cuál es el resultado esperado del monitoreo?",
+  "options": [
+   "Detectar y gestionar riesgos oportunamente",
+   "Incrementar ventas",
+   "Reducir impuestos",
+   "Sustituir DD"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T4",
+  "topicName": "Monitoreo Transaccional"
+ },
+ {
+  "code": "SG-P201",
+  "statement": "¿Qué significa ROS?",
+  "options": [
+   "Reporte Operación Segura",
+   "Reporte de Operación Sospechosa",
+   "Registro Operación Sistemática",
+   "Reporte Oficial Sistema"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P202",
+  "statement": "¿Qué significa ROE?",
+  "options": [
+   "Reporte Operación Exitosa",
+   "Reporte de Operación Intentada",
+   "Registro Operación Especial",
+   "Reporte Operación Externa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P203",
+  "statement": "¿Cuál es el objetivo de un ROS?",
+  "options": [
+   "Acusar delitos",
+   "Informar operaciones sospechosas a la UIAF",
+   "Cobrar impuestos",
+   "Abrir investigación penal"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P204",
+  "statement": "¿Quién determina la culpabilidad de una persona?",
+  "options": [
+   "OC",
+   "Juez competente",
+   "UIAF",
+   "Empresa"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P205",
+  "statement": "¿Cómo debe redactarse un ROS?",
+  "options": [
+   "Acusatorio",
+   "Objetivo y basado en hechos",
+   "Emocional",
+   "Comercial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P206",
+  "statement": "¿Qué transforma una operación inusual en sospechosa?",
+  "options": [
+   "Monto elevado",
+   "Falta de justificación razonable",
+   "Cliente extranjero",
+   "Operación nocturna"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P207",
+  "statement": "¿Qué plataforma utiliza la UIAF para recibir ROS?",
+  "options": [
+   "RUES",
+   "SIREL",
+   "DIAN",
+   "SECOP"
+  ],
+  "answerIndex": 1,
+  "difficulty": "BASIC",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P208",
+  "statement": "¿Qué debe incluir un ROS?",
+  "options": [
+   "Hechos, análisis y soportes",
+   "Opiniones personales",
+   "Acusaciones",
+   "Rumores"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P209",
+  "statement": "¿Qué no debe incluir un ROS?",
+  "options": [
+   "Evidencias",
+   "Juicios de culpabilidad",
+   "Análisis",
+   "Hechos observados"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P210",
+  "statement": "¿Qué protege la reserva del ROS?",
+  "options": [
+   "Información sensible del proceso",
+   "Imagen comercial",
+   "Ventas",
+   "Competencia"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P211",
+  "statement": "¿Quién puede conocer un ROS?",
+  "options": [
+   "Cliente reportado",
+   "Personas autorizadas legalmente",
+   "Cualquier empleado",
+   "Proveedores"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P212",
+  "statement": "¿Qué es el tipping off?",
+  "options": [
+   "Reportar ROS",
+   "Advertir al cliente sobre el reporte",
+   "Archivar evidencia",
+   "Consultar listas"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P213",
+  "statement": "¿Qué constituye una tipología?",
+  "options": [
+   "Norma jurídica",
+   "Patrón de comportamiento asociado a LA/FT",
+   "Contrato comercial",
+   "Formato UIAF"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P214",
+  "statement": "¿Para qué sirven las tipologías UIAF?",
+  "options": [
+   "Capacitación y detección de riesgos",
+   "Liquidar impuestos",
+   "Diseñar rutas",
+   "Contratar personal"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P215",
+  "statement": "¿Qué puede indicar uso excesivo de efectivo?",
+  "options": [
+   "Bajo riesgo",
+   "Posible alerta LA/FT",
+   "Error sistema",
+   "Cumplimiento total"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P216",
+  "statement": "¿Qué debe hacerse cuando una alerta se descarta?",
+  "options": [
+   "Eliminar soportes",
+   "Documentar conclusión",
+   "Informar cliente",
+   "Publicar resultado"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P217",
+  "statement": "¿Cuál es una señal típica de lavado de activos?",
+  "options": [
+   "Actividad coherente",
+   "Movimientos inconsistentes con capacidad económica",
+   "Facturación normal",
+   "Contrato vigente"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P218",
+  "statement": "¿Qué busca la UIAF con los ROS?",
+  "options": [
+   "Investigar tendencias y generar inteligencia financiera",
+   "Cobrar sanciones",
+   "Fiscalizar impuestos",
+   "Realizar auditorías"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P219",
+  "statement": "¿Quién firma normalmente el ROS?",
+  "options": [
+   "Contador",
+   "Oficial de Cumplimiento",
+   "Conductor",
+   "Gerente comercial"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P220",
+  "statement": "¿Qué debe hacerse con el soporte documental de un ROS?",
+  "options": [
+   "Destruirlo",
+   "Conservarlo según políticas y norma",
+   "Compartirlo",
+   "Publicarlo"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P221",
+  "statement": "¿Qué riesgo existe si no se reporta una operación sospechosa?",
+  "options": [
+   "Ninguno",
+   "Incumplimiento normativo",
+   "Beneficio financiero",
+   "Reducción controles"
+  ],
+  "answerIndex": 1,
+  "difficulty": "ADVANCED",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P222",
+  "statement": "¿Qué característica tiene una operación intentada?",
+  "options": [
+   "Fue ejecutada",
+   "No se concretó pero generó sospecha",
+   "Fue aprobada",
+   "Fue facturada"
+  ],
+  "answerIndex": 1,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P223",
+  "statement": "¿Cuál es el propósito del ROE?",
+  "options": [
+   "Reportar operación sospechosa no ejecutada",
+   "Reportar ventas",
+   "Reportar impuestos",
+   "Reportar auditorías"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P224",
+  "statement": "¿Qué debe prevalecer al elaborar un ROS?",
+  "options": [
+   "Objetividad",
+   "Percepción personal",
+   "Presión comercial",
+   "Intuición"
+  ],
+  "answerIndex": 0,
+  "difficulty": "ADVANCED",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P225",
+  "statement": "¿Cuál es el principio fundamental del reporte a la UIAF?",
+  "options": [
+   "Confidencialidad y oportunidad",
+   "Publicidad",
+   "Competencia",
+   "Rentabilidad"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T5",
+  "topicName": "Reportes ROS y ROE"
+ },
+ {
+  "code": "SG-P226",
+  "statement": "¿Cuál es la principal función del Oficial de Cumplimiento?",
+  "options": [
+   "Gestionar SAGRILAFT",
+   "Aprobar créditos",
+   "Diseñar rutas",
+   "Cobrar cartera"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P227",
+  "statement": "¿Qué característica debe tener el OC?",
+  "options": [
+   "Independencia",
+   "Dependencia comercial",
+   "Función temporal",
+   "Cargo simbólico"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P228",
+  "statement": "¿Quién supervisa la gestión del OC?",
+  "options": [
+   "Junta Directiva",
+   "Conductores",
+   "Clientes",
+   "Proveedores"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P229",
+  "statement": "¿Qué debe garantizar la Junta Directiva?",
+  "options": [
+   "Recursos y apoyo al SAGRILAFT",
+   "Ventas mínimas",
+   "Menos controles",
+   "Menos auditorías"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P230",
+  "statement": "¿Cuál es una responsabilidad del OC?",
+  "options": [
+   "Monitorear riesgos LA/FT",
+   "Diseñar publicidad",
+   "Contratar conductores",
+   "Aprobar compras"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P231",
+  "statement": "¿Qué debe presentar periódicamente el OC?",
+  "options": [
+   "Informes de gestión SAGRILAFT",
+   "Nómina",
+   "Inventario",
+   "Estados financieros"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P232",
+  "statement": "¿Qué implica conflicto de interés?",
+  "options": [
+   "Situación que afecta objetividad",
+   "Capacitación",
+   "Auditoría",
+   "Comité"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P233",
+  "statement": "¿Qué debe hacer el OC ante un conflicto de interés?",
+  "options": [
+   "Declararlo y abstenerse",
+   "Ocultarlo",
+   "Ignorarlo",
+   "Delegarlo sin informar"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P234",
+  "statement": "¿Qué principio exige actuar con honestidad?",
+  "options": [
+   "Integridad",
+   "Rentabilidad",
+   "Productividad",
+   "Jerarquía"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P235",
+  "statement": "¿Qué principio exige decisiones sin favoritismos?",
+  "options": [
+   "Imparcialidad",
+   "Productividad",
+   "Rentabilidad",
+   "Competitividad"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P236",
+  "statement": "¿Qué protege la confidencialidad?",
+  "options": [
+   "Información sensible",
+   "Imagen corporativa",
+   "Ventas",
+   "Inventarios"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P237",
+  "statement": "¿Qué constituye una vulneración ética?",
+  "options": [
+   "Divulgar ROS sin autorización",
+   "Capacitar empleados",
+   "Actualizar matriz",
+   "Consultar listas"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P238",
+  "statement": "¿Qué es un canal ético?",
+  "options": [
+   "Medio para reportar conductas indebidas",
+   "Canal de ventas",
+   "Plataforma logística",
+   "Ruta operativa"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P239",
+  "statement": "¿Qué debe promover el OC?",
+  "options": [
+   "Cultura de cumplimiento",
+   "Cultura comercial",
+   "Cultura competitiva",
+   "Cultura financiera"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P240",
+  "statement": "¿Cuál es un objetivo de la capacitación SAGRILAFT?",
+  "options": [
+   "Sensibilizar y fortalecer controles",
+   "Reducir costos",
+   "Eliminar auditorías",
+   "Evitar reportes"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T6",
+  "topicName": "Rol del Oficial de Cumplimiento"
+ },
+ {
+  "code": "SG-P241",
+  "statement": "¿Quién participa en la gestión del riesgo?",
+  "options": [
+   "Toda la organización",
+   "Solo OC",
+   "Solo Junta",
+   "Solo auditoría"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P242",
+  "statement": "¿Qué documento resume riesgos y controles?",
+  "options": [
+   "Matriz de riesgos",
+   "Factura",
+   "Contrato",
+   "Nómina"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P243",
+  "statement": "¿Qué debe contener una matriz de riesgos?",
+  "options": [
+   "Factores, riesgos, controles y evaluación",
+   "Solo riesgos",
+   "Solo controles",
+   "Solo clientes"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P244",
+  "statement": "¿Qué representa el riesgo residual?",
+  "options": [
+   "Riesgo luego de controles",
+   "Riesgo inicial",
+   "Riesgo legal",
+   "Riesgo financiero"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P245",
+  "statement": "¿Cuál es el propósito del gobierno corporativo?",
+  "options": [
+   "Direccionar y supervisar la organización",
+   "Vender servicios",
+   "Diseñar rutas",
+   "Facturar clientes"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P246",
+  "statement": "¿Quién aprueba el apetito de riesgo?",
+  "options": [
+   "Junta Directiva",
+   "Cliente",
+   "Auditor externo",
+   "Proveedor"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P247",
+  "statement": "¿Qué debe hacer una empresa ante cambios significativos del riesgo?",
+  "options": [
+   "Actualizar la matriz",
+   "Ignorarlos",
+   "Reducir controles",
+   "Eliminar monitoreo"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P248",
+  "statement": "¿Qué evidencia demuestra funcionamiento de controles?",
+  "options": [
+   "Registros y soportes verificables",
+   "Comentarios verbales",
+   "Rumores",
+   "Opiniones"
+  ],
+  "answerIndex": 0,
+  "difficulty": "INTERMEDIATE",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P249",
+  "statement": "¿Cuál es el objetivo final del SAGRILAFT?",
+  "options": [
+   "Prevenir y gestionar riesgos LA/FT",
+   "Incrementar ventas",
+   "Reducir personal",
+   "Aumentar utilidades"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ },
+ {
+  "code": "SG-P250",
+  "statement": "¿Qué principio integra todas las etapas del sistema?",
+  "options": [
+   "Enfoque Basado en Riesgo",
+   "Máxima rentabilidad",
+   "Mínimo costo",
+   "Automatización absoluta"
+  ],
+  "answerIndex": 0,
+  "difficulty": "BASIC",
+  "topicCode": "T7",
+  "topicName": "Ética y Confidencialidad"
+ }
+]

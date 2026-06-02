@@ -1,9 +1,16 @@
 import "server-only";
 import { redirect } from "next/navigation";
+import { prisma } from "./prisma";
 import { getCurrentUser, can, type AuthContext } from "./session";
 
 export interface SubscriberCtx {
   ctx: AuthContext;
+  subscriberId: string;
+}
+
+export interface CandidateCtx {
+  ctx: AuthContext;
+  candidateId: string;
   subscriberId: string;
 }
 
@@ -30,4 +37,32 @@ export async function requireSubscriberAction(
     throw new Error("FORBIDDEN: " + permission);
   }
   return { ctx, subscriberId: ctx.subscriberId };
+}
+
+/// Guard para PÁGINAS del portal del candidato. Redirige si no aplica.
+export async function requireCandidatePage(): Promise<CandidateCtx> {
+  const ctx = await getCurrentUser();
+  if (!ctx) redirect("/login");
+  if (ctx.type !== "CANDIDATE") {
+    redirect(ctx.type === "PLATFORM" ? "/admin" : "/panel");
+  }
+  const candidate = await prisma.candidate.findFirst({
+    where: { userId: ctx.userId },
+    select: { id: true, subscriberId: true },
+  });
+  if (!candidate) redirect("/login");
+  return { ctx, candidateId: candidate.id, subscriberId: candidate.subscriberId };
+}
+
+/// Guard para SERVER ACTIONS del candidato. Lanza error si no aplica.
+export async function requireCandidateAction(): Promise<CandidateCtx> {
+  const ctx = await getCurrentUser();
+  if (!ctx) throw new Error("UNAUTHENTICATED");
+  if (ctx.type !== "CANDIDATE") throw new Error("FORBIDDEN");
+  const candidate = await prisma.candidate.findFirst({
+    where: { userId: ctx.userId },
+    select: { id: true, subscriberId: true },
+  });
+  if (!candidate) throw new Error("FORBIDDEN");
+  return { ctx, candidateId: candidate.id, subscriberId: candidate.subscriberId };
 }
