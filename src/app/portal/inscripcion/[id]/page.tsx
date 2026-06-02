@@ -9,6 +9,7 @@ import { DocumentUpload } from "@/components/document-upload";
 import { EnrollmentNotes } from "@/components/enrollment-notes";
 import { computeJourney, computeEnrollmentFees, type JourneyStep } from "@/lib/enrollment";
 import { payEnrollment, bookSlot, cancelEnrollment } from "@/lib/actions/enrollment";
+import { startAttempt } from "@/lib/actions/attempt";
 import { money, dateTime } from "@/lib/format";
 
 export const metadata = { title: "Inscripción" };
@@ -116,6 +117,17 @@ export default async function EnrollmentProcessPage({
   const submissionByDoc = new Map(submissions.map((s) => [s.requiredDocumentId, s]));
   const fees = await computeEnrollmentFees(subscriberId, enrollment.schemeId);
 
+  // Último intento de examen (para el CTA de presentación).
+  const latestAttempt = enrollment.examId
+    ? await prisma.examAttempt.findFirst({
+        where: { enrollmentId: enrollment.id },
+        orderBy: { attemptNumber: "desc" },
+        select: { id: true, status: true, passed: true, scorePercent: true },
+      })
+    : null;
+  const FINISHED_ATTEMPT = ["SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED", "PASSED", "FAILED", "PENDING_COMMITTEE"];
+  const canPresent = !!enrollment.exam && enrollment.exam.type !== "PRACTICAL";
+
   return (
     <>
       <PageHeader
@@ -132,24 +144,50 @@ export default async function EnrollmentProcessPage({
 
       <EnrollmentNotes />
 
-      {terminal && (
-        <Card className="mb-6 border-l-4 border-l-brand-600 p-5">
-          <p className="text-sm text-slate-600">
-            Esta inscripción está en estado <strong>{enrollment.status}</strong>. La
-            presentación, calificación y certificación se gestionan en fases
-            posteriores del proceso.
-          </p>
+      {latestAttempt?.status === "IN_PROGRESS" ? (
+        <Card className="mb-6 border-l-4 border-l-amber-500 bg-amber-50/40 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-amber-800">Tiene un examen en curso.</p>
+            <Link href={`/portal/examen/${latestAttempt.id}`} className="rounded-lg bg-brand-800 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-900">
+              Continuar examen
+            </Link>
+          </div>
         </Card>
-      )}
-
-      {!terminal && journey.completed && (
+      ) : latestAttempt && FINISHED_ATTEMPT.includes(latestAttempt.status) ? (
+        <Card className="mb-6 border-l-4 border-l-brand-600 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm text-slate-700">
+              Examen presentado{latestAttempt.scorePercent != null ? ` — calificación ${Number(latestAttempt.scorePercent.toString())}%` : ""}.
+            </p>
+            <Link href={`/portal/examen/${latestAttempt.id}/resultado`} className="rounded-lg border border-brand-300 px-5 py-2 text-sm font-semibold text-brand-800 hover:bg-brand-50">
+              Ver resultado
+            </Link>
+          </div>
+        </Card>
+      ) : !terminal && journey.completed && canPresent ? (
+        <Card className="mb-6 border-l-4 border-l-emerald-500 bg-emerald-50/40 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-sm font-medium text-emerald-800">
+              ✓ ¡Inscripción completa! Está <strong>listo para presentar</strong> la evaluación.
+            </p>
+            <form action={startAttempt.bind(null, enrollment.id)}>
+              <SubmitButton pendingText="Preparando…">Presentar examen</SubmitButton>
+            </form>
+          </div>
+        </Card>
+      ) : !terminal && journey.completed && !canPresent ? (
         <Card className="mb-6 border-l-4 border-l-emerald-500 bg-emerald-50/40 p-5">
           <p className="text-sm font-medium text-emerald-800">
-            ✓ ¡Inscripción completa! Está <strong>listo para presentar</strong> la
-            evaluación. La presentación del examen se habilitará próximamente.
+            ✓ ¡Inscripción completa! La evaluación práctica (caso) se entrega y califica por el comité evaluador (en habilitación).
           </p>
         </Card>
-      )}
+      ) : terminal ? (
+        <Card className="mb-6 border-l-4 border-l-brand-600 p-5">
+          <p className="text-sm text-slate-600">
+            Esta inscripción está en estado <strong>{enrollment.status}</strong>.
+          </p>
+        </Card>
+      ) : null}
 
       <div className="space-y-5">
         {/* Paso 1: Consentimiento */}

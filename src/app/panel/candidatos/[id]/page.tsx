@@ -62,6 +62,7 @@ export default async function CandidateDetailPage({
           documents: { include: { requiredDocument: { select: { name: true } } }, orderBy: { uploadedAt: "desc" } },
           payments: { orderBy: { createdAt: "desc" } },
           bookings: { where: { status: { not: "CANCELLED" } }, include: { session: { select: { startsAt: true, location: true, modality: true } } } },
+          attempts: { orderBy: { attemptNumber: "desc" }, take: 1, select: { id: true, status: true, scorePercent: true, passed: true, submittedAt: true } },
         },
       },
       consents: { orderBy: { acceptedAt: "desc" }, take: 1 },
@@ -175,6 +176,27 @@ export default async function CandidateDetailPage({
                       </ul>
                     )}
                   </section>
+
+                  {/* Evaluación */}
+                  {e.attempts.length > 0 ? (
+                    <section>
+                      <h3 className="text-sm font-medium text-slate-700">Evaluación</h3>
+                      {e.attempts.map((at) => {
+                        const pct = at.scorePercent != null ? Number(at.scorePercent.toString()) : null;
+                        const tone = at.passed === true ? "green" : at.passed === false ? "red" : "amber";
+                        const label = at.status === "PASSED" ? "Aprobado" : at.status === "FAILED" ? "No aprobado" : at.status === "MANUAL_GRADING" ? "En calificación" : at.status === "PENDING_COMMITTEE" ? "En comité" : at.status;
+                        return (
+                          <div key={at.id} className="mt-2 flex items-center justify-between text-sm">
+                            <span className="text-slate-600">
+                              {pct != null ? `Calificación ${pct}%` : "Examen presentado"}
+                              {at.submittedAt ? <span className="ml-2 text-xs text-slate-400">{dateTime(at.submittedAt)}</span> : null}
+                            </span>
+                            <Badge tone={tone}>{label}</Badge>
+                          </div>
+                        );
+                      })}
+                    </section>
+                  ) : null}
 
                   {/* Agenda */}
                   {e.bookings.length > 0 ? (
