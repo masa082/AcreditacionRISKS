@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberPage } from "@/lib/guards";
 import { can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
-import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
+import { PageHeader, Badge, EmptyState } from "@/components/ui";
 
 export const metadata = { title: "Banco de preguntas" };
 

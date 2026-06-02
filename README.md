@@ -1,5 +1,7 @@
 # AcreditaPro
 
+[![CI](https://github.com/masa082/AcreditacionRISKS/actions/workflows/ci.yml/badge.svg)](https://github.com/masa082/AcreditacionRISKS/actions/workflows/ci.yml)
+
 Plataforma **SaaS multitenant** para crear, administrar, presentar, calificar y
 certificar evaluaciones para acreditación/certificación de personas, basada en
 los principios de la norma **ISO/IEC 17024**.
@@ -52,6 +54,8 @@ npm run dev                 # http://localhost:3000  (o -p 3100)
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` | `prisma generate` + build de producción |
 | `npm run start` | Servidor de producción |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | Chequeo de tipos (tsc) |
 | `npm run db:seed` | Datos de demostración |
 | `npm run db:reset` | Reinicia BD + migra + siembra |
 | `npm run prisma:studio` | Explorador visual de la BD |
