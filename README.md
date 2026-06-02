@@ -2,6 +2,8 @@
 
 [![CI](https://github.com/masa082/AcreditacionRISKS/actions/workflows/ci.yml/badge.svg)](https://github.com/masa082/AcreditacionRISKS/actions/workflows/ci.yml)
 
+🌐 **En vivo:** https://www.okacreditado.com · 🔎 **Verificación pública:** https://www.okacreditado.com/verificar
+
 Plataforma **SaaS multitenant** para crear, administrar, presentar, calificar y
 certificar evaluaciones para acreditación/certificación de personas, basada en
 los principios de la norma **ISO/IEC 17024**.
@@ -143,6 +145,36 @@ Revisor, Evaluador, Comité, Auditor interno, Soporte.
 | 16 | Auditoría / trazabilidad | 🔜 Fase 6 |
 
 ---
+
+## Despliegue (producción)
+
+El sitio en vivo corre en **Vercel** con base de datos **PostgreSQL gestionada en Railway**.
+
+| Componente | Detalle |
+|------------|---------|
+| Hosting | Vercel (proyecto `okacreeditado`) · dominio `www.okacreditado.com` |
+| Base de datos | Railway PostgreSQL (proyecto `acreditapro`) |
+| Variables en Vercel | `DATABASE_URL`, `DIRECT_URL` (URL pública de Railway), `AUTH_SECRET`, `NEXT_PUBLIC_APP_NAME`, `NEXT_PUBLIC_APP_URL` |
+| Migraciones | `prisma migrate deploy` contra la URL pública de Railway |
+| CI/CD | Push a `main` → CI (GitHub Actions) + deploy automático en Vercel |
+
+Pasos para reproducir el despliegue:
+
+```bash
+# 1. Provisionar Postgres (Railway / Neon / Vercel Postgres) y obtener la URL pública.
+# 2. Configurar variables en Vercel (Production):
+vercel env add DATABASE_URL production    # URL pública de la BD
+vercel env add DIRECT_URL production       # igual a DATABASE_URL
+vercel env add AUTH_SECRET production       # secreto aleatorio >= 32 chars
+# 3. Aplicar migraciones + datos demo contra la BD de producción:
+DATABASE_URL="<url-publica>" DIRECT_URL="<url-publica>" npx prisma migrate deploy
+DATABASE_URL="<url-publica>" DIRECT_URL="<url-publica>" npm run db:seed
+# 4. Desplegar:
+vercel --prod
+```
+
+> Para escalar en serverless, considere un pooler (PgBouncer / Prisma Accelerate)
+> o `?connection_limit=1` en `DATABASE_URL`.
 
 ## Seguridad
 

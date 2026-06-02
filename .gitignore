@@ -33,3 +33,4 @@ yarn-error.log*
 # uploads / generated artifacts
 /storage
 /public/uploads
+.vercel
