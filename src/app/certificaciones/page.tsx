@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { Metadata } from "next";
 import { LandingHeader } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
-import { CERTIFICATIONS, BRAND, CTAS } from "@/lib/brand";
+import { CERTIFICATIONS, BRAND, CTAS, formatCOP } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Certificaciones profesionales disponibles",
@@ -50,7 +50,8 @@ export default function CertificationsPage() {
                 <dl className="mt-5 grid grid-cols-3 gap-x-3 gap-y-1 text-[11px] text-slate-500">
                   <dt>Dirigido a</dt><dd className="col-span-2 text-slate-700">{c.audience.split(".")[0]}.</dd>
                   <dt>Duración</dt><dd className="col-span-2 font-semibold text-slate-700">{c.durationMin} min</dd>
-                  <dt>Vigencia</dt><dd className="col-span-2 font-semibold text-slate-700">{c.validityMonths} meses</dd>
+                  <dt>Vigencia</dt><dd className="col-span-2 font-semibold text-slate-700">{c.validityMonths} meses ({Math.round(c.validityMonths / 12)} años)</dd>
+                  <dt>Inversión</dt><dd className="col-span-2 font-semibold text-brand-800">{c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : "Consultar"}</dd>
                 </dl>
                 <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
                   <Link href={`/certificaciones/${c.slug}`} className="text-sm font-semibold text-brand-800 hover:underline">Ver detalles →</Link>

@@ -117,6 +117,21 @@ export default async function EnrollmentProcessPage({
   const submissionByDoc = new Map(submissions.map((s) => [s.requiredDocumentId, s]));
   const fees = await computeEnrollmentFees(subscriberId, enrollment.schemeId);
 
+  // Detecta si esta inscripción ya quedaría cubierta por un pago previo del
+  // mismo programa (mismo schemeId, otro enrollment del mismo candidato).
+  const coveredByPrevious = !payment && enrollment.schemeId
+    ? Boolean(
+        await prisma.payment.findFirst({
+          where: {
+            status: "APPROVED",
+            amount: { gt: 0 },
+            enrollment: { candidateId, schemeId: enrollment.schemeId, NOT: { id: enrollment.id } },
+          },
+          select: { id: true },
+        }),
+      )
+    : false;
+
   // Último intento de examen (para el CTA de presentación).
   const latestAttempt = enrollment.examId
     ? await prisma.examAttempt.findFirst({
@@ -235,7 +250,11 @@ export default async function EnrollmentProcessPage({
               </div>
             ) : (
               <div className="space-y-3">
-                {fees.lines.length > 0 ? (
+                {coveredByPrevious ? (
+                  <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800 ring-1 ring-emerald-200">
+                    Esta evaluación está <strong>cubierta</strong> por el pago previo del programa. No se cobrará un nuevo cargo.
+                  </div>
+                ) : fees.lines.length > 0 ? (
                   <ul className="divide-y divide-slate-100 text-sm">
                     {fees.lines.map((l, i) => (
                       <li key={i} className="flex justify-between py-2">
@@ -244,8 +263,12 @@ export default async function EnrollmentProcessPage({
                       </li>
                     ))}
                     <li className="flex justify-between py-2 font-semibold">
-                      <span>Total</span>
+                      <span>Subtotal</span>
                       <span>{money(fees.total, fees.currency)}</span>
+                    </li>
+                    <li className="flex justify-between py-1 text-xs text-slate-500">
+                      <span>+ IVA</span>
+                      <span>según legislación aplicable</span>
                     </li>
                   </ul>
                 ) : (
@@ -253,10 +276,16 @@ export default async function EnrollmentProcessPage({
                 )}
                 <form action={payEnrollment.bind(null, enrollment.id)}>
                   <SubmitButton pendingText="Procesando pago…">
-                    {fees.total && Number(fees.total.toString()) > 0 ? `Pagar ${money(fees.total, fees.currency)} (simulado)` : "Confirmar (sin costo)"}
+                    {coveredByPrevious
+                      ? "Confirmar (cubierto por pago previo)"
+                      : fees.total && Number(fees.total.toString()) > 0
+                      ? `Pagar ${money(fees.total, fees.currency)} + IVA (simulado)`
+                      : "Confirmar (sin costo)"}
                   </SubmitButton>
                 </form>
-                <p className="text-xs text-slate-400">Pasarela de pago simulada para demostración. La integración real (Wompi/PayU/MercadoPago) se conecta en producción.</p>
+                {!coveredByPrevious ? (
+                  <p className="text-xs text-slate-400">Pasarela de pago simulada para demostración. La integración real (Wompi/PayU/MercadoPago) se conecta en producción. El IVA se liquidará según la legislación vigente.</p>
+                ) : null}
               </div>
             )}
           </StepCard>

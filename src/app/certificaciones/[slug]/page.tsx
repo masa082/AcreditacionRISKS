@@ -5,7 +5,7 @@ import { LandingHeader } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
 import { FAQList } from "@/components/landing/faq";
 import { SchemaJsonLd } from "@/components/landing/schema-jsonld";
-import { CERTIFICATIONS, BRAND, CTAS } from "@/lib/brand";
+import { CERTIFICATIONS, BRAND, CTAS, formatCOP } from "@/lib/brand";
 
 export function generateStaticParams() {
   return CERTIFICATIONS.map((c) => ({ slug: c.slug }));
@@ -37,10 +37,13 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
 
   const faqs = [
     { q: `¿A quién va dirigida la ${c.shortName}?`, a: c.audience },
-    { q: `¿Cuánto dura la evaluación?`, a: `La evaluación tiene una duración aproximada de ${c.durationMin} minutos y se presenta de forma ${c.modality.toLowerCase()}.` },
-    { q: `¿Cuál es la vigencia del certificado?`, a: `El certificado tiene una vigencia de ${c.validityMonths} meses (${Math.round(c.validityMonths / 12)} años). Antes de su vencimiento se notifica al titular para iniciar la recertificación.` },
+    { q: `¿Cuánto cuesta el programa?`, a: c.priceCOP
+        ? `La inversión es de ${formatCOP(c.priceCOP)} pesos colombianos más IVA. Incluye las dos evaluaciones (Caso Práctico y Examen Teórico) y la emisión del certificado al aprobar.`
+        : `El valor del programa se confirma al solicitar información, en función del esquema y la cohorte. Escríbenos y te enviamos la cotización formal.` },
+    { q: `¿Cuántas evaluaciones incluye?`, a: `El programa incluye dos evaluaciones: un Caso Práctico y un Examen Teórico. Al aprobar ambas se emite el certificado.` },
+    { q: `¿Cuál es la vigencia del certificado?`, a: `El certificado tiene una vigencia de ${Math.round(c.validityMonths / 12)} años (${c.validityMonths} meses). Antes de su vencimiento se notifica al titular para iniciar la recertificación.` },
     { q: `¿Cómo se verifica el certificado?`, a: `Cada certificado tiene un código único y QR. Cualquier tercero puede verificar la autenticidad y vigencia en la página pública de verificación.` },
-    { q: `¿Qué pasa si no apruebo la evaluación?`, a: `Podrá presentar nuevamente la evaluación según las reglas de su esquema. Recibirá una constancia de presentación que documenta su intento.` },
+    { q: `¿Qué pasa si no apruebo una de las evaluaciones?`, a: `Podrá presentarla nuevamente según las reglas del esquema. Recibirá una constancia de presentación que documenta su intento. El certificado final se emite cuando ambas evaluaciones están aprobadas.` },
   ];
 
   return (
@@ -70,12 +73,13 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
 
       {/* Ficha técnica */}
       <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-6 py-10 sm:grid-cols-4">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-6 py-10 sm:grid-cols-4 lg:grid-cols-5">
           {[
             ["Duración", `${c.durationMin} min`],
-            ["Vigencia", `${c.validityMonths} meses`],
+            ["Vigencia", `${Math.round(c.validityMonths / 12)} años`],
             ["Modalidad", c.modality],
             ["Nivel", c.level],
+            ["Inversión", c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : "Consultar"],
           ].map(([k, v]) => (
             <div key={k} className="rounded-xl border border-slate-200 bg-white p-4 text-center">
               <div className="text-[11px] uppercase tracking-wider text-slate-400">{k}</div>

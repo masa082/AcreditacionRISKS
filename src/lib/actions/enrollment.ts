@@ -219,6 +219,26 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     return;
   }
 
+  // Si el candidato ya pagó el programa (mismo esquema) en otra inscripción,
+  // esta segunda evaluación del mismo programa queda cubierta sin cobro
+  // adicional. Se crea un Payment APPROVED con monto 0 y referencia al pago
+  // original, para mantener la trazabilidad sin doblar el cobro.
+  let coveredBy: { id: string; providerRef: string | null; amount: string } | null = null;
+  if (enrollment.schemeId) {
+    const sibling = await prisma.payment.findFirst({
+      where: {
+        status: "APPROVED",
+        enrollment: { candidateId, schemeId: enrollment.schemeId, NOT: { id: enrollmentId } },
+        amount: { gt: 0 },
+      },
+      orderBy: { paidAt: "asc" },
+      select: { id: true, providerRef: true, amount: true },
+    });
+    if (sibling) {
+      coveredBy = { id: sibling.id, providerRef: sibling.providerRef, amount: sibling.amount.toString() };
+    }
+  }
+
   const { total, currency, lines } = await computeEnrollmentFees(subscriberId, enrollment.schemeId);
   const description = lines.length
     ? lines.map((l) => l.label).join(" + ")
@@ -229,15 +249,17 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
       subscriberId,
       enrollmentId,
       concept: "EXAM",
-      description,
-      amount: total,
+      description: coveredBy ? `${description} (cubierto por inscripción previa del programa)` : description,
+      amount: coveredBy ? new Prisma.Decimal(0) : total,
       currency,
       status: "APPROVED",
-      provider: "mock",
-      providerRef: `MOCK-${newToken(6).toUpperCase()}`,
+      provider: coveredBy ? "internal" : "mock",
+      providerRef: coveredBy ? `COVER-${coveredBy.providerRef ?? coveredBy.id}` : `MOCK-${newToken(6).toUpperCase()}`,
       receiptUrl: null,
       paidAt: new Date(),
-      metadata: { simulated: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue,
+      metadata: coveredBy
+        ? ({ coveredBy: coveredBy.id, originalAmount: coveredBy.amount, note: "Cubierto por inscripción previa del mismo programa." } as Prisma.InputJsonValue)
+        : ({ simulated: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue),
     },
   });
 
@@ -247,7 +269,12 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     entity: "Payment",
     entityId: payment.id,
     subscriberId,
-    after: { amount: total.toString(), currency, simulated: true },
+    after: {
+      amount: coveredBy ? "0" : total.toString(),
+      currency,
+      simulated: !coveredBy,
+      coveredBy: coveredBy?.id ?? null,
+    },
   });
   revalidatePath(`/portal/inscripcion/${enrollmentId}`);
   revalidatePath("/portal/pagos");

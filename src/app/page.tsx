@@ -5,7 +5,7 @@ import { LandingFooter } from "@/components/landing/footer";
 import { CertificateMock } from "@/components/landing/certificate-mock";
 import { FAQList } from "@/components/landing/faq";
 import { SchemaJsonLd } from "@/components/landing/schema-jsonld";
-import { BRAND, CTAS, CERTIFICATIONS } from "@/lib/brand";
+import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
 
 export const metadata: Metadata = {
   title: "Certificación de Personas y Competencias",
@@ -165,8 +165,8 @@ export default function HomePage() {
                 <p className="mt-2 text-xs leading-relaxed text-slate-600 line-clamp-3">{c.description}</p>
                 <dl className="mt-4 grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-500">
                   <dt>Duración</dt><dd className="text-right font-semibold text-slate-700">{c.durationMin} min</dd>
-                  <dt>Vigencia</dt><dd className="text-right font-semibold text-slate-700">{c.validityMonths} meses</dd>
-                  <dt>Modalidad</dt><dd className="text-right font-semibold text-slate-700">{c.modality}</dd>
+                  <dt>Vigencia</dt><dd className="text-right font-semibold text-slate-700">{c.validityMonths} meses ({Math.round(c.validityMonths / 12)} años)</dd>
+                  <dt>Inversión</dt><dd className="text-right font-semibold text-brand-800">{c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : "Consultar"}</dd>
                 </dl>
                 <div className="mt-4 flex items-center justify-between gap-2">
                   <Link href={`/certificaciones/${c.slug}`} className="text-xs font-semibold text-brand-800 hover:underline">Ver detalles</Link>

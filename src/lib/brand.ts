@@ -58,6 +58,10 @@ export interface PublicCertification {
   metaTitle: string;
   metaDescription: string;
   keywords: string[];
+  /** Precio subtotal (no incluye IVA), en COP. null si "Solicitar información". */
+  priceCOP: number | null;
+  /** Indica si el programa está abierto a inscripción inmediata o requiere contacto previo. */
+  status: "AVAILABLE" | "ON_REQUEST";
 }
 
 export const CERTIFICATIONS: PublicCertification[] = [
@@ -105,6 +109,8 @@ export const CERTIFICATIONS: PublicCertification[] = [
       "SARLAFT Supertransporte",
       "certificación prevención LAFT transporte",
     ],
+    priceCOP: 650000,
+    status: "AVAILABLE",
   },
   {
     slug: "sagrilaft",
@@ -149,6 +155,8 @@ export const CERTIFICATIONS: PublicCertification[] = [
       "SAGRILAFT Supersociedades",
       "Capítulo X SAGRILAFT",
     ],
+    priceCOP: 950000,
+    status: "AVAILABLE",
   },
   {
     slug: "siplaft",
@@ -189,6 +197,8 @@ export const CERTIFICATIONS: PublicCertification[] = [
       "SIPLAFT sector transporte",
       "prevención LAFT transporte",
     ],
+    priceCOP: null,
+    status: "ON_REQUEST",
   },
   {
     slug: "oficial-cumplimiento",
@@ -232,5 +242,11 @@ export const CERTIFICATIONS: PublicCertification[] = [
       "certificación compliance Colombia",
       "PTEE oficial de cumplimiento",
     ],
+    priceCOP: null,
+    status: "ON_REQUEST",
   },
 ];
+
+export function formatCOP(value: number): string {
+  return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+}
