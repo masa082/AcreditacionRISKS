@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
 import { getCurrentUser } from "@/lib/session";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "CIOC";
 const HOME: Record<string, string> = {
   PLATFORM: "/admin",
   SUBSCRIBER: "/panel",

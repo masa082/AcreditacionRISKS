@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 const BRAND_NAME = "RISKS INTERNATIONAL";
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://www.okacreditado.com";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || "https://www.okacreditado.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(APP_URL),

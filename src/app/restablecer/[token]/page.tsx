@@ -3,7 +3,7 @@ import { ResetForm } from "@/components/reset-form";
 
 export const metadata = { title: "Restablecer contraseña" };
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "CIOC";
 
 export default async function RestablecerPage({
   params,

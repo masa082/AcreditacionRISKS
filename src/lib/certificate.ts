@@ -10,7 +10,7 @@ import { newToken } from "./auth";
 
 /// URL pública base para la verificación de certificados.
 export function appBaseUrl(): string {
-  return (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3100").replace(/\/$/, "");
+  return (process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3100").replace(/\/$/, "");
 }
 
 export function verifyUrl(code: string): string {
