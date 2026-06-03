@@ -5,6 +5,10 @@ export const BRAND = {
   shortName: "RISKS INTERNATIONAL",
   fullName: "Risks International S.A.S.",
   legalName: "RISKS INTERNATIONAL S.A.S.",
+  /** Nombre comercial del programa / plataforma. */
+  appName: "CIOC",
+  /** Nombre completo del programa. */
+  appLongName: "Certificado de Idoneidad como Oficial de Cumplimiento",
   tagline: "Certificación y acreditación profesional",
   claim: "Certifica tus competencias y demuestra tu conocimiento con respaldo, trazabilidad y verificación digital.",
   description:

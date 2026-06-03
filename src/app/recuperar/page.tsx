@@ -11,6 +11,9 @@ export default function RecuperarPage() {
       <div className="w-full max-w-md">
         <div className="mb-6 text-center text-white">
           <Link href="/" className="text-2xl font-bold tracking-tight">{APP_NAME}</Link>
+          <p className="mt-1 text-xs uppercase tracking-wide text-brand-100">
+            Certificado de Idoneidad como Oficial de Cumplimiento
+          </p>
         </div>
         <div className="rounded-2xl bg-white p-8 shadow-xl">
           <h1 className="mb-1 text-lg font-semibold text-slate-900">Recuperar contraseña</h1>

@@ -33,6 +33,9 @@ export default async function RegistroPage({
           <Link href="/" className="text-xl font-bold text-brand-800">
             {APP_NAME}
           </Link>
+          <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-400">
+            Certificado de Idoneidad como Oficial de Cumplimiento
+          </p>
           <h1 className="mt-4 text-lg font-semibold text-slate-900">
             Cree su cuenta de candidato
           </h1>

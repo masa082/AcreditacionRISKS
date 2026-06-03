@@ -45,8 +45,11 @@ export default async function VerificationResult({
     <main className="flex min-h-screen flex-col bg-slate-50">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto flex max-w-3xl items-center justify-between px-6 py-4">
-          <Link href="/" className="text-lg font-bold text-brand-800">
-            {APP_NAME}
+          <Link href="/" className="flex flex-col leading-none">
+            <span className="text-lg font-bold text-brand-800">{APP_NAME}</span>
+            <span className="text-[10px] uppercase tracking-wide text-slate-400">
+              Certificado de Idoneidad como Oficial de Cumplimiento
+            </span>
           </Link>
           <Link href="/verificar" className="text-sm text-slate-600 hover:text-brand-800">
             Nueva verificación

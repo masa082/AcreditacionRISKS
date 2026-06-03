@@ -12,9 +12,11 @@ export const metadata: Metadata = {
   },
   description:
     "Certifica tus competencias profesionales con RISKS INTERNATIONAL. Evaluaciones online, certificados digitales verificables por QR en compliance, riesgos, SARLAFT, SAGRILAFT, SIPLAFT y debida diligencia.",
-  applicationName: BRAND_NAME,
+  applicationName: `CIOC — Certificado de Idoneidad como Oficial de Cumplimiento · ${BRAND_NAME}`,
   authors: [{ name: BRAND_NAME }],
   keywords: [
+    "CIOC",
+    "Certificado de Idoneidad como Oficial de Cumplimiento",
     "certificación de personas",
     "certificación de competencias",
     "certificación SARLAFT",

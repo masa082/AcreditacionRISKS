@@ -29,7 +29,7 @@ export default async function LoginPage({
             {APP_NAME}
           </Link>
           <p className="mt-1 text-sm text-brand-100">
-            Evaluación y certificación de personas · ISO/IEC 17024
+            Certificado de Idoneidad como Oficial de Cumplimiento · ISO/IEC 17024
           </p>
         </div>
         <div className="rounded-2xl bg-white p-8 shadow-xl">

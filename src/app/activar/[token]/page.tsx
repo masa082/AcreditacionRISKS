@@ -19,6 +19,9 @@ export default async function ActivatePage({
         <Link href="/" className="text-xl font-bold text-brand-800">
           {APP_NAME}
         </Link>
+        <p className="mt-0.5 text-[11px] uppercase tracking-wide text-slate-400">
+          Certificado de Idoneidad como Oficial de Cumplimiento
+        </p>
         <div
           className={`mx-auto mt-6 flex h-12 w-12 items-center justify-center rounded-full text-2xl ${
             result.ok ? "bg-emerald-100" : "bg-rose-100"

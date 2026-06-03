@@ -5,6 +5,7 @@ import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "CIOC";
+const APP_LONG = "Certificado de Idoneidad como Oficial de Cumplimiento";
 
 export type { NavItem };
 
@@ -22,10 +23,13 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-slate-50">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
-        <div className="flex h-16 items-center border-b border-slate-200 px-5">
-          <Link href="/" className="text-lg font-bold text-brand-800">
+        <div className="flex h-16 flex-col justify-center border-b border-slate-200 px-5">
+          <Link href="/" className="text-lg font-bold text-brand-800 leading-none">
             {APP_NAME}
           </Link>
+          <span className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400" title={APP_LONG}>
+            {APP_LONG}
+          </span>
         </div>
         <div className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
           {area}
