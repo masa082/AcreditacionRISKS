@@ -7,7 +7,7 @@ const NAV: NavItem[] = [
   { href: "/portal/evaluaciones", label: "Evaluaciones disponibles" },
   { href: "/portal/pagos", label: "Mis pagos" },
   { href: "/portal/agenda", label: "Mi agenda" },
-  { href: "/portal/certificados", label: "Mis certificados", disabled: true },
+  { href: "/portal/certificados", label: "Mis certificados" },
   { href: "/portal/perfil", label: "Mi perfil" },
 ];
 

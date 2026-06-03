@@ -82,9 +82,16 @@ export default function Home() {
       </section>
 
       <footer className="border-t border-slate-200 bg-white">
-        <div className="mx-auto max-w-6xl px-6 py-8 text-sm text-slate-500">
-          © {APP_NAME} · Plataforma de evaluación y certificación bajo los
-          principios de la norma ISO/IEC 17024.
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-6 py-8 text-sm text-slate-500">
+          <span>
+            © {APP_NAME} · Plataforma de evaluación y certificación bajo los
+            principios de la norma ISO/IEC 17024.
+          </span>
+          <nav className="flex gap-4">
+            <Link href="/terminos" className="hover:text-brand-800">Términos</Link>
+            <Link href="/privacidad" className="hover:text-brand-800">Privacidad</Link>
+            <Link href="/verificar" className="hover:text-brand-800">Verificar certificado</Link>
+          </nav>
         </div>
       </footer>
     </main>

@@ -12,7 +12,7 @@ const NAV: NavItem[] = [
   { href: "/panel/agenda", label: "Agenda de pruebas" },
   { href: "/panel/calificacion", label: "Calificación" },
   { href: "/panel/comite", label: "Comité evaluador" },
-  { href: "/panel/certificados", label: "Certificados", disabled: true },
+  { href: "/panel/certificados", label: "Certificados" },
   { href: "/panel/reportes", label: "Reportes", disabled: true },
 ];
 
