@@ -8,6 +8,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { newToken } from "@/lib/auth";
 import { generateCertificateCode } from "@/lib/certificate";
+import { notifyCandidate } from "@/lib/notify";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 /// Emite el diploma/certificado de certificación de una inscripción aprobada.
@@ -66,6 +67,7 @@ export async function issueCertificate(enrollmentId: string): Promise<ActionResu
   });
 
   await prisma.enrollment.update({ where: { id: enrollmentId }, data: { status: "CERTIFIED" } });
+  await notifyCandidate(enrollment.candidateId, "certificate.issued", "¡Su certificado fue emitido!", `${cert.title} · código ${cert.code}`);
   await audit(ctx, { action: "certificate.issue", entity: "Certificate", entityId: cert.id, subscriberId, after: { code, holderName } });
   revalidatePath("/panel/certificados");
   revalidatePath("/portal/certificados");

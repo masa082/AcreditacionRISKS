@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { logoutAction } from "@/lib/actions/auth";
 import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
+import { NotificationBellServer } from "@/components/notification-bell-server";
 
 const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
 
@@ -38,7 +39,8 @@ export function DashboardShell({
       <div className="flex min-w-0 flex-1 flex-col">
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
           <div className="text-sm text-slate-500 md:hidden">{APP_NAME}</div>
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center gap-3">
+            <NotificationBellServer />
             <div className="text-right">
               <div className="text-sm font-medium text-slate-800">
                 {user.name}

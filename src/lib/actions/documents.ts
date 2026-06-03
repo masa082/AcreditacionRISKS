@@ -7,6 +7,7 @@ import { requireSubscriberAction } from "@/lib/guards";
 import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { syncEnrollmentStatus } from "@/lib/enrollment";
+import { notifyCandidate } from "@/lib/notify";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const reviewSchema = z.object({
@@ -37,7 +38,10 @@ export async function reviewDocument(
 
   const doc = await prisma.candidateDocument.findUnique({
     where: { id: documentId },
-    include: { enrollment: { select: { id: true, subscriberId: true } } },
+    include: {
+      enrollment: { select: { id: true, subscriberId: true, candidateId: true } },
+      requiredDocument: { select: { name: true } },
+    },
   });
   if (!doc || doc.enrollment.subscriberId !== subscriberId) {
     return { ok: false, error: "Documento no encontrado." };
@@ -54,6 +58,13 @@ export async function reviewDocument(
   });
 
   await syncEnrollmentStatus(doc.enrollment.id);
+  const docName = doc.requiredDocument?.name ?? "Documento";
+  await notifyCandidate(
+    doc.enrollment.candidateId,
+    "document.reviewed",
+    parsed.data.decision === "APPROVED" ? "Documento aprobado" : "Documento rechazado",
+    parsed.data.decision === "APPROVED" ? docName : `${docName}: ${parsed.data.notes ?? "revise las observaciones"}`,
+  );
   await audit(ctx, {
     action: `document.${parsed.data.decision.toLowerCase()}`,
     entity: "CandidateDocument",

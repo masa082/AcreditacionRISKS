@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberAction } from "@/lib/guards";
 import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { notifyCandidate } from "@/lib/notify";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 function clean(v: FormDataEntryValue | null): string | null {
@@ -82,7 +83,7 @@ export async function closeReview(
 
   const review = await prisma.committeeReview.findUnique({
     where: { id: reviewId },
-    include: { enrollment: { select: { id: true } }, attempt: { select: { id: true } }, votes: true },
+    include: { enrollment: { select: { id: true, candidateId: true } }, attempt: { select: { id: true } }, votes: true },
   });
   if (!review || review.subscriberId !== subscriberId) return { ok: false, error: "Revisión no encontrada." };
   if (review.closedAt) return { ok: false, error: "La revisión ya está cerrada." };
@@ -102,6 +103,12 @@ export async function closeReview(
   if (review.attemptId) {
     await prisma.examAttempt.update({ where: { id: review.attemptId }, data: { status: approved ? "PASSED" : "FAILED", passed: approved } });
   }
+  await notifyCandidate(
+    review.enrollment.candidateId,
+    "committee.decision",
+    approved ? "Certificación aprobada por el comité" : "Certificación no aprobada",
+    approved ? "El comité evaluador aprobó su certificación." : "El comité evaluador no aprobó su certificación.",
+  );
 
   await audit(ctx, { action: "committee.decide", entity: "CommitteeReview", entityId: reviewId, subscriberId, after: { decision: parsed.data.decision } });
   revalidatePath(`/panel/comite/${reviewId}`);
