@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { saveAnswer, saveTextAnswer, uploadAnswerFile, submitAttempt } from "@/lib/actions/attempt";
+import { saveAnswer, saveTextAnswer, uploadAnswerFile, submitAttempt, recordAttemptEvent } from "@/lib/actions/attempt";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 export interface RunnerQuestion {
@@ -104,6 +104,8 @@ export function ExamRunner({
   const [saving, setSaving] = useState(false);
   const [submitting, startSubmit] = useTransition();
   const submittedRef = useRef(false);
+  const [incidents, setIncidents] = useState(0);
+  const lastIncidentRef = useRef(0);
 
   const secondsLeft = Math.floor((dueMs - now) / 1000);
 
@@ -119,6 +121,27 @@ export function ExamRunner({
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+
+  // Antifraude básico: registra salidas de la pantalla del examen.
+  useEffect(() => {
+    function flag() {
+      if (submittedRef.current) return;
+      const ts = Date.now();
+      if (ts - lastIncidentRef.current < 1500) return; // evita doble disparo
+      lastIncidentRef.current = ts;
+      setIncidents((n) => n + 1);
+      void recordAttemptEvent(attemptId, "focus_lost");
+    }
+    function onVis() {
+      if (document.hidden) flag();
+    }
+    window.addEventListener("blur", flag);
+    document.addEventListener("visibilitychange", onVis);
+    return () => {
+      window.removeEventListener("blur", flag);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [attemptId]);
 
   useEffect(() => {
     if (secondsLeft <= 0 && !submittedRef.current) doSubmit();
@@ -165,6 +188,11 @@ export function ExamRunner({
         <div className="text-sm text-slate-600">
           Respondidas <strong>{answered}</strong> / {questions.length}
           <span className="ml-3 text-xs text-slate-400">{saving ? "Guardando…" : "Guardado ✓"}</span>
+          {incidents > 0 ? (
+            <span className="ml-3 text-xs font-medium text-amber-600" title="Se registró que salió de la pantalla del examen">
+              ⚠ Salidas de pantalla: {incidents}
+            </span>
+          ) : null}
         </div>
         <div className={`rounded-lg px-3 py-1.5 font-mono text-sm font-semibold ${lowTime ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-700"}`}>
           ⏱ {fmt(secondsLeft)}

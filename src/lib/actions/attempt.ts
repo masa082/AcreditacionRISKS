@@ -191,6 +191,21 @@ export async function uploadAnswerFile(
   return { ok: true };
 }
 
+/// Registra un evento de proctoring/antifraude del intento (p. ej. salida de pantalla).
+export async function recordAttemptEvent(
+  attemptId: string,
+  type: string,
+): Promise<{ ok: boolean }> {
+  const { candidateId } = await requireCandidateAction();
+  const allowed = ["focus_lost", "blur", "resume", "fullscreen_exit", "paste"];
+  if (!allowed.includes(type)) return { ok: false };
+  const attempt = await loadOwnedAttempt(candidateId, attemptId);
+  if (attempt.status !== "IN_PROGRESS") return { ok: false };
+  const meta = await reqMeta();
+  await prisma.attemptEvent.create({ data: { attemptId, type, ip: meta.ip } });
+  return { ok: true };
+}
+
 // ----------------------------------------------------------------------------
 //  Enviar y calificar automáticamente el intento.
 // ----------------------------------------------------------------------------

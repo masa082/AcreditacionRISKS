@@ -31,6 +31,7 @@ export default async function ResultPage({
   });
   if (!attempt || attempt.candidateId !== candidateId) notFound();
 
+  const focusLost = await prisma.attemptEvent.count({ where: { attemptId, type: "focus_lost" } });
   const st = STATUS[attempt.status] ?? { label: attempt.status, tone: "blue" as const };
   const pending = attempt.status === "MANUAL_GRADING" || attempt.status === "PENDING_COMMITTEE";
   const percent = attempt.scorePercent != null ? Number(attempt.scorePercent.toString()) : null;
@@ -75,6 +76,12 @@ export default async function ResultPage({
         {!pending && attempt.passed === false ? (
           <p className="mt-4 text-sm text-slate-500">
             No alcanzó el puntaje mínimo aprobatorio. Si su esquema permite reintentos, podrá presentarlo nuevamente según las políticas de la entidad.
+          </p>
+        ) : null}
+
+        {focusLost > 0 ? (
+          <p className="mt-4 text-xs text-amber-600">
+            ⚠ Durante la presentación se registraron {focusLost} salida(s) de la pantalla del examen (control de integridad).
           </p>
         ) : null}
       </Card>
