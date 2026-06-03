@@ -4,6 +4,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, newToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
+import { sendVerificationEmail } from "@/lib/email";
+import { appBaseUrl } from "@/lib/app-url";
 
 export interface RegisterState {
   ok: boolean;
@@ -131,6 +133,8 @@ export async function registerCandidate(
     subscriberId: subscriber.id,
     after: { email, documentNumber: data.documentNumber },
   });
+
+  await sendVerificationEmail(subscriber.id, email, data.firstName, `${appBaseUrl()}/activar/${verificationToken}`);
 
   return { ok: true, activationToken: verificationToken };
 }

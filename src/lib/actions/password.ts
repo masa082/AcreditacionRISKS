@@ -5,6 +5,8 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, newToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
+import { sendPasswordResetEmail } from "@/lib/email";
+import { appBaseUrl } from "@/lib/app-url";
 
 export interface ForgotState {
   ok: boolean;
@@ -72,6 +74,7 @@ export async function requestPasswordReset(
     entityId: user.id,
     subscriberId: user.subscriberId,
   });
+  await sendPasswordResetEmail(user.subscriberId, email, `${appBaseUrl()}/restablecer/${resetToken}`);
   return { ok: true, message: generic, resetToken };
 }
 

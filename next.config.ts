@@ -15,7 +15,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
-  serverExternalPackages: ["@prisma/client", "bcryptjs", "qrcode", "@aws-sdk/client-s3"],
+  serverExternalPackages: ["@prisma/client", "bcryptjs", "qrcode", "@aws-sdk/client-s3", "nodemailer"],
   // ESLint se configura en una fase posterior; no bloquear el build por ahora.
   eslint: { ignoreDuringBuilds: true },
   // El chequeo de tipos de TypeScript permanece activo (no se ignora).
