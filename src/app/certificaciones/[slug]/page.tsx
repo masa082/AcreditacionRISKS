@@ -59,13 +59,24 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
             <span className="px-2">/</span>
             <span className="text-brand-800">{c.shortName}</span>
           </nav>
-          <span className="inline-block rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-800">
-            {c.category} · {c.level}
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-block rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-800">
+              {c.category} · {c.level}
+            </span>
+            {c.status === "COMING_SOON" ? (
+              <span className="inline-block rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-amber-700">
+                Próximamente
+              </span>
+            ) : null}
+          </div>
           <h1 className="mt-4 max-w-3xl text-3xl font-bold text-brand-900 sm:text-4xl">{c.name}</h1>
           <p className="mt-4 max-w-2xl text-slate-600">{c.description}</p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-900">Inscribirme ahora</Link>
+            {c.status === "AVAILABLE" ? (
+              <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-900">Inscribirme ahora</Link>
+            ) : c.status === "COMING_SOON" ? (
+              <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg bg-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600">Notificarme cuando esté disponible</Link>
+            ) : null}
             <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 hover:bg-brand-50">Solicitar información</Link>
           </div>
         </div>
@@ -144,7 +155,11 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
                 <li>5. Agenda y presenta la prueba</li>
                 <li>6. Descarga tu diploma verificable</li>
               </ol>
-              <Link href={`/registro?cert=${c.slug}`} className="block rounded-lg bg-brand-800 px-4 py-3 text-center text-sm font-bold text-white hover:bg-brand-900">Inscribirme</Link>
+              {c.status === "AVAILABLE" ? (
+                <Link href={`/registro?cert=${c.slug}`} className="block rounded-lg bg-brand-800 px-4 py-3 text-center text-sm font-bold text-white hover:bg-brand-900">Inscribirme</Link>
+              ) : c.status === "COMING_SOON" ? (
+                <Link href={`/contacto?cert=${c.slug}`} className="block rounded-lg bg-amber-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-amber-600">Notificarme cuando esté disponible</Link>
+              ) : null}
               <Link href={`/contacto?cert=${c.slug}`} className="block rounded-lg border border-slate-300 px-4 py-3 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50">Solicitar información</Link>
               <Link href={CTAS.verify.href} className="block text-center text-xs font-semibold text-brand-800 hover:underline">Verificar un certificado existente →</Link>
             </div>

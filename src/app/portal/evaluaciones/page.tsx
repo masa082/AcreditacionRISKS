@@ -5,6 +5,7 @@ import { PageHeader, Card, EmptyState, Badge } from "@/components/ui";
 import { SubmitButton } from "@/components/form";
 import { startEnrollment } from "@/lib/actions/enrollment";
 import { money, dateOnly } from "@/lib/format";
+import { isSchemeComingSoon } from "@/lib/brand";
 
 export const metadata = { title: "Programas de certificación disponibles" };
 
@@ -160,6 +161,7 @@ function ProgramCard({
   const years = Math.round(group.validityMonths / 12);
   const yearsLabel = `${years} ${years === 1 ? "año" : "años"}`;
   const inProgress = enrolledSchemes.has(group.schemeId);
+  const comingSoon = isSchemeComingSoon(group.schemeName);
   // Mostrar primero el Examen Teórico, luego el Caso Práctico (orden pedagógico).
   const examOrder = [...group.exams].sort((a, b) => {
     const w = (n: string) => (/teórico/i.test(n) ? 0 : /caso/i.test(n) ? 1 : 2);
@@ -172,7 +174,7 @@ function ProgramCard({
         <div className="lg:col-span-2">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-lg font-bold text-slate-900">{group.schemeName}</h2>
-            {inProgress ? <Badge tone="green">Inscrito</Badge> : null}
+            {comingSoon ? <Badge tone="amber">Próximamente</Badge> : inProgress ? <Badge tone="green">Inscrito</Badge> : null}
           </div>
           {group.scope ? <p className="mt-2 text-sm text-slate-600">{group.scope}</p> : null}
           {group.normReference ? <p className="mt-2 text-xs italic text-slate-400">Referencia: {group.normReference}</p> : null}
@@ -209,33 +211,49 @@ function ProgramCard({
             <div className="flex justify-between"><dt>Modalidad</dt><dd className="font-semibold text-slate-700">En línea</dd></div>
           </dl>
           <div className="mt-5 space-y-2">
-            {examOrder.map((e) => {
-              const enrolledId = enrolledByExam.get(e.id);
-              const isTeor = /teórico/i.test(e.name);
-              const label = isTeor ? "Examen Teórico" : /caso/i.test(e.name) ? "Caso Práctico" : e.name;
-              const earliestClose = e.availableTo ? `Cierra ${dateOnly(e.availableTo)}` : null;
-              return (
-                <div key={e.id}>
-                  {enrolledId ? (
-                    <Link
-                      href={`/portal/inscripcion/${enrolledId}`}
-                      className="block rounded-lg border border-brand-300 px-3 py-2 text-center text-sm font-semibold text-brand-800 hover:bg-brand-50"
-                    >
-                      Continuar · {label}
-                    </Link>
-                  ) : (
-                    <form action={startEnrollment.bind(null, e.id)}>
-                      <SubmitButton pendingText="Inscribiendo…">Inscribirme · {label}</SubmitButton>
-                    </form>
-                  )}
-                  {earliestClose ? <p className="mt-1 text-center text-[10px] text-amber-600">{earliestClose}</p> : null}
+            {comingSoon ? (
+              <>
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-center text-sm font-semibold text-amber-800">
+                  🕒 Próximamente
                 </div>
-              );
-            })}
+                <Link
+                  href={`/contacto?cert=${encodeURIComponent(group.schemeName)}`}
+                  className="block rounded-lg border border-brand-200 px-3 py-2 text-center text-xs font-semibold text-brand-800 hover:bg-brand-50"
+                >
+                  Notifíquenme cuando esté disponible →
+                </Link>
+              </>
+            ) : (
+              examOrder.map((e) => {
+                const enrolledId = enrolledByExam.get(e.id);
+                const isTeor = /teórico/i.test(e.name);
+                const label = isTeor ? "Examen Teórico" : /caso/i.test(e.name) ? "Caso Práctico" : e.name;
+                const earliestClose = e.availableTo ? `Cierra ${dateOnly(e.availableTo)}` : null;
+                return (
+                  <div key={e.id}>
+                    {enrolledId ? (
+                      <Link
+                        href={`/portal/inscripcion/${enrolledId}`}
+                        className="block rounded-lg border border-brand-300 px-3 py-2 text-center text-sm font-semibold text-brand-800 hover:bg-brand-50"
+                      >
+                        Continuar · {label}
+                      </Link>
+                    ) : (
+                      <form action={startEnrollment.bind(null, e.id)}>
+                        <SubmitButton pendingText="Inscribiendo…">Inscribirme · {label}</SubmitButton>
+                      </form>
+                    )}
+                    {earliestClose ? <p className="mt-1 text-center text-[10px] text-amber-600">{earliestClose}</p> : null}
+                  </div>
+                );
+              })
+            )}
           </div>
-          <p className="mt-3 text-center text-[10px] text-slate-400">
-            La primera inscripción cubre el costo del programa. La segunda evaluación queda <strong>sin costo adicional</strong>.
-          </p>
+          {!comingSoon ? (
+            <p className="mt-3 text-center text-[10px] text-slate-400">
+              La primera inscripción cubre el costo del programa. La segunda evaluación queda <strong>sin costo adicional</strong>.
+            </p>
+          ) : null}
         </aside>
       </div>
     </Card>

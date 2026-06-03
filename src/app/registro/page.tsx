@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { RegisterForm } from "@/components/register-form";
+import { CERTIFICATIONS } from "@/lib/brand";
 
 export const metadata = { title: "Registro de candidato" };
 
@@ -9,9 +10,9 @@ const APP_NAME = "CIOC";
 export default async function RegistroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ org?: string }>;
+  searchParams: Promise<{ org?: string; cert?: string }>;
 }) {
-  const { org } = await searchParams;
+  const { org, cert } = await searchParams;
 
   const subscribers = await prisma.subscriber.findMany({
     where: { status: { in: ["ACTIVE", "TRIAL"] } },
@@ -25,6 +26,15 @@ export default async function RegistroPage({
 
   const lockedOrg =
     org && orgs.some((o) => o.slug === org) ? org : undefined;
+
+  const certOptions = CERTIFICATIONS.map((c) => ({
+    slug: c.slug,
+    name: c.shortName,
+    available: c.status === "AVAILABLE",
+    status: c.status,
+  }));
+  const preselectedCert =
+    cert && certOptions.some((o) => o.slug === cert && o.available) ? cert : undefined;
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
@@ -51,7 +61,12 @@ export default async function RegistroPage({
             momento.
           </p>
         ) : (
-          <RegisterForm orgs={orgs} lockedOrg={lockedOrg} />
+          <RegisterForm
+            orgs={orgs}
+            lockedOrg={lockedOrg}
+            certifications={certOptions}
+            preselectedCert={preselectedCert}
+          />
         )}
       </div>
     </main>

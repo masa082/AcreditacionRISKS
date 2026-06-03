@@ -30,9 +30,18 @@ async function loadOwnedEnrollment(candidateId: string, enrollmentId: string) {
 // ----------------------------------------------------------------------------
 export async function startEnrollment(examId: string): Promise<void> {
   const { ctx, candidateId, subscriberId } = await requireCandidateAction();
-  const exam = await prisma.exam.findUnique({ where: { id: examId } });
+  const exam = await prisma.exam.findUnique({
+    where: { id: examId },
+    include: { scheme: { select: { name: true } } },
+  });
   if (!exam || exam.subscriberId !== subscriberId || exam.status !== "PUBLISHED") {
     throw new Error("La evaluación no está disponible.");
+  }
+  // Defensa en profundidad: bloquear inscripciones a esquemas anunciados como
+  // "Próximamente" en el catálogo público (lib/brand.ts).
+  const { isSchemeComingSoon } = await import("@/lib/brand");
+  if (isSchemeComingSoon(exam.scheme?.name)) {
+    throw new Error("Este programa aún no está abierto para inscripción. Estará disponible próximamente.");
   }
   const now = new Date();
   if (exam.availableFrom && exam.availableFrom > now) throw new Error("La evaluación aún no está disponible.");

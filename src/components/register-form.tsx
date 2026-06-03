@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { Field, Input, Select, FormError, SubmitButton } from "@/components/form";
 import { registerCandidate, type RegisterState } from "@/lib/actions/registration";
 
@@ -10,16 +10,37 @@ interface Org {
   name: string;
 }
 
+export interface CertOption {
+  slug: string;
+  name: string;
+  available: boolean;
+  status: "AVAILABLE" | "COMING_SOON" | "ON_REQUEST";
+}
+
 const initial: RegisterState = { ok: false };
+
+const STATUS_BADGE: Record<CertOption["status"], { label: string; cls: string }> = {
+  AVAILABLE: { label: "Disponible", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  COMING_SOON: { label: "Próximamente", cls: "bg-amber-50 text-amber-700 ring-amber-200" },
+  ON_REQUEST: { label: "Solicitar info", cls: "bg-slate-100 text-slate-600 ring-slate-200" },
+};
 
 export function RegisterForm({
   orgs,
   lockedOrg,
+  certifications,
+  preselectedCert,
 }: {
   orgs: Org[];
   lockedOrg?: string;
+  certifications?: CertOption[];
+  preselectedCert?: string;
 }) {
   const [state, action] = useActionState(registerCandidate, initial);
+  const certs = certifications ?? [];
+  const availableCerts = certs.filter((c) => c.available);
+  const initialCert = preselectedCert ?? availableCerts[0]?.slug ?? "";
+  const [selectedCert, setSelectedCert] = useState(initialCert);
 
   if (state.ok) {
     const href = `/activar/${state.activationToken}`;
@@ -61,6 +82,50 @@ export function RegisterForm({
           </Select>
         </Field>
       )}
+
+      {certs.length > 0 ? (
+        <Field
+          label="Certificación de interés"
+          htmlFor="certificationOfInterest"
+          required
+          hint="Su cuenta queda registrada para iniciar la inscripción a este programa."
+        >
+          <input type="hidden" name="certificationOfInterest" value={selectedCert} />
+          <div className="space-y-2">
+            {certs.map((c) => {
+              const badge = STATUS_BADGE[c.status];
+              const isSelected = selectedCert === c.slug;
+              return (
+                <button
+                  type="button"
+                  key={c.slug}
+                  disabled={!c.available}
+                  onClick={() => c.available && setSelectedCert(c.slug)}
+                  className={`group flex w-full items-center justify-between gap-3 rounded-lg border px-3 py-2 text-left transition ${
+                    !c.available
+                      ? "cursor-not-allowed border-slate-200 bg-slate-50 opacity-70"
+                      : isSelected
+                      ? "border-brand-700 bg-brand-50 ring-2 ring-brand-100"
+                      : "border-slate-300 hover:border-brand-400 hover:bg-brand-50/40"
+                  }`}
+                >
+                  <div>
+                    <div className={`text-sm font-semibold ${isSelected ? "text-brand-900" : "text-slate-800"}`}>
+                      {c.name}
+                    </div>
+                    {!c.available ? (
+                      <p className="mt-0.5 text-[11px] text-slate-500">Lanzamiento próximo · podrá inscribirse cuando se habilite.</p>
+                    ) : null}
+                  </div>
+                  <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ${badge.cls}`}>
+                    {badge.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </Field>
+      ) : null}
 
       <div className="grid gap-5 sm:grid-cols-2">
         <Field label="Nombres" htmlFor="firstName" required>

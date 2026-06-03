@@ -158,25 +158,43 @@ export default function HomePage() {
           </div>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {FEATURED_CERTS.map((c) => (
-              <article key={c.slug} className="flex flex-col rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-premium">
-                <div className="flex items-start justify-between gap-2">
-                  <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800">{c.category}</span>
-                  <span className="text-[10px] uppercase tracking-wider text-slate-400">{c.level}</span>
-                </div>
-                <h3 className="mt-3 text-base font-bold leading-snug text-brand-900">{c.shortName}</h3>
-                <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-slate-600">{c.description}</p>
-                <dl className="mt-4 grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-500">
-                  <dt>Duración</dt><dd className="text-right font-semibold text-slate-700">{c.durationMin} min</dd>
-                  <dt>Vigencia</dt><dd className="text-right font-semibold text-slate-700">{Math.round(c.validityMonths / 12)} años</dd>
-                  <dt>Inversión</dt><dd className="text-right font-bold text-brand-800">{c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : "Consultar"}</dd>
-                </dl>
-                <div className="mt-4 flex items-center justify-between gap-2">
-                  <Link href={`/certificaciones/${c.slug}`} className="text-xs font-semibold text-brand-800 hover:underline">Ver detalles</Link>
-                  <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900">Inscribirme</Link>
-                </div>
-              </article>
-            ))}
+            {FEATURED_CERTS.map((c) => {
+              const isComing = c.status === "COMING_SOON";
+              const isOnRequest = c.status === "ON_REQUEST";
+              return (
+                <article key={c.slug} className={`flex flex-col rounded-2xl border bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:shadow-premium ${isComing ? "border-amber-200" : "border-slate-200"}`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800">{c.category}</span>
+                    {isComing ? (
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200">Próximamente</span>
+                    ) : (
+                      <span className="text-[10px] uppercase tracking-wider text-slate-400">{c.level}</span>
+                    )}
+                  </div>
+                  <h3 className="mt-3 text-base font-bold leading-snug text-brand-900">{c.shortName}</h3>
+                  <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-slate-600">{c.description}</p>
+                  <dl className="mt-4 grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-500">
+                    <dt>Duración</dt><dd className="text-right font-semibold text-slate-700">{c.durationMin} min</dd>
+                    <dt>Vigencia</dt><dd className="text-right font-semibold text-slate-700">{Math.round(c.validityMonths / 12)} años</dd>
+                    <dt>Inversión</dt><dd className="text-right font-bold text-brand-800">{c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : "Consultar"}</dd>
+                  </dl>
+                  <div className="mt-4 flex items-center justify-between gap-2">
+                    <Link href={`/certificaciones/${c.slug}`} className="text-xs font-semibold text-brand-800 hover:underline">Ver detalles</Link>
+                    {isComing ? (
+                      <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50">
+                        Notificarme
+                      </Link>
+                    ) : isOnRequest ? (
+                      <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                        Solicitar info
+                      </Link>
+                    ) : (
+                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900">Inscribirme</Link>
+                    )}
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>

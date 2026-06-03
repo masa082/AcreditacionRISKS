@@ -65,8 +65,13 @@ export interface PublicCertification {
   keywords: string[];
   /** Precio subtotal (no incluye IVA), en COP. null si "Solicitar información". */
   priceCOP: number | null;
-  /** Indica si el programa está abierto a inscripción inmediata o requiere contacto previo. */
-  status: "AVAILABLE" | "ON_REQUEST";
+  /**
+   * Estado comercial del programa:
+   * - AVAILABLE: inscripción abierta inmediata.
+   * - COMING_SOON: anunciado pero aún no abierto; CTA "Notificarme".
+   * - ON_REQUEST: catálogo no público; CTA "Solicitar información".
+   */
+  status: "AVAILABLE" | "COMING_SOON" | "ON_REQUEST";
 }
 
 export const CERTIFICATIONS: PublicCertification[] = [
@@ -161,7 +166,7 @@ export const CERTIFICATIONS: PublicCertification[] = [
       "Capítulo X SAGRILAFT",
     ],
     priceCOP: 950000,
-    status: "AVAILABLE",
+    status: "COMING_SOON",
   },
   {
     slug: "siplaft",
@@ -254,4 +259,29 @@ export const CERTIFICATIONS: PublicCertification[] = [
 
 export function formatCOP(value: number): string {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(value);
+}
+
+/**
+ * Slugs de certificaciones marcadas como "Próximamente" — la inscripción
+ * pública queda bloqueada hasta que el organismo certificador apruebe la
+ * apertura. Manejado por lib/brand.ts para mantener una única fuente de verdad
+ * usable por UI y por server actions.
+ */
+export const COMING_SOON_SLUGS = new Set(
+  CERTIFICATIONS.filter((c) => c.status === "COMING_SOON").map((c) => c.slug),
+);
+
+/**
+ * Determina si un esquema (CertificationScheme.name proveniente de BD) está en
+ * estado "Próximamente". Hace matching contra el nombre del programa.
+ */
+export function isSchemeComingSoon(schemeName: string | null | undefined): boolean {
+  if (!schemeName) return false;
+  const upper = schemeName.toUpperCase();
+  // Igual lista de slugs marcados COMING_SOON arriba, pero matched por keyword
+  // del programa (más robusto contra cambios menores de nombre).
+  if (COMING_SOON_SLUGS.has("sagrilaft") && /SAGRILAFT/.test(upper)) return true;
+  if (COMING_SOON_SLUGS.has("siplaft") && /SIPLAFT/.test(upper)) return true;
+  if (COMING_SOON_SLUGS.has("oficial-cumplimiento") && /OFICIAL DE CUMPLIMIENTO(?!.*(SARLAFT|SAGRILAFT|SIPLAFT))/.test(upper)) return true;
+  return false;
 }
