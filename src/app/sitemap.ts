@@ -7,6 +7,7 @@ const STATIC_ROUTES: { path: string; priority: number; changefreq: MetadataRoute
   { path: "/preguntas-frecuentes", priority: 0.7, changefreq: "monthly" },
   { path: "/verificar", priority: 0.8, changefreq: "monthly" },
   { path: "/contacto", priority: 0.7, changefreq: "monthly" },
+  { path: "/refiere-y-gana", priority: 0.8, changefreq: "monthly" },
   { path: "/registro", priority: 0.7, changefreq: "monthly" },
   { path: "/login", priority: 0.4, changefreq: "yearly" },
   { path: "/terminos", priority: 0.3, changefreq: "yearly" },

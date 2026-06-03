@@ -39,6 +39,7 @@ export async function LandingFooter() {
               <li><Link href="/verificar" className="hover:text-white">Verificar certificado</Link></li>
               <li><Link href="/registro" className="hover:text-white">Crear cuenta</Link></li>
               <li><Link href="/login" className="hover:text-white">Iniciar sesión</Link></li>
+              <li><Link href="/refiere-y-gana" className="hover:text-white">Refiere y gana 💸</Link></li>
               <li><Link href="/preguntas-frecuentes" className="hover:text-white">Preguntas frecuentes</Link></li>
               <li><Link href="/contacto" className="hover:text-white">Contacto</Link></li>
             </ul>

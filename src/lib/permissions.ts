@@ -71,6 +71,10 @@ export const PERMISSIONS = {
   // Leads comerciales (formularios de landing)
   LEAD_VIEW: "lead.view",
   LEAD_MANAGE: "lead.manage",
+
+  // Referidos
+  REFERRAL_VIEW: "referral.view",
+  REFERRAL_MANAGE: "referral.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -118,7 +122,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: "Administrador del suscriptor",
     description: "Administra toda la operación de la entidad certificadora.",
     scope: "SUBSCRIBER",
-    permissions: ["org.*", "user.*", "role.*", "scheme.*", "program.*", "question.*", "exam.*", "candidate.*", "enrollment.*", "document.*", "payment.*", "schedule.*", "grade.*", "committee.*", "certificate.*", "renewal.*", "report.*", "audit.*", "appeal.*", "lead.*"],
+    permissions: ["org.*", "user.*", "role.*", "scheme.*", "program.*", "question.*", "exam.*", "candidate.*", "enrollment.*", "document.*", "payment.*", "schedule.*", "grade.*", "committee.*", "certificate.*", "renewal.*", "report.*", "audit.*", "appeal.*", "lead.*", "referral.*"],
   },
   {
     key: "COORDINATOR",

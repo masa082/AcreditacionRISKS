@@ -72,6 +72,23 @@ export async function startEnrollment(examId: string): Promise<void> {
       code,
     },
   });
+  // Si el candidato venía con código de referido (cookie persistida desde la
+  // landing /r/[code] o desde ?ref=), crear el Referral PENDING.
+  try {
+    const { cookies } = await import("next/headers");
+    const refCode = (await cookies()).get("ref_code")?.value;
+    if (refCode) {
+      const { attachReferralCode } = await import("@/lib/actions/referrals");
+      await attachReferralCode({
+        code: refCode,
+        candidateId,
+        enrollmentId: created.id,
+        subscriberId,
+      });
+    }
+  } catch {
+    /* el referido es opcional, no debe bloquear la inscripción */
+  }
   await syncEnrollmentStatus(created.id);
   await audit(ctx, {
     action: "enrollment.start",
@@ -265,6 +282,17 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
   const isMock = providerEnv === "mock";
   const isCovered = !!coveredBy;
 
+  // Aplicación de descuento por código de referido.
+  const referral = !isCovered ? await prisma.referral.findFirst({
+    where: { enrollmentId, status: "PENDING" },
+    select: { id: true, discountPercent: true, referrerId: true },
+  }) : null;
+  const discountPct = referral ? Number(referral.discountPercent.toString()) : 0;
+  const discountAmount = referral && total.greaterThan(0)
+    ? total.times(new Prisma.Decimal(discountPct / 100))
+    : new Prisma.Decimal(0);
+  const finalTotal = isCovered ? new Prisma.Decimal(0) : total.minus(discountAmount);
+
   // Casos donde el Payment nace APPROVED: cubierto por pago previo del
   // programa, o modo demo explícito (PAYMENT_PROVIDER=mock).
   const status: "APPROVED" | "PENDING" = isCovered || isMock ? "APPROVED" : "PENDING";
@@ -274,7 +302,7 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     : isMock
     ? `MOCK-${newToken(6).toUpperCase()}`
     : `MANUAL-${newToken(6).toUpperCase()}`;
-  const amount = isCovered ? new Prisma.Decimal(0) : total;
+  const amount = isCovered ? new Prisma.Decimal(0) : finalTotal;
   const paidAt = status === "APPROVED" ? new Date() : null;
 
   const payment = await prisma.payment.create({
@@ -301,6 +329,19 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
   // Solo sincroniza el estado del enrollment cuando el pago realmente quedó APPROVED.
   if (status === "APPROVED") {
     await syncEnrollmentStatus(enrollmentId);
+    // Confirma el referido si existe — calcula la recompensa sobre el monto
+    // realmente cobrado (ya con el descuento aplicado).
+    if (!isCovered) {
+      const { confirmReferralByEnrollment } = await import("@/lib/actions/referrals");
+      await confirmReferralByEnrollment(enrollmentId, Number(amount.toString()), currency, payment.id);
+    }
+  }
+  // Marca el discount aplicado en el referral (informativo).
+  if (referral) {
+    await prisma.referral.update({
+      where: { id: referral.id },
+      data: { discountAmount },
+    });
   }
   await audit(ctx, {
     action: status === "APPROVED" ? "payment.approve" : "payment.pending",
@@ -308,16 +349,20 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     entityId: payment.id,
     subscriberId,
     after: {
-      amount: isCovered ? "0" : total.toString(),
+      amount: isCovered ? "0" : amount.toString(),
+      baseAmount: total.toString(),
+      discountAmount: discountAmount.toString(),
       currency,
       status,
       provider,
+      referralId: referral?.id ?? null,
       coveredBy: coveredBy?.id ?? null,
     },
   });
   revalidatePath(`/portal/inscripcion/${enrollmentId}`);
   revalidatePath("/portal/pagos");
   revalidatePath("/panel/pagos");
+  revalidatePath("/panel/referidos");
 }
 
 // ----------------------------------------------------------------------------

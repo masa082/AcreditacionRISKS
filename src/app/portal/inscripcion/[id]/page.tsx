@@ -117,6 +117,19 @@ export default async function EnrollmentProcessPage({
   const submissionByDoc = new Map(submissions.map((s) => [s.requiredDocumentId, s]));
   const fees = await computeEnrollmentFees(subscriberId, enrollment.schemeId);
 
+  // ¿Tiene un descuento de referido activo en esta inscripción?
+  const activeReferral = await prisma.referral.findFirst({
+    where: { enrollmentId: enrollment.id, status: { in: ["PENDING", "CONFIRMED"] } },
+    select: { discountPercent: true, referrer: { select: { fullName: true, code: true } } },
+  });
+  const refPct = activeReferral ? Number(activeReferral.discountPercent.toString()) : 0;
+  const refDiscount = activeReferral && fees.total
+    ? Number(fees.total.toString()) * (refPct / 100)
+    : 0;
+  const refFinalTotal = activeReferral
+    ? Number(fees.total.toString()) - refDiscount
+    : Number(fees.total.toString());
+
   // Detecta si esta inscripción ya quedaría cubierta por un pago previo del
   // mismo programa (mismo schemeId, otro enrollment del mismo candidato).
   const coveredByPrevious = !payment && enrollment.schemeId
@@ -282,6 +295,18 @@ export default async function EnrollmentProcessPage({
                       <span>Subtotal</span>
                       <span>{money(fees.total, fees.currency)}</span>
                     </li>
+                    {activeReferral ? (
+                      <>
+                        <li className="flex justify-between py-1 text-sm font-medium text-emerald-700">
+                          <span>Descuento referido ({activeReferral.referrer.code})</span>
+                          <span>− {money(refDiscount, fees.currency)}</span>
+                        </li>
+                        <li className="flex justify-between py-2 font-bold text-brand-800">
+                          <span>Total a pagar</span>
+                          <span>{money(refFinalTotal, fees.currency)}</span>
+                        </li>
+                      </>
+                    ) : null}
                     <li className="flex justify-between py-1 text-xs text-slate-500">
                       <span>+ IVA</span>
                       <span>según legislación aplicable</span>

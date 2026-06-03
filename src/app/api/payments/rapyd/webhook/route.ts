@@ -138,6 +138,13 @@ export async function POST(req: Request) {
 
   if (newStatus === "APPROVED" && payment.enrollment) {
     await syncEnrollmentStatus(payment.enrollment.id);
+    const { confirmReferralByEnrollment } = await import("@/lib/actions/referrals");
+    await confirmReferralByEnrollment(
+      payment.enrollment.id,
+      Number(payment.amount.toString()),
+      payment.currency,
+      payment.id,
+    );
   }
 
   if (payment.enrollment?.candidateId) {

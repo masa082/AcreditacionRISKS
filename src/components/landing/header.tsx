@@ -8,6 +8,7 @@ const NAV = [
   { href: "/#beneficios", label: "Beneficios" },
   { href: "/#proceso", label: "Proceso" },
   { href: "/verificar", label: "Verificar certificado" },
+  { href: "/refiere-y-gana", label: "Refiere y gana" },
   { href: "/preguntas-frecuentes", label: "FAQ" },
   { href: "/contacto", label: "Contacto" },
 ];
