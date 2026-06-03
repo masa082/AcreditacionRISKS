@@ -6,6 +6,12 @@ import { CertificateMock } from "@/components/landing/certificate-mock";
 import { CertificateGallery } from "@/components/landing/certificate-gallery";
 import { FAQList } from "@/components/landing/faq";
 import { SchemaJsonLd } from "@/components/landing/schema-jsonld";
+import { UrgencyBanner } from "@/components/landing/urgency-banner";
+import { HeroMicroForm } from "@/components/landing/hero-micro-form";
+import { GuaranteesSection } from "@/components/landing/guarantees-section";
+import { ExamPreview } from "@/components/landing/exam-preview";
+import { WhatsAppFloat } from "@/components/landing/whatsapp-float";
+import { MobileStickyCTA } from "@/components/landing/mobile-sticky-cta";
 import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
 import { getBrandAssets } from "@/lib/brand-assets";
 
@@ -27,10 +33,10 @@ export const metadata: Metadata = {
 };
 
 const TRUST_METRICS = [
-  { value: "+10", label: "años en compliance y LA/FT" },
-  { value: "100%", label: "evaluaciones digitales y trazables" },
-  { value: "QR", label: "verificación pública de cada certificado" },
-  { value: "ISO/IEC", label: "17024 — principios de certificación" },
+  { value: BRAND.socialProof.professionalsCertified, label: "profesionales certificados" },
+  { value: BRAND.socialProof.companiesTrust, label: "empresas confían en RISKS" },
+  { value: BRAND.socialProof.avgScore, label: "puntaje promedio de aprobación" },
+  { value: BRAND.socialProof.daysToIssue, label: "días hábiles para emitir el certificado" },
 ];
 
 const BENEFITS = [
@@ -69,12 +75,13 @@ export default async function HomePage() {
   const { logoUrl } = await getBrandAssets();
   return (
     <main className="min-h-screen bg-white text-slate-900">
+      <UrgencyBanner />
       <LandingHeader />
 
-      {/* HERO — BLANCO PREMIUM */}
+      {/* HERO — BLANCO PREMIUM con microformulario */}
       <section className="bg-premium-light">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-20 lg:grid-cols-2 lg:py-28">
-          <div>
+        <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-24">
+          <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-800">
               <span className="h-1.5 w-1.5 rounded-full bg-gold-500" />
               Organismo de Certificación de Personas · {BRAND.isoNorm}
@@ -98,6 +105,9 @@ export default async function HomePage() {
                 Verificar certificado →
               </Link>
             </div>
+            <div className="relative mt-10 mx-auto max-w-xs lg:hidden">
+              <CertificateMock />
+            </div>
             <ul className="mt-10 grid max-w-md grid-cols-2 gap-3 text-xs text-slate-600">
               <li className="flex items-center gap-2"><span className="text-gold-500">●</span> Certificado QR verificable</li>
               <li className="flex items-center gap-2"><span className="text-gold-500">●</span> Evaluaciones trazables</li>
@@ -106,18 +116,26 @@ export default async function HomePage() {
             </ul>
           </div>
 
-          <div className="relative">
-            <div className="animate-float-soft">
-              <CertificateMock />
+          <div className="hidden lg:col-span-5 lg:block">
+            <div className="relative mb-6">
+              <div className="animate-float-soft">
+                <CertificateMock />
+              </div>
+              <div className="absolute -left-3 bottom-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 xl:block">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">Estado</div>
+                <div className="text-sm font-bold text-emerald-700">✓ Verificado</div>
+              </div>
+              <div className="absolute -right-2 top-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 xl:block">
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">Vigencia</div>
+                <div className="text-sm font-bold text-brand-800">3 años</div>
+              </div>
             </div>
-            <div className="absolute -left-3 bottom-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 sm:block">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">Estado</div>
-              <div className="text-sm font-bold text-emerald-700">✓ Verificado</div>
-            </div>
-            <div className="absolute -right-2 top-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 sm:block">
-              <div className="text-[10px] uppercase tracking-wider text-slate-400">Vigencia</div>
-              <div className="text-sm font-bold text-brand-800">3 años</div>
-            </div>
+            <HeroMicroForm />
+          </div>
+
+          {/* Microformulario también en mobile bajo el hero */}
+          <div className="lg:hidden">
+            <HeroMicroForm />
           </div>
         </div>
       </section>
@@ -238,6 +256,12 @@ export default async function HomePage() {
           </ol>
         </div>
       </section>
+
+      {/* GARANTÍAS */}
+      <GuaranteesSection />
+
+      {/* VISTA PREVIA DEL EXAMEN */}
+      <ExamPreview />
 
       {/* EVALUACIÓN ONLINE */}
       <section className="bg-white">
@@ -418,6 +442,10 @@ export default async function HomePage() {
       </section>
 
       <LandingFooter />
+
+      {/* Componentes flotantes globales */}
+      <WhatsAppFloat />
+      <MobileStickyCTA />
 
       {/* Schema markup: Organization */}
       <SchemaJsonLd

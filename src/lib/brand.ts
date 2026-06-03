@@ -30,6 +30,31 @@ export const BRAND = {
     facebook: null as string | null,
     twitter: null as string | null,
   },
+  /** WhatsApp para CTA flotante. number SIN signo +, solo dígitos (formato wa.me). */
+  whatsapp: {
+    number: "573001234567",
+    message:
+      "Hola, me interesa la Certificación Profesional Oficial de Cumplimiento SARLAFT (Supertransporte). ¿Me dan más información?",
+  },
+  /** Banner superior de urgencia (opcional). null o "" para ocultarlo. */
+  urgency: {
+    text: "🎓 Inscripciones abiertas · Cupos limitados para la próxima cohorte",
+    cta: { label: "Asegurar mi lugar", href: "/registro?cert=sarlaft" },
+  },
+  /** Garantías visibles. Eleva la confianza para reducir fricción en el pago. */
+  guarantees: [
+    { icon: "🔁", title: "Reintento incluido", desc: "Si no aprueba, puede repetir cada evaluación una vez sin costo adicional." },
+    { icon: "📜", title: "Constancia de presentación", desc: "Recibe certificado de presentación aunque no apruebe, como evidencia formal del proceso." },
+    { icon: "🔒", title: "Pago seguro y verificable", desc: "Transferencia bancaria con confirmación humana o pasarela automática Rapyd. Nunca avanza sin pago aprobado." },
+    { icon: "📞", title: "Soporte humano dedicado", desc: "Atención por correo y WhatsApp durante todo el proceso de certificación." },
+  ],
+  /** Métricas cuantificadas para social proof. Ajustar con datos reales. */
+  socialProof: {
+    professionalsCertified: "150+",
+    companiesTrust: "+25",
+    avgScore: "92%",
+    daysToIssue: "≤ 5",
+  },
 };
 
 // CTAs y rutas reutilizables.
