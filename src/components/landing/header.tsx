@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { BRAND, CTAS } from "@/lib/brand";
+import { getBrandAssets } from "@/lib/brand-assets";
 
 const NAV = [
   { href: "/", label: "Inicio" },
@@ -11,17 +12,21 @@ const NAV = [
   { href: "/contacto", label: "Contacto" },
 ];
 
-export function LandingHeader() {
+export async function LandingHeader() {
+  const { logoUrl } = await getBrandAssets();
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-3">
         <Link href="/" className="flex items-center gap-3 text-brand-800">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={BRAND.monogramUrl} alt={BRAND.shortName} className="h-10 w-auto" />
-          <div className="leading-tight">
-            <div className="text-sm font-extrabold tracking-tight text-brand-800">{BRAND.shortName}</div>
-            <div className="text-[10px] uppercase tracking-wider text-slate-400">S.A.S. · {BRAND.isoNorm}</div>
-          </div>
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt={`${BRAND.shortName} ${BRAND.fullName}`} className="h-12 w-auto" />
+          ) : (
+            <div className="leading-tight">
+              <div className="text-sm font-extrabold tracking-tight text-brand-800">{BRAND.shortName}</div>
+              <div className="text-[10px] uppercase tracking-wider text-slate-400">S.A.S. · {BRAND.isoNorm}</div>
+            </div>
+          )}
         </Link>
 
         <nav className="hidden items-center gap-5 text-sm text-slate-600 lg:flex">

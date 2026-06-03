@@ -7,6 +7,7 @@ import { CertificateGallery } from "@/components/landing/certificate-gallery";
 import { FAQList } from "@/components/landing/faq";
 import { SchemaJsonLd } from "@/components/landing/schema-jsonld";
 import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
+import { getBrandAssets } from "@/lib/brand-assets";
 
 export const metadata: Metadata = {
   title: "Certificación de Personas y Competencias",
@@ -64,7 +65,8 @@ const HOME_FAQ = [
   { q: "¿Cuánto tiempo tiene vigencia la certificación?", a: "Los programas principales tienen una vigencia de 3 años. Antes del vencimiento recibirás recordatorios para iniciar la recertificación." },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const { logoUrl } = await getBrandAssets();
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <LandingHeader />
@@ -425,7 +427,7 @@ export default function HomePage() {
           name: BRAND.legalName,
           alternateName: BRAND.shortName,
           url: BRAND.appUrl,
-          logo: `${BRAND.appUrl}${BRAND.logoUrl}`,
+          logo: logoUrl ? (logoUrl.startsWith("http") ? logoUrl : `${BRAND.appUrl}${logoUrl}`) : undefined,
           email: BRAND.contactEmail,
           address: BRAND.address,
           sameAs: [BRAND.social.linkedin].filter(Boolean),

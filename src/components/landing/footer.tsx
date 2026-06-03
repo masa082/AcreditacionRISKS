@@ -1,17 +1,22 @@
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
+import { getBrandAssets } from "@/lib/brand-assets";
 
-export function LandingFooter() {
+export async function LandingFooter() {
   const year = 2026;
+  const { logoUrl } = await getBrandAssets();
   return (
     <footer className="border-t border-slate-200 bg-slate-900 text-slate-300">
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
             <div className="flex items-center gap-3">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={BRAND.monogramUrl} alt={BRAND.shortName} className="h-10 w-auto brightness-0 invert" />
-              <strong className="text-sm text-white">{BRAND.shortName} S.A.S.</strong>
+              {logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={logoUrl} alt={BRAND.shortName} className="h-12 w-auto brightness-0 invert" />
+              ) : (
+                <strong className="text-sm text-white">{BRAND.shortName} S.A.S.</strong>
+              )}
             </div>
             <p className="mt-2 text-xs italic text-slate-300">&ldquo;{BRAND.slogan}&rdquo;</p>
             <p className="mt-3 text-xs leading-relaxed text-slate-400">

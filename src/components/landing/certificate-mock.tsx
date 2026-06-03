@@ -1,8 +1,10 @@
 import { BRAND } from "@/lib/brand";
+import { getBrandAssets } from "@/lib/brand-assets";
 
 // Mockup premium ilustrativo de un certificado RISKS INTERNATIONAL.
 // NO es un certificado real; soporte visual de la landing.
-export function CertificateMock({ tilt = true }: { tilt?: boolean }) {
+export async function CertificateMock({ tilt = true }: { tilt?: boolean }) {
+  const { logoUrl } = await getBrandAssets();
   return (
     <div
       className={`relative mx-auto w-full max-w-md select-none rounded-2xl bg-white shadow-premium ring-1 ring-slate-200 ${tilt ? "rotate-[-2deg]" : ""}`}
@@ -14,18 +16,21 @@ export function CertificateMock({ tilt = true }: { tilt?: boolean }) {
 
       <div className="relative m-3 rounded-xl border-gold-fine p-5">
         <div className="rounded-lg border-2 border-brand-800/10 p-5 text-center">
-          {/* Encabezado: monograma + nombre */}
+          {/* Encabezado: logo oficial o wordmark */}
           <div className="flex items-center justify-center gap-3">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={BRAND.monogramUrl} alt="" className="h-8 w-auto" />
-            <div className="text-left leading-tight">
-              <div className="text-[10px] font-extrabold tracking-[0.3em] text-brand-800">
-                {BRAND.shortName}
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt={BRAND.shortName} className="h-10 w-auto" />
+            ) : (
+              <div className="text-left leading-tight">
+                <div className="text-[11px] font-extrabold tracking-[0.3em] text-brand-800">
+                  {BRAND.shortName}
+                </div>
+                <div className="text-[9px] uppercase tracking-wider text-slate-400">
+                  S.A.S. · {BRAND.isoNorm}
+                </div>
               </div>
-              <div className="text-[8px] uppercase tracking-wider text-slate-400">
-                S.A.S. · {BRAND.isoNorm}
-              </div>
-            </div>
+            )}
           </div>
 
           <div className="mt-4 inline-block rounded-full border border-gold-500 px-3 py-0.5 text-[9px] font-bold uppercase tracking-widest text-gold-600">

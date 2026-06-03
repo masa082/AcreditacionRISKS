@@ -1,4 +1,5 @@
 import { BRAND } from "@/lib/brand";
+import { getBrandAssets } from "@/lib/brand-assets";
 
 interface MiniCert {
   title: string;
@@ -14,7 +15,7 @@ const SAMPLES: MiniCert[] = [
   { title: "Compliance Officer", scope: "Programa avanzado", code: "CERT-2026-C1D4", status: "POR VENCER", accent: "navy" },
 ];
 
-function MiniCertificate({ data, rotate }: { data: MiniCert; rotate: string }) {
+function MiniCertificate({ data, rotate, logoUrl }: { data: MiniCert; rotate: string; logoUrl: string | null }) {
   const borderClass = data.accent === "gold" ? "border-gold-500/40" : "border-brand-800/20";
   return (
     <div
@@ -22,8 +23,14 @@ function MiniCertificate({ data, rotate }: { data: MiniCert; rotate: string }) {
     >
       <div className={`rounded-xl border ${borderClass} p-4`}>
         <div className="flex items-center justify-between">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={BRAND.monogramUrl} alt="" className="h-7 w-auto" />
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={logoUrl} alt="" className="h-8 w-auto" />
+          ) : (
+            <div className="text-[8px] font-extrabold tracking-[0.25em] text-brand-800">
+              {BRAND.shortName}
+            </div>
+          )}
           <div className="text-right">
             <div className="text-[8px] font-extrabold tracking-[0.25em] text-brand-800">
               {BRAND.shortName}
@@ -69,13 +76,14 @@ function MiniCertificate({ data, rotate }: { data: MiniCert; rotate: string }) {
   );
 }
 
-export function CertificateGallery() {
+export async function CertificateGallery() {
+  const { logoUrl } = await getBrandAssets();
   return (
     <div className="relative">
       <div className="flex flex-wrap items-center justify-center gap-6 lg:flex-nowrap">
-        <MiniCertificate data={SAMPLES[0]} rotate="rotate-[-4deg]" />
-        <MiniCertificate data={SAMPLES[1]} rotate="rotate-[2deg]" />
-        <MiniCertificate data={SAMPLES[2]} rotate="rotate-[-1deg]" />
+        <MiniCertificate data={SAMPLES[0]} rotate="rotate-[-4deg]" logoUrl={logoUrl} />
+        <MiniCertificate data={SAMPLES[1]} rotate="rotate-[2deg]" logoUrl={logoUrl} />
+        <MiniCertificate data={SAMPLES[2]} rotate="rotate-[-1deg]" logoUrl={logoUrl} />
       </div>
     </div>
   );
