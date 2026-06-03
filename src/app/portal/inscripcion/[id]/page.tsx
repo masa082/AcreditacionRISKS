@@ -100,7 +100,7 @@ export default async function EnrollmentProcessPage({
       ? prisma.requiredDocument.findMany({ where: { subscriberId, schemeId: enrollment.schemeId, isActive: true }, orderBy: { required: "desc" } })
       : Promise.resolve([]),
     prisma.candidateDocument.findMany({ where: { enrollmentId: enrollment.id } }),
-    prisma.payment.findFirst({ where: { enrollmentId: enrollment.id, status: "APPROVED" }, orderBy: { paidAt: "desc" } }),
+    prisma.payment.findFirst({ where: { enrollmentId: enrollment.id, status: { in: ["APPROVED", "PENDING", "REJECTED"] } }, orderBy: [{ status: "asc" }, { createdAt: "desc" }] }),
     requireSchedule && enrollment.examId
       ? prisma.examSession.findMany({
           where: { subscriberId, examId: enrollment.examId, isActive: true, startsAt: { gte: new Date() } },
@@ -242,11 +242,27 @@ export default async function EnrollmentProcessPage({
 
         {consentDone && paymentStep.required && (
           <StepCard title={`${docsStep.required ? "3" : "2"}. Pago`} done={paymentStep.done}>
-            {payment ? (
+            {payment && payment.status === "APPROVED" ? (
               <div className="text-sm text-slate-600">
-                <p className="font-medium text-emerald-700">Pago aprobado</p>
+                <p className="font-medium text-emerald-700">✓ Pago aprobado</p>
                 <p className="mt-1">{money(payment.amount, payment.currency)} · {payment.description}</p>
                 <p className="text-xs text-slate-400">Ref. {payment.providerRef} · {payment.paidAt ? dateTime(payment.paidAt) : ""}</p>
+              </div>
+            ) : payment && payment.status === "PENDING" ? (
+              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
+                <p className="font-semibold text-amber-900">⏳ Pago en revisión</p>
+                <p className="text-amber-800">
+                  Recibimos su intento de pago por <strong>{money(payment.amount, payment.currency)}</strong>. Realice la transferencia o consignación a la cuenta del organismo certificador y envíe el comprobante a <a className="underline" href="mailto:calidad@risksint.com">calidad@risksint.com</a> con su número de inscripción <strong>{enrollment.code}</strong>.
+                </p>
+                <p className="text-xs text-amber-700">
+                  Su pago será verificado y aprobado por el equipo de RISKS INTERNATIONAL. Recibirá una notificación en cuanto se confirme y podrá continuar con su evaluación.
+                </p>
+                <p className="text-xs text-slate-500">Referencia interna: {payment.providerRef}</p>
+              </div>
+            ) : payment && payment.status === "REJECTED" ? (
+              <div className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm">
+                <p className="font-semibold text-rose-800">⚠ Pago rechazado</p>
+                <p className="text-rose-700">Su pago fue rechazado por el organismo. Contacte a soporte para conocer el motivo y reintente.</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -275,16 +291,24 @@ export default async function EnrollmentProcessPage({
                   <p className="text-sm text-slate-500">Esta evaluación no tiene tarifas configuradas.</p>
                 )}
                 <form action={payEnrollment.bind(null, enrollment.id)}>
-                  <SubmitButton pendingText="Procesando pago…">
+                  <SubmitButton pendingText="Registrando solicitud…">
                     {coveredByPrevious
                       ? "Confirmar (cubierto por pago previo)"
                       : fees.total && Number(fees.total.toString()) > 0
-                      ? `Pagar ${money(fees.total, fees.currency)} + IVA (simulado)`
+                      ? `Reportar mi pago de ${money(fees.total, fees.currency)} + IVA`
                       : "Confirmar (sin costo)"}
                   </SubmitButton>
                 </form>
                 {!coveredByPrevious ? (
-                  <p className="text-xs text-slate-400">Pasarela de pago simulada para demostración. La integración real (Wompi/PayU/MercadoPago) se conecta en producción. El IVA se liquidará según la legislación vigente.</p>
+                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                    <p className="font-semibold text-slate-800">Cómo pagar</p>
+                    <p>
+                      Al confirmar, generamos su solicitud de pago. Realice la transferencia o consignación a la cuenta del organismo certificador y envíe el comprobante a <a className="underline text-brand-800" href="mailto:calidad@risksint.com">calidad@risksint.com</a> indicando su folio <strong>{enrollment.code}</strong>.
+                    </p>
+                    <p className="text-slate-500">
+                      Su pago será verificado y aprobado por el equipo del organismo. Recibirá una notificación en cuanto se confirme. (La pasarela automática Wompi/PayU se conectará próximamente.)
+                    </p>
+                  </div>
                 ) : null}
               </div>
             )}

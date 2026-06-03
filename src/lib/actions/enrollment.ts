@@ -213,17 +213,25 @@ export async function submitDocument(
 }
 
 // ----------------------------------------------------------------------------
-//  Pago (pasarela simulada — aprobación inmediata).
+//  Inicio del pago.
+//  - Modo `mock`  → aprobación instantánea (solo para entornos demo/local).
+//  - Modo `manual`/sin variable → crea Payment PENDING; el admin del
+//    suscriptor lo aprueba en /panel/pagos al verificar la transferencia,
+//    o un webhook real lo confirmará cuando se conecte la pasarela.
+//  - Modo `wompi`/`payu` (futuro) → redirección al checkout externo. El
+//    webhook actualizará el estado.
 // ----------------------------------------------------------------------------
 export async function payEnrollment(enrollmentId: string): Promise<void> {
   const { ctx, candidateId, subscriberId } = await requireCandidateAction();
   const enrollment = await loadOwnedEnrollment(candidateId, enrollmentId);
 
-  const already = await prisma.payment.findFirst({
-    where: { enrollmentId, status: "APPROVED" },
-    select: { id: true },
+  // Si ya tiene un Payment activo (cualquier estado distinto de REJECTED),
+  // no creamos otro: lo dejamos avanzar al flujo.
+  const existing = await prisma.payment.findFirst({
+    where: { enrollmentId, status: { in: ["APPROVED", "PENDING"] } },
+    select: { id: true, status: true },
   });
-  if (already) {
+  if (existing) {
     revalidatePath(`/portal/inscripcion/${enrollmentId}`);
     return;
   }
@@ -253,40 +261,63 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     ? lines.map((l) => l.label).join(" + ")
     : "Inscripción a evaluación";
 
+  const providerEnv = (process.env.PAYMENT_PROVIDER || "manual").toLowerCase();
+  const isMock = providerEnv === "mock";
+  const isCovered = !!coveredBy;
+
+  // Casos donde el Payment nace APPROVED: cubierto por pago previo del
+  // programa, o modo demo explícito (PAYMENT_PROVIDER=mock).
+  const status: "APPROVED" | "PENDING" = isCovered || isMock ? "APPROVED" : "PENDING";
+  const provider = isCovered ? "internal" : isMock ? "mock" : providerEnv;
+  const providerRef = isCovered
+    ? `COVER-${coveredBy!.providerRef ?? coveredBy!.id}`
+    : isMock
+    ? `MOCK-${newToken(6).toUpperCase()}`
+    : `MANUAL-${newToken(6).toUpperCase()}`;
+  const amount = isCovered ? new Prisma.Decimal(0) : total;
+  const paidAt = status === "APPROVED" ? new Date() : null;
+
   const payment = await prisma.payment.create({
     data: {
       subscriberId,
       enrollmentId,
       concept: "EXAM",
-      description: coveredBy ? `${description} (cubierto por inscripción previa del programa)` : description,
-      amount: coveredBy ? new Prisma.Decimal(0) : total,
+      description: isCovered ? `${description} (cubierto por inscripción previa del programa)` : description,
+      amount,
       currency,
-      status: "APPROVED",
-      provider: coveredBy ? "internal" : "mock",
-      providerRef: coveredBy ? `COVER-${coveredBy.providerRef ?? coveredBy.id}` : `MOCK-${newToken(6).toUpperCase()}`,
+      status,
+      provider,
+      providerRef,
       receiptUrl: null,
-      paidAt: new Date(),
-      metadata: coveredBy
-        ? ({ coveredBy: coveredBy.id, originalAmount: coveredBy.amount, note: "Cubierto por inscripción previa del mismo programa." } as Prisma.InputJsonValue)
-        : ({ simulated: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue),
+      paidAt,
+      metadata: isCovered
+        ? ({ coveredBy: coveredBy!.id, originalAmount: coveredBy!.amount, note: "Cubierto por inscripción previa del mismo programa." } as Prisma.InputJsonValue)
+        : isMock
+        ? ({ simulated: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue)
+        : ({ provider: providerEnv, awaitingManualApproval: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue),
     },
   });
 
-  await syncEnrollmentStatus(enrollmentId);
+  // Solo sincroniza el estado del enrollment cuando el pago realmente quedó APPROVED.
+  if (status === "APPROVED") {
+    await syncEnrollmentStatus(enrollmentId);
+  }
   await audit(ctx, {
-    action: "payment.approve",
+    action: status === "APPROVED" ? "payment.approve" : "payment.pending",
     entity: "Payment",
     entityId: payment.id,
     subscriberId,
     after: {
-      amount: coveredBy ? "0" : total.toString(),
+      amount: isCovered ? "0" : total.toString(),
       currency,
-      simulated: !coveredBy,
+      status,
+      provider,
       coveredBy: coveredBy?.id ?? null,
     },
   });
   revalidatePath(`/portal/inscripcion/${enrollmentId}`);
   revalidatePath("/portal/pagos");
+  revalidatePath("/panel/pagos");
 }
 
 // ----------------------------------------------------------------------------

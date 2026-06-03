@@ -14,6 +14,7 @@ const NAV: NavItem[] = [
   { href: "/panel/evaluaciones", label: "Evaluaciones" },
   { href: "/panel/candidatos", label: "Candidatos" },
   { href: "/panel/agenda", label: "Agenda de pruebas" },
+  { href: "/panel/pagos", label: "Pagos recibidos" },
   { href: "/panel/calificacion", label: "Calificación" },
   { href: "/panel/comite", label: "Comité evaluador" },
   { href: "/panel/apelaciones", label: "Apelaciones y quejas" },
