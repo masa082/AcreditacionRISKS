@@ -26,7 +26,7 @@ export default async function ExamPage({
 
   const questions: RunnerQuestion[] = attempt.questions.map((aq) => {
     const snap = publicSnapshot(aq.snapshot as unknown as QuestionSnapshot);
-    const ans = aq.answers[0]?.response as { key?: string; keys?: string[] } | null;
+    const ans = aq.answers[0]?.response as { key?: string; keys?: string[]; text?: string; fileName?: string } | null;
     return {
       id: aq.id,
       sectionTitle: aq.sectionTitle,
@@ -34,7 +34,8 @@ export default async function ExamPage({
       contextText: snap.contextText,
       options: snap.options,
       multiple: snap.multiple,
-      saved: { key: ans?.key, keys: ans?.keys },
+      manual: snap.manual,
+      saved: { key: ans?.key, keys: ans?.keys, text: ans?.text, fileName: ans?.fileName },
     };
   });
 
@@ -49,7 +50,6 @@ export default async function ExamPage({
       <ExamRunner
         attemptId={attempt.id}
         dueAt={(attempt.dueAt ?? new Date()).toISOString()}
-        durationMin={attempt.exam.durationMin}
         questions={questions}
       />
     </div>

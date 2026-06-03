@@ -126,7 +126,7 @@ export default async function EnrollmentProcessPage({
       })
     : null;
   const FINISHED_ATTEMPT = ["SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED", "PASSED", "FAILED", "PENDING_COMMITTEE"];
-  const canPresent = !!enrollment.exam && enrollment.exam.type !== "PRACTICAL";
+  const canPresent = !!enrollment.exam;
 
   return (
     <>
@@ -174,12 +174,6 @@ export default async function EnrollmentProcessPage({
               <SubmitButton pendingText="Preparando…">Presentar examen</SubmitButton>
             </form>
           </div>
-        </Card>
-      ) : !terminal && journey.completed && !canPresent ? (
-        <Card className="mb-6 border-l-4 border-l-emerald-500 bg-emerald-50/40 p-5">
-          <p className="text-sm font-medium text-emerald-800">
-            ✓ ¡Inscripción completa! La evaluación práctica (caso) se entrega y califica por el comité evaluador (en habilitación).
-          </p>
         </Card>
       ) : terminal ? (
         <Card className="mb-6 border-l-4 border-l-brand-600 p-5">

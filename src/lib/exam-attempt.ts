@@ -24,9 +24,11 @@ export interface QuestionSnapshot {
   needsManual: boolean;
   /// Solo servidor: claves correctas. Se elimina antes de enviar al cliente.
   correctKeys: string[];
+  /// Solo evaluador: rúbrica para preguntas de calificación manual.
+  rubric?: unknown;
 }
 
-/// Versión del snapshot segura para el candidato (sin la respuesta correcta).
+/// Versión del snapshot segura para el candidato (sin la respuesta correcta ni la rúbrica).
 export function publicSnapshot(s: QuestionSnapshot) {
   return {
     type: s.type,
@@ -35,6 +37,7 @@ export function publicSnapshot(s: QuestionSnapshot) {
     mediaUrl: s.mediaUrl ?? null,
     options: s.options,
     multiple: s.multiple,
+    manual: s.needsManual,
   };
 }
 
@@ -95,6 +98,7 @@ function buildSnapshot(q: QuestionWithOptions, randomizeOptions: boolean): Quest
     multiple: false,
     needsManual: true,
     correctKeys: [],
+    rubric: q.rubric ?? null,
   };
 }
 

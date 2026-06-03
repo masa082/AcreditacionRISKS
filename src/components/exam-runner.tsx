@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { saveAnswer, submitAttempt } from "@/lib/actions/attempt";
+import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { saveAnswer, saveTextAnswer, uploadAnswerFile, submitAttempt } from "@/lib/actions/attempt";
+import type { ActionResult } from "@/lib/actions/schemes";
 
 export interface RunnerQuestion {
   id: string; // attemptQuestionId
@@ -10,7 +11,8 @@ export interface RunnerQuestion {
   contextText: string | null;
   options: { key: string; text: string }[];
   multiple: boolean;
-  saved: { key?: string; keys?: string[] };
+  manual: boolean;
+  saved: { key?: string; keys?: string[]; text?: string; fileName?: string };
 }
 
 function fmt(sec: number): string {
@@ -20,24 +22,83 @@ function fmt(sec: number): string {
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
 }
 
+function ManualAnswer({
+  attemptId,
+  q,
+  onFilled,
+}: {
+  attemptId: string;
+  q: RunnerQuestion;
+  onFilled: (id: string, filled: boolean) => void;
+}) {
+  const uploadAction = uploadAnswerFile.bind(null, attemptId, q.id);
+  const [upState, upFormAction] = useActionState<ActionResult, FormData>(uploadAction, { ok: false });
+  const [fileName, setFileName] = useState(q.saved.fileName ?? "");
+  const [savingText, setSavingText] = useState(false);
+
+  useEffect(() => {
+    if (upState.ok) onFilled(q.id, true);
+  }, [upState.ok, q.id, onFilled]);
+
+  return (
+    <div className="mt-3 space-y-3">
+      <div>
+        <label className="block text-sm font-medium text-slate-700">Respuesta</label>
+        <textarea
+          name={`text-${q.id}`}
+          rows={6}
+          defaultValue={q.saved.text ?? ""}
+          placeholder="Escriba aquí su desarrollo…"
+          onBlur={async (e) => {
+            setSavingText(true);
+            await saveTextAnswer(attemptId, q.id, e.target.value);
+            setSavingText(false);
+            onFilled(q.id, e.target.value.trim().length > 0 || !!fileName);
+          }}
+          className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+        />
+        <p className="mt-1 text-xs text-slate-400">{savingText ? "Guardando…" : "Se guarda al salir del campo."}</p>
+      </div>
+      <form action={upFormAction} className="space-y-2 rounded-lg border border-dashed border-slate-300 p-3">
+        <label className="block text-sm font-medium text-slate-700">Adjuntar evidencia (PDF/imagen)</label>
+        {upState.error ? <p className="text-xs text-rose-600">{upState.error}</p> : null}
+        {fileName || q.saved.fileName ? (
+          <p className="text-xs text-emerald-700">Archivo cargado: {fileName || q.saved.fileName}</p>
+        ) : null}
+        <input
+          type="file"
+          name="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          onChange={(e) => setFileName(e.target.files?.[0]?.name ?? "")}
+          className="block w-full text-sm text-slate-600 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100"
+        />
+        <button type="submit" className="rounded-lg bg-slate-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-slate-800">
+          Subir archivo
+        </button>
+      </form>
+    </div>
+  );
+}
+
 export function ExamRunner({
   attemptId,
   dueAt,
-  durationMin,
   questions,
 }: {
   attemptId: string;
   dueAt: string; // ISO
-  durationMin: number;
   questions: RunnerQuestion[];
 }) {
   const dueMs = useMemo(() => new Date(dueAt).getTime(), [dueAt]);
   const [now, setNow] = useState<number>(() => Date.now());
   const [answers, setAnswers] = useState<Record<string, string[]>>(() => {
     const init: Record<string, string[]> = {};
-    for (const q of questions) {
-      init[q.id] = q.saved.keys ?? (q.saved.key ? [q.saved.key] : []);
-    }
+    for (const q of questions) init[q.id] = q.saved.keys ?? (q.saved.key ? [q.saved.key] : []);
+    return init;
+  });
+  const [manualFilled, setManualFilled] = useState<Record<string, boolean>>(() => {
+    const init: Record<string, boolean> = {};
+    for (const q of questions) if (q.manual) init[q.id] = !!(q.saved.text?.trim() || q.saved.fileName);
     return init;
   });
   const [saving, setSaving] = useState(false);
@@ -54,13 +115,11 @@ export function ExamRunner({
     });
   }, [attemptId]);
 
-  // Reloj
   useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
 
-  // Auto-envío al expirar
   useEffect(() => {
     if (secondsLeft <= 0 && !submittedRef.current) doSubmit();
   }, [secondsLeft, doSubmit]);
@@ -91,8 +150,13 @@ export function ExamRunner({
       return { ...a, [q.id]: next };
     });
   }
+  const onFilled = useCallback((id: string, filled: boolean) => {
+    setManualFilled((m) => ({ ...m, [id]: filled }));
+  }, []);
 
-  const answered = questions.filter((q) => (answers[q.id] ?? []).length > 0).length;
+  const answered = questions.filter((q) =>
+    q.manual ? manualFilled[q.id] : (answers[q.id] ?? []).length > 0,
+  ).length;
   const lowTime = secondsLeft <= 300;
 
   return (
@@ -122,28 +186,33 @@ export function ExamRunner({
                 <span className="mr-2 text-slate-400">{i + 1}.</span>
                 {q.statement}
               </p>
-              <div className="mt-3 space-y-2">
-                {q.options.map((o) => {
-                  const checked = sel.includes(o.key);
-                  return (
-                    <label
-                      key={o.key}
-                      className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm transition ${
-                        checked ? "border-brand-400 bg-brand-50 text-brand-900" : "border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      <input
-                        type={q.multiple ? "checkbox" : "radio"}
-                        name={q.id}
-                        checked={checked}
-                        onChange={() => (q.multiple ? toggleMulti(q, o.key) : selectSingle(q, o.key))}
-                        className="h-4 w-4"
-                      />
-                      <span>{o.text}</span>
-                    </label>
-                  );
-                })}
-              </div>
+
+              {q.manual ? (
+                <ManualAnswer attemptId={attemptId} q={q} onFilled={onFilled} />
+              ) : (
+                <div className="mt-3 space-y-2">
+                  {q.options.map((o) => {
+                    const checked = sel.includes(o.key);
+                    return (
+                      <label
+                        key={o.key}
+                        className={`flex cursor-pointer items-center gap-3 rounded-lg border px-3 py-2 text-sm transition ${
+                          checked ? "border-brand-400 bg-brand-50 text-brand-900" : "border-slate-200 hover:bg-slate-50"
+                        }`}
+                      >
+                        <input
+                          type={q.multiple ? "checkbox" : "radio"}
+                          name={q.id}
+                          checked={checked}
+                          onChange={() => (q.multiple ? toggleMulti(q, o.key) : selectSingle(q, o.key))}
+                          className="h-4 w-4"
+                        />
+                        <span>{o.text}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
             </li>
           );
         })}

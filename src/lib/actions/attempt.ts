@@ -13,6 +13,8 @@ import {
   gradeAnswer,
   type QuestionSnapshot,
 } from "@/lib/exam-attempt";
+import { saveUpload, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
+import type { ActionResult } from "@/lib/actions/schemes";
 
 const FINISHED = ["SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED", "PASSED", "FAILED", "PENDING_COMMITTEE", "VOID"];
 
@@ -125,6 +127,66 @@ export async function saveAnswer(
     update: { response: clean, status: "PENDING" },
   });
   await prisma.examAttempt.update({ where: { id: attemptId }, data: { lastSavedAt: new Date() } });
+  return { ok: true };
+}
+
+/// Autoguardar el texto de una respuesta abierta / caso práctico.
+export async function saveTextAnswer(
+  attemptId: string,
+  attemptQuestionId: string,
+  text: string,
+): Promise<{ ok: boolean }> {
+  const { candidateId } = await requireCandidateAction();
+  const attempt = await loadOwnedAttempt(candidateId, attemptId);
+  if (attempt.status !== "IN_PROGRESS") return { ok: false };
+  if (attempt.dueAt && attempt.dueAt.getTime() + 5000 < Date.now()) return { ok: false };
+
+  const aq = await prisma.attemptQuestion.findUnique({ where: { id: attemptQuestionId }, select: { id: true, attemptId: true } });
+  if (!aq || aq.attemptId !== attemptId) return { ok: false };
+
+  const existing = await prisma.attemptAnswer.findUnique({ where: { attemptQuestionId }, select: { response: true } });
+  const prevResp = (existing?.response ?? {}) as Record<string, unknown>;
+  const response: Prisma.InputJsonValue = { ...prevResp, text: text.slice(0, 20000) };
+
+  await prisma.attemptAnswer.upsert({
+    where: { attemptQuestionId },
+    create: { attemptId, attemptQuestionId, response, status: "PENDING" },
+    update: { response, status: "PENDING" },
+  });
+  await prisma.examAttempt.update({ where: { id: attemptId }, data: { lastSavedAt: new Date() } });
+  return { ok: true };
+}
+
+/// Adjuntar un archivo de evidencia (PDF/imagen) a una respuesta.
+export async function uploadAnswerFile(
+  attemptId: string,
+  attemptQuestionId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { candidateId, subscriberId } = await requireCandidateAction();
+  const attempt = await loadOwnedAttempt(candidateId, attemptId);
+  if (attempt.status !== "IN_PROGRESS") return { ok: false, error: "El examen ya no admite cambios." };
+  if (attempt.dueAt && attempt.dueAt.getTime() + 5000 < Date.now()) return { ok: false, error: "El tiempo del examen finalizó." };
+
+  const aq = await prisma.attemptQuestion.findUnique({ where: { id: attemptQuestionId }, select: { id: true, attemptId: true } });
+  if (!aq || aq.attemptId !== attemptId) return { ok: false, error: "Pregunta inválida." };
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Adjunte un archivo." };
+  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: "El archivo supera el tamaño máximo de 10 MB." };
+  const ext = extFromName(file.name);
+  if (!["pdf", "jpg", "jpeg", "png"].includes(ext)) return { ok: false, error: "Formato no permitido (PDF/JPG/PNG)." };
+
+  const { key } = await saveUpload(file, [subscriberId, "attempts", attemptId, attemptQuestionId]);
+  const existing = await prisma.attemptAnswer.findUnique({ where: { attemptQuestionId }, select: { response: true } });
+  await prisma.attemptAnswer.upsert({
+    where: { attemptQuestionId },
+    create: { attemptId, attemptQuestionId, fileUrl: key, response: { fileName: file.name } as Prisma.InputJsonValue, status: "PENDING" },
+    update: { fileUrl: key, response: { ...((existing?.response ?? {}) as Record<string, unknown>), fileName: file.name } as Prisma.InputJsonValue },
+  });
+  await prisma.examAttempt.update({ where: { id: attemptId }, data: { lastSavedAt: new Date() } });
+  revalidatePath(`/portal/examen/${attemptId}`);
   return { ok: true };
 }
 
