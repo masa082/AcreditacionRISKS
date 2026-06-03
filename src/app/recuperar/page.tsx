@@ -3,7 +3,7 @@ import { ForgotForm } from "@/components/forgot-form";
 
 export const metadata = { title: "Recuperar contraseña" };
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME || "CIOC";
+const APP_NAME = "CIOC";
 
 export default function RecuperarPage() {
   return (
