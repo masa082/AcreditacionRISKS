@@ -9,6 +9,7 @@ const NAV: NavItem[] = [
   { href: "/panel/usuarios", label: "Usuarios" },
   { href: "/panel/roles", label: "Roles y permisos" },
   { href: "/panel/esquemas", label: "Esquemas de certificación" },
+  { href: "/panel/tarifas", label: "Tarifas y precios" },
   { href: "/panel/preguntas", label: "Banco de preguntas" },
   { href: "/panel/evaluaciones", label: "Evaluaciones" },
   { href: "/panel/candidatos", label: "Candidatos" },

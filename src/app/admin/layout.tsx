@@ -6,6 +6,7 @@ const NAV: NavItem[] = [
   { href: "/admin", label: "Resumen" },
   { href: "/admin/suscriptores", label: "Suscriptores" },
   { href: "/admin/planes", label: "Planes" },
+  { href: "/admin/tarifas", label: "Tarifas y precios" },
   { href: "/admin/logs", label: "Logs globales" },
   { href: "/admin/cuenta", label: "Mi cuenta" },
 ];
