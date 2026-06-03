@@ -160,9 +160,8 @@ async function main() {
     ["evaluador@risksint.com", "Evaluador", "OCP", "EVALUATOR"],
     ["comite@risksint.com", "Comité", "Evaluador", "COMMITTEE_MEMBER"],
   ];
-  let adminUserId = "";
   for (const [email, fn, ln, roleKey] of team) {
-    const u = await prisma.user.upsert({
+    await prisma.user.upsert({
       where: { email_subscriberId: { email, subscriberId: subscriber.id } },
       update: { roleId: roles[roleKey], firstName: fn, lastName: ln, status: "ACTIVE" },
       create: {
@@ -177,14 +176,12 @@ async function main() {
         roleId: roles[roleKey],
       },
     });
-    if (email === "autor@risksint.com") adminUserId = u.id;
   }
   const author = await prisma.user.findFirstOrThrow({ where: { email: "autor@risksint.com", subscriberId: subscriber.id } });
   const reviewer = await prisma.user.findFirstOrThrow({ where: { email: "revisor@risksint.com", subscriberId: subscriber.id } });
-  adminUserId = author.id;
 
   // ----------------------- Política de datos + finalidades -----------------------
-  const policy = await prisma.privacyPolicyVersion.upsert({
+  await prisma.privacyPolicyVersion.upsert({
     where: { subscriberId_version: { subscriberId: subscriber.id, version: "v1.0" } },
     update: { isCurrent: true },
     create: {

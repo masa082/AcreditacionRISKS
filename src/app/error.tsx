@@ -27,6 +27,7 @@ export default function GlobalError({
           <button onClick={() => reset()} className="rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900">
             Reintentar
           </button>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- recarga completa intencional desde el error boundary */}
           <a href="/" className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50">
             Ir al inicio
           </a>
