@@ -147,7 +147,7 @@ export async function createLead(
     });
     const to = sub?.contactEmail;
     if (to) {
-      const orgName = sub?.tradeName ?? sub?.legalName ?? "AcreditaPro";
+      const orgName = sub?.tradeName ?? sub?.legalName ?? "CIOC";
       const lines = [
         `Tipo: ${kindLabel}`,
         `Nombre: ${parsed.data.fullName}`,

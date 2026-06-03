@@ -3,7 +3,7 @@ import { activateAccount } from "@/lib/actions/registration";
 
 export const metadata = { title: "Activar cuenta" };
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 
 export default async function ActivatePage({
   params,

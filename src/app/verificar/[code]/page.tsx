@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 
 export const metadata = { title: "Resultado de verificación" };
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 
 const STATUS_INFO: Record<
   string,

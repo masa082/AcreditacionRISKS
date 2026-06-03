@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 
 export default function NotFound() {
   return (

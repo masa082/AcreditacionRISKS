@@ -19,7 +19,7 @@ function escapeHtml(s: string): string {
 
 function layout(brand: Brand, bodyHtml: string): string {
   const color = brand.primaryColor || "#1e3a8a";
-  const app = brand.appName || "AcreditaPro";
+  const app = brand.appName || "CIOC";
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"></head>
 <body style="margin:0;background:#f1f5f9;font-family:Arial,Helvetica,sans-serif;color:#0f172a">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f1f5f9;padding:24px 0">

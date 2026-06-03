@@ -15,7 +15,7 @@ import {
 //  Registra cada envío en AuditLog (action email.sent / email.failed).
 // ============================================================================
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 const FROM = process.env.EMAIL_FROM ?? `${APP_NAME} <no-reply@okacreditado.com>`;
 
 interface SendOpts {

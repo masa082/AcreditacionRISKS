@@ -4,7 +4,7 @@ import { logoutAction } from "@/lib/actions/auth";
 import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 
 export type { NavItem };
 

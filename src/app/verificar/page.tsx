@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 
 export const metadata = { title: "Verificación de certificados" };
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 
 async function search(formData: FormData) {
   "use server";

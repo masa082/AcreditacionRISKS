@@ -4,7 +4,7 @@ import { RegisterForm } from "@/components/register-form";
 
 export const metadata = { title: "Registro de candidato" };
 
-const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "AcreditaPro";
+const APP_NAME = process.env.NEXT_PUBLIC_APP_NAME ?? "CIOC";
 
 export default async function RegistroPage({
   searchParams,
