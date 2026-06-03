@@ -86,6 +86,14 @@ export const PERMISSION_GROUPS: PermissionGroup[] = [
       { key: PERMISSIONS.APPEAL_MANAGE, label: "Gestionar apelaciones/quejas" },
     ],
   },
+  {
+    module: "lead",
+    label: "Leads comerciales",
+    permissions: [
+      { key: PERMISSIONS.LEAD_VIEW, label: "Ver leads de la landing" },
+      { key: PERMISSIONS.LEAD_MANAGE, label: "Atender y actualizar leads" },
+    ],
+  },
 ];
 
 /// Todas las claves de permiso válidas para un suscriptor (para validar en servidor).

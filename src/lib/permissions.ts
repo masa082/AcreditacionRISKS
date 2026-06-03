@@ -67,6 +67,10 @@ export const PERMISSIONS = {
 
   // Apelaciones / quejas
   APPEAL_MANAGE: "appeal.manage",
+
+  // Leads comerciales (formularios de landing)
+  LEAD_VIEW: "lead.view",
+  LEAD_MANAGE: "lead.manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -114,7 +118,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: "Administrador del suscriptor",
     description: "Administra toda la operación de la entidad certificadora.",
     scope: "SUBSCRIBER",
-    permissions: ["org.*", "user.*", "role.*", "scheme.*", "program.*", "question.*", "exam.*", "candidate.*", "enrollment.*", "document.*", "payment.*", "schedule.*", "grade.*", "committee.*", "certificate.*", "renewal.*", "report.*", "audit.*", "appeal.*"],
+    permissions: ["org.*", "user.*", "role.*", "scheme.*", "program.*", "question.*", "exam.*", "candidate.*", "enrollment.*", "document.*", "payment.*", "schedule.*", "grade.*", "committee.*", "certificate.*", "renewal.*", "report.*", "audit.*", "appeal.*", "lead.*"],
   },
   {
     key: "COORDINATOR",
@@ -127,6 +131,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
       P.DOCUMENT_REVIEW, P.SCHEDULE_MANAGE, P.GRADE_VIEW,
       P.CERTIFICATE_ISSUE, P.CERTIFICATE_VIEW, P.RENEWAL_MANAGE,
       P.REPORT_VIEW, P.APPEAL_MANAGE, P.PAYMENT_VIEW,
+      P.LEAD_VIEW, P.LEAD_MANAGE,
     ],
   },
   {
@@ -169,7 +174,7 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
     name: "Soporte del suscriptor",
     description: "Atiende candidatos, inscripciones y apelaciones.",
     scope: "SUBSCRIBER",
-    permissions: [P.CANDIDATE_MANAGE, P.ENROLLMENT_MANAGE, P.APPEAL_MANAGE, P.PAYMENT_VIEW],
+    permissions: [P.CANDIDATE_MANAGE, P.ENROLLMENT_MANAGE, P.APPEAL_MANAGE, P.PAYMENT_VIEW, P.LEAD_VIEW, P.LEAD_MANAGE],
   },
   {
     key: "CANDIDATE",

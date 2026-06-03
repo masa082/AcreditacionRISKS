@@ -22,6 +22,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },
+  async redirects() {
+    return [
+      // Alias SEO amigable de la verificación pública.
+      { source: "/verificar-certificado", destination: "/verificar", permanent: true },
+      { source: "/verificar-certificado/:code", destination: "/verificar/:code", permanent: true },
+    ];
+  },
 };
 
 export default nextConfig;

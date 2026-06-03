@@ -303,6 +303,7 @@ model Subscriber {
   committeeReviews   CommitteeReview[]
   requiredDocuments  RequiredDocument[]
   appeals            Appeal[]
+  leads              Lead[]
 
   @@index([status])
 }
@@ -1161,4 +1162,54 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([userId, readAt])
+}
+
+/// Solicitud comercial capturada desde la landing pública (registro de interés,
+/// solicitud de información o agendamiento de asesoría). Pertenece a un
+/// suscriptor opcional para soportar multi-tenant futuro; hoy se asigna al
+/// suscriptor activo único (RISKS).
+model Lead {
+  id              String   @id @default(cuid())
+  subscriberId    String?
+  subscriber      Subscriber? @relation(fields: [subscriberId], references: [id], onDelete: SetNull)
+  kind            LeadKind @default(REGISTRATION)
+  fullName        String
+  email           String
+  phone           String?
+  country         String?
+  company         String?
+  jobTitle        String?
+  certificationOfInterest String?
+  message         String?
+  suggestedDate   DateTime?
+  status          LeadStatus @default(NEW)
+  source          String?  // "landing" | "certificacion-sarlaft" | ...
+  utmSource       String?
+  utmMedium       String?
+  utmCampaign     String?
+  ip              String?
+  userAgent       String?
+  consentAccepted Boolean  @default(false)
+  notes           String?
+  contactedAt     DateTime?
+  contactedById   String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([subscriberId, status])
+  @@index([email])
+  @@index([createdAt])
+}
+
+enum LeadKind {
+  REGISTRATION     // "Quiero certificarme"
+  INFORMATION      // Solicitud de información
+  ADVISORY         // Agendar asesoría
+}
+
+enum LeadStatus {
+  NEW
+  CONTACTED
+  CONVERTED
+  DISCARDED
 }

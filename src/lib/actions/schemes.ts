@@ -21,6 +21,7 @@ export interface ActionResult {
   ok: boolean;
   error?: string;
   id?: string;
+  message?: string;
 }
 
 function clean(v: FormDataEntryValue | null): string | null {

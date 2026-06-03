@@ -16,6 +16,7 @@ const NAV: NavItem[] = [
   { href: "/panel/calificacion", label: "Calificación" },
   { href: "/panel/comite", label: "Comité evaluador" },
   { href: "/panel/apelaciones", label: "Apelaciones y quejas" },
+  { href: "/panel/leads", label: "Leads comerciales" },
   { href: "/panel/certificados", label: "Certificados" },
   { href: "/panel/vencimientos", label: "Vencimientos" },
   { href: "/panel/reportes", label: "Reportes" },
