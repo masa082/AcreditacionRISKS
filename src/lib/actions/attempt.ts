@@ -14,6 +14,7 @@ import {
   type QuestionSnapshot,
 } from "@/lib/exam-attempt";
 import { saveUpload, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
+import { issuePresentationCertificate } from "@/lib/certificate";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const FINISHED = ["SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED", "PASSED", "FAILED", "PENDING_COMMITTEE", "VOID"];
@@ -271,6 +272,13 @@ export async function submitAttempt(attemptId: string): Promise<void> {
     },
   });
   await prisma.enrollment.update({ where: { id: attempt.enrollmentId }, data: { status: enrollmentStatus } });
+
+  // Constancia de presentación del examen (no debe romper el envío).
+  try {
+    await issuePresentationCertificate(attemptId);
+  } catch {
+    /* la constancia se puede reintentar después */
+  }
 
   await audit(ctx, {
     action: "attempt.submit",

@@ -48,6 +48,7 @@ export default async function CertificatePage({
       <Diploma
         data={{
           code: cert.code,
+          type: cert.type,
           title: cert.title,
           holderName: cert.holderName,
           documentNumber: cert.documentNumber,

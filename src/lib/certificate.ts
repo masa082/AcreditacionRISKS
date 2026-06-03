@@ -27,13 +27,54 @@ export async function qrDataUrl(code: string): Promise<string> {
   });
 }
 
-/// Genera un código de certificado único a nivel global (CERT-AAAA-XXXXXXXX).
-export async function generateCertificateCode(): Promise<string> {
+/// Genera un código de certificado único a nivel global (PREFIJO-AAAA-XXXXXXXX).
+export async function generateCertificateCode(prefix = "CERT"): Promise<string> {
   const year = new Date().getFullYear();
   for (let i = 0; i < 50; i++) {
-    const code = `CERT-${year}-${newToken(4).toUpperCase()}`;
+    const code = `${prefix}-${year}-${newToken(4).toUpperCase()}`;
     const exists = await prisma.certificate.findUnique({ where: { code }, select: { id: true } });
     if (!exists) return code;
   }
-  return `CERT-${year}-${Date.now().toString(36).toUpperCase()}`;
+  return `${prefix}-${year}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+/// Emite (idempotente) la constancia de PRESENTACIÓN del examen para un intento
+/// enviado. Se dispara automáticamente al finalizar el intento; nunca debe romper
+/// el flujo de envío (envolver en try/catch en el llamador).
+export async function issuePresentationCertificate(attemptId: string): Promise<void> {
+  const attempt = await prisma.examAttempt.findUnique({
+    where: { id: attemptId },
+    include: {
+      exam: { select: { name: true } },
+      candidate: { select: { id: true, firstName: true, lastName: true, documentNumber: true } },
+      enrollment: { select: { id: true, schemeId: true } },
+    },
+  });
+  if (!attempt || !attempt.submittedAt) return;
+
+  const existing = await prisma.certificate.findFirst({
+    where: { attemptId, type: "EXAM_PRESENTATION" },
+    select: { id: true },
+  });
+  if (existing) return;
+
+  const code = await generateCertificateCode("PRES");
+  await prisma.certificate.create({
+    data: {
+      subscriberId: attempt.subscriberId,
+      candidateId: attempt.candidateId,
+      enrollmentId: attempt.enrollmentId,
+      schemeId: attempt.enrollment?.schemeId ?? null,
+      attemptId,
+      type: "EXAM_PRESENTATION",
+      code,
+      verifyToken: newToken(16),
+      title: `Constancia de presentación — ${attempt.exam.name}`,
+      holderName: `${attempt.candidate.firstName} ${attempt.candidate.lastName}`,
+      documentNumber: attempt.candidate.documentNumber,
+      status: "VALID",
+      issuedAt: new Date(),
+      expiresAt: null,
+    },
+  });
 }

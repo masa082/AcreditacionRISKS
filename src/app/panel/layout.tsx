@@ -14,7 +14,9 @@ const NAV: NavItem[] = [
   { href: "/panel/calificacion", label: "Calificación" },
   { href: "/panel/comite", label: "Comité evaluador" },
   { href: "/panel/certificados", label: "Certificados" },
-  { href: "/panel/reportes", label: "Reportes", disabled: true },
+  { href: "/panel/vencimientos", label: "Vencimientos" },
+  { href: "/panel/reportes", label: "Reportes" },
+  { href: "/panel/auditoria", label: "Auditoría" },
 ];
 
 export default async function PanelLayout({

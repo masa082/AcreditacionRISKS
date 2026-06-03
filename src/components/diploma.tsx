@@ -2,6 +2,7 @@ import { verifyUrl } from "@/lib/certificate";
 
 export interface DiplomaData {
   code: string;
+  type?: string; // CERTIFICATION | EXAM_PRESENTATION
   title: string;
   holderName: string;
   documentNumber: string | null;
@@ -50,13 +51,17 @@ export function Diploma({ data }: { data: DiplomaData }) {
           <div className="mt-1 text-xs text-slate-500">{data.org.legalName}</div>
           <div className="mt-1 text-[11px] uppercase tracking-wide text-slate-400">Organismo de Certificación de Personas · ISO/IEC 17024</div>
 
-          <h1 className="mt-8 text-3xl font-bold text-slate-900">Certificado de Competencias</h1>
-          <p className="mt-6 text-sm text-slate-500">Certifica que</p>
+          <h1 className="mt-8 text-3xl font-bold text-slate-900">
+            {data.type === "EXAM_PRESENTATION" ? "Constancia de Presentación de Examen" : "Certificado de Competencias"}
+          </h1>
+          <p className="mt-6 text-sm text-slate-500">{data.type === "EXAM_PRESENTATION" ? "Hace constar que" : "Certifica que"}</p>
           <p className="mt-2 text-2xl font-semibold text-brand-900">{data.holderName}</p>
           {data.documentNumber ? <p className="mt-1 text-sm text-slate-500">Documento de identidad N.º {data.documentNumber}</p> : null}
 
           <p className="mx-auto mt-6 max-w-2xl text-sm leading-relaxed text-slate-600">
-            ha demostrado idoneidad y cumple con los estándares de competencia definidos para la certificación
+            {data.type === "EXAM_PRESENTATION"
+              ? "presentó la evaluación correspondiente a"
+              : "ha demostrado idoneidad y cumple con los estándares de competencia definidos para la certificación"}
           </p>
           <p className="mt-2 text-lg font-semibold text-slate-900">{data.title}</p>
           {data.scope ? <p className="mx-auto mt-3 max-w-2xl text-xs leading-relaxed text-slate-500">Alcance: {data.scope}</p> : null}
