@@ -50,23 +50,23 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
     <main className="min-h-screen bg-white">
       <LandingHeader />
 
-      <section className="bg-hero-grad text-white">
+      <section className="bg-premium-light">
         <div className="mx-auto max-w-6xl px-6 py-16">
-          <nav className="mb-4 text-xs text-cyan-200">
-            <Link href="/" className="hover:text-white">Inicio</Link>
+          <nav className="mb-4 text-xs text-slate-500">
+            <Link href="/" className="hover:text-brand-800">Inicio</Link>
             <span className="px-2">/</span>
-            <Link href="/certificaciones" className="hover:text-white">Certificaciones</Link>
+            <Link href="/certificaciones" className="hover:text-brand-800">Certificaciones</Link>
             <span className="px-2">/</span>
-            <span className="text-white">{c.shortName}</span>
+            <span className="text-brand-800">{c.shortName}</span>
           </nav>
-          <span className="inline-block rounded-full bg-white/10 px-3 py-1 text-[10px] font-bold uppercase tracking-wider ring-1 ring-white/20">
+          <span className="inline-block rounded-full border border-brand-100 bg-brand-50 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-brand-800">
             {c.category} · {c.level}
           </span>
-          <h1 className="mt-4 max-w-3xl text-3xl font-bold sm:text-4xl">{c.name}</h1>
-          <p className="mt-4 max-w-2xl text-slate-200">{c.description}</p>
+          <h1 className="mt-4 max-w-3xl text-3xl font-bold text-brand-900 sm:text-4xl">{c.name}</h1>
+          <p className="mt-4 max-w-2xl text-slate-600">{c.description}</p>
           <div className="mt-7 flex flex-wrap gap-3">
-            <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-gold-500 px-5 py-3 text-sm font-bold text-slate-900 shadow-lg shadow-gold-500/30 hover:bg-gold-400">Inscribirme ahora</Link>
-            <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-white/30 px-5 py-3 text-sm font-semibold text-white hover:bg-white/10">Solicitar información</Link>
+            <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-900">Inscribirme ahora</Link>
+            <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 hover:bg-brand-50">Solicitar información</Link>
           </div>
         </div>
       </section>

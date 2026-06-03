@@ -8,10 +8,12 @@ export function LandingFooter() {
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <div className="flex items-center gap-2 text-white">
-              <span className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br from-brand-700 to-cyan-500 text-sm font-black">R</span>
-              <strong className="text-sm">{BRAND.shortName}</strong>
+            <div className="flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={BRAND.monogramUrl} alt={BRAND.shortName} className="h-10 w-auto brightness-0 invert" />
+              <strong className="text-sm text-white">{BRAND.shortName} S.A.S.</strong>
             </div>
+            <p className="mt-2 text-xs italic text-slate-300">&ldquo;{BRAND.slogan}&rdquo;</p>
             <p className="mt-3 text-xs leading-relaxed text-slate-400">
               {BRAND.description} Operamos bajo los principios de la norma {BRAND.isoNorm} para la certificación de personas.
             </p>

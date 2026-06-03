@@ -6,18 +6,21 @@
 }
 
 @theme {
-  --color-brand-50: #eff6ff;
-  --color-brand-100: #dbeafe;
-  --color-brand-500: #3b82f6;
-  --color-brand-600: #2563eb;
-  --color-brand-700: #1d4ed8;
-  --color-brand-800: #1e3a8a;
-  --color-brand-900: #172554;
+  /* Paleta alineada al navy oficial del logo RISKS INTERNATIONAL (#0b1d44). */
+  --color-brand-50:  #eef2fb;
+  --color-brand-100: #d6dff2;
+  --color-brand-200: #adbfe5;
+  --color-brand-300: #7d96d0;
+  --color-brand-500: #3a5ca8;
+  --color-brand-600: #1f3f87;
+  --color-brand-700: #142e69;
+  --color-brand-800: #0b1d44;
+  --color-brand-900: #06122c;
 
-  /* Acentos secundarios usados en la landing comercial */
-  --color-gold-400: #fbbf24;
-  --color-gold-500: #f59e0b;
-  --color-gold-600: #d97706;
+  /* Acentos: dorado discreto para badges y un cyan claro para detalles. */
+  --color-gold-400: #f5c046;
+  --color-gold-500: #c89a35;
+  --color-gold-600: #946d22;
   --color-cyan-400: #22d3ee;
   --color-cyan-500: #06b6d4;
   --color-cyan-600: #0891b2;
@@ -30,12 +33,31 @@
 }
 .animate-float-soft { animation: float-soft 6s ease-in-out infinite; }
 
-/* Gradiente premium reutilizable */
-.bg-hero-grad {
-  background-image: radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.18), transparent 40%),
-                    radial-gradient(circle at 80% 0%, rgba(251, 191, 36, 0.18), transparent 45%),
-                    linear-gradient(135deg, #0b1d4a 0%, #1e3a8a 60%, #1d4ed8 100%);
+/* Fondo "premium light": blanco con un sutil tinte navy en grilla decorativa. */
+.bg-premium-light {
+  background-color: #ffffff;
+  background-image:
+    radial-gradient(circle at 90% 0%, rgba(11, 29, 68, 0.05), transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(200, 154, 53, 0.06), transparent 45%);
 }
+.bg-premium-grid {
+  background-color: #fafbfd;
+  background-image:
+    linear-gradient(rgba(11, 29, 68, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(11, 29, 68, 0.04) 1px, transparent 1px);
+  background-size: 36px 36px;
+}
+
+/* Gradiente premium reutilizable (para CTA final / footers fuertes). */
+.bg-hero-grad {
+  background-image: radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.15), transparent 40%),
+                    radial-gradient(circle at 80% 0%, rgba(245, 192, 70, 0.18), transparent 45%),
+                    linear-gradient(135deg, #06122c 0%, #0b1d44 60%, #142e69 100%);
+}
+
+/* Borde dorado fino tipo certificado premium */
+.border-gold-fine { border: 1px solid #c89a35; }
+.shadow-premium { box-shadow: 0 10px 40px -10px rgba(11,29,68,0.18), 0 2px 8px -2px rgba(11,29,68,0.08); }
 
 html,
 body {

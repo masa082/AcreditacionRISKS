@@ -10,7 +10,12 @@ export const BRAND = {
   /** Nombre completo del programa. */
   appLongName: "Certificado de Idoneidad como Oficial de Cumplimiento",
   tagline: "Certificación y acreditación profesional",
+  slogan: "Trabajamos para facilitar decisiones seguras",
   claim: "Certifica tus competencias y demuestra tu conocimiento con respaldo, trazabilidad y verificación digital.",
+  // Assets de marca (reemplazables en /public). Si subes archivos oficiales con
+  // estos nombres, se reflejan en toda la web sin tocar código.
+  logoUrl: "/risks-logo.svg",
+  monogramUrl: "/risks-monogram.svg",
   description:
     "Plataforma digital para la certificación y acreditación de personas en compliance, riesgos, debida diligencia y prevención LA/FT — con certificados verificables por QR.",
   // Dominio comercial canónico (para canonicals/SEO/OG).
