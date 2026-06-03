@@ -28,10 +28,8 @@ export async function LandingFooter() {
             <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Certificaciones</h3>
             <ul className="mt-3 space-y-2 text-sm">
               <li><Link href="/certificaciones/sarlaft" className="hover:text-white">SARLAFT — Supertransporte</Link></li>
-              <li><Link href="/certificaciones/sagrilaft" className="hover:text-white">SAGRILAFT — Supersociedades</Link></li>
-              <li><Link href="/certificaciones/siplaft" className="hover:text-white">SIPLAFT — Transporte</Link></li>
-              <li><Link href="/certificaciones/oficial-cumplimiento" className="hover:text-white">Oficial de Cumplimiento</Link></li>
-              <li><Link href="/certificaciones" className="text-cyan-300 hover:text-cyan-200">Ver todas →</Link></li>
+              <li><Link href="/certificaciones/sagrilaft" className="hover:text-white">SAGRILAFT — Supersociedades <span className="text-[10px] text-amber-300">(próx.)</span></Link></li>
+              <li><Link href="/certificaciones" className="text-cyan-300 hover:text-cyan-200">Ver catálogo →</Link></li>
             </ul>
           </div>
 

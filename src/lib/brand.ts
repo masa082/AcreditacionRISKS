@@ -167,49 +167,12 @@ export const CERTIFICATIONS: PublicCertification[] = [
     priceCOP: 950000,
     status: "COMING_SOON",
   },
-  {
-    slug: "siplaft",
-    name: "Certificación Profesional SIPLAFT — Sector Transporte",
-    shortName: "SIPLAFT (Sector Transporte)",
-    category: "LA/FT",
-    level: "Profesional",
-    modality: "Online",
-    durationMin: 75,
-    validityMonths: 36,
-    audience:
-      "Profesionales y oficiales de cumplimiento de empresas obligadas a aplicar el Sistema Integral de Prevención de LA/FT en transporte.",
-    competencies: [
-      "Estructura del SIPLAFT y diferencias con SARLAFT/SAGRILAFT.",
-      "Conocimiento de clientes, contrapartes y proveedores.",
-      "Monitoreo de operaciones y umbrales de riesgo.",
-      "Gestión de reportes y comunicación con autoridades.",
-    ],
-    syllabus: [
-      "Origen y alcance del SIPLAFT.",
-      "Etapas: identificación, medición, control y monitoreo.",
-      "Procedimientos operativos por área del negocio de transporte.",
-      "Reportes UIAF y trazabilidad documental.",
-    ],
-    requirements: [
-      "Documento de identidad vigente.",
-      "Soportes académicos o de experiencia (opcionales).",
-      "Aceptación de política de tratamiento de datos.",
-    ],
-    description:
-      "Certificación enfocada en profesionales del sector transporte que requieren acreditar competencias en el Sistema Integral de Prevención de LA/FT (SIPLAFT).",
-    metaTitle:
-      "Certificación SIPLAFT en el Sector Transporte | RISKS INTERNATIONAL",
-    metaDescription:
-      "Certifica tus competencias en SIPLAFT con RISKS INTERNATIONAL. Diseñada para profesionales y oficiales de cumplimiento del sector transporte. Certificado verificable digitalmente.",
-    keywords: [
-      "certificación SIPLAFT",
-      "SIPLAFT sector transporte",
-      "prevención LAFT transporte",
-    ],
-    priceCOP: null,
-    status: "ON_REQUEST",
-  },
-  {
+  /* Catálogo activo de RISKS INTERNATIONAL: solo SARLAFT y SAGRILAFT.
+     Las certificaciones SIPLAFT y "Oficial de Cumplimiento integral" se
+     retiran del público hasta que la entidad decida ofrecerlas.
+     Si en el futuro vuelven a ofrecerse, restaurar este bloque desde el
+     historial de git (commit anterior a esta fecha). */
+  /* {
     slug: "oficial-cumplimiento",
     name: "Certificación Profesional Oficial de Cumplimiento",
     shortName: "Oficial de Cumplimiento",
@@ -220,25 +183,9 @@ export const CERTIFICATIONS: PublicCertification[] = [
     validityMonths: 36,
     audience:
       "Profesionales que ejercen o aspiran a ejercer como Oficiales de Cumplimiento en cualquier sector regulado en Colombia.",
-    competencies: [
-      "Marco general de cumplimiento normativo en Colombia.",
-      "Diseño e implementación de sistemas de cumplimiento (SARLAFT, SAGRILAFT, PTEE, SIPLAFT).",
-      "Gobernanza, ética e integridad corporativa.",
-      "Debida diligencia, KYC y conocimiento de contrapartes.",
-      "Relación con autoridades, reportes regulatorios y régimen sancionatorio.",
-    ],
-    syllabus: [
-      "Cumplimiento normativo: panorama general y marcos sectoriales.",
-      "Sistemas de prevención LA/FT, soborno y corrupción.",
-      "Programa de transparencia y ética empresarial (PTEE).",
-      "Gestión integral del riesgo de cumplimiento.",
-      "Comité de cumplimiento, reportes y trazabilidad.",
-    ],
-    requirements: [
-      "Documento de identidad vigente.",
-      "Hoja de vida con experiencia o formación relacionada (opcional).",
-      "Aceptación de política de tratamiento de datos.",
-    ],
+    competencies: [...],
+    syllabus: [...],
+    requirements: [...],
     description:
       "Certificación profesional integral para Oficiales de Cumplimiento. Acredita competencias transversales en SARLAFT, SAGRILAFT, PTEE, debida diligencia y gestión integral del cumplimiento.",
     metaTitle:
@@ -253,7 +200,7 @@ export const CERTIFICATIONS: PublicCertification[] = [
     ],
     priceCOP: null,
     status: "ON_REQUEST",
-  },
+  }, */
 ];
 
 export function formatCOP(value: number): string {
