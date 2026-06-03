@@ -1,19 +1,7 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 import { Card, StatTile, PageHeader, Badge } from "@/components/ui";
 
 export const metadata = { title: "Panel de plataforma" };
-
-const NAV: NavItem[] = [
-  { href: "/admin", label: "Resumen" },
-  { href: "/admin/suscriptores", label: "Suscriptores", disabled: true },
-  { href: "/admin/planes", label: "Planes", disabled: true },
-  { href: "/admin/pagos", label: "Facturación SaaS", disabled: true },
-  { href: "/admin/logs", label: "Logs globales", disabled: true },
-  { href: "/admin/config", label: "Configuración", disabled: true },
-];
 
 const STATUS_TONE: Record<string, "green" | "amber" | "red" | "slate"> = {
   ACTIVE: "green",
@@ -23,12 +11,6 @@ const STATUS_TONE: Record<string, "green" | "amber" | "red" | "slate"> = {
 };
 
 export default async function AdminDashboard() {
-  const ctx = await getCurrentUser();
-  if (!ctx) redirect("/login");
-  if (ctx.type !== "PLATFORM") {
-    redirect(ctx.type === "SUBSCRIBER" ? "/panel" : "/portal");
-  }
-
   const [
     totalSubs,
     activeSubs,
@@ -58,11 +40,7 @@ export default async function AdminDashboard() {
   ]);
 
   return (
-    <DashboardShell
-      area="Superadministrador"
-      nav={NAV}
-      user={{ name: `${ctx.firstName} ${ctx.lastName}`, role: "Superadministrador" }}
-    >
+    <>
       <PageHeader
         title="Resumen de la plataforma"
         subtitle="Estado general del SaaS y de los suscriptores."
@@ -116,6 +94,6 @@ export default async function AdminDashboard() {
           </table>
         </div>
       </Card>
-    </DashboardShell>
+    </>
   );
 }

@@ -5,6 +5,7 @@ import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 
 const NAV: NavItem[] = [
   { href: "/panel", label: "Resumen" },
+  { href: "/panel/organizacion", label: "Organización" },
   { href: "/panel/esquemas", label: "Esquemas de certificación" },
   { href: "/panel/preguntas", label: "Banco de preguntas" },
   { href: "/panel/evaluaciones", label: "Evaluaciones" },

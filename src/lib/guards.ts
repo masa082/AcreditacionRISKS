@@ -39,6 +39,25 @@ export async function requireSubscriberAction(
   return { ctx, subscriberId: ctx.subscriberId };
 }
 
+/// Guard para PÁGINAS de la plataforma (SUPERADMIN). Redirige si no aplica.
+export async function requirePlatformPage(): Promise<AuthContext> {
+  const ctx = await getCurrentUser();
+  if (!ctx) redirect("/login");
+  if (ctx.type !== "PLATFORM") {
+    redirect(ctx.type === "SUBSCRIBER" ? "/panel" : "/portal");
+  }
+  return ctx;
+}
+
+/// Guard para SERVER ACTIONS de la plataforma. Lanza error si no aplica.
+export async function requirePlatformAction(permission?: string): Promise<AuthContext> {
+  const ctx = await getCurrentUser();
+  if (!ctx) throw new Error("UNAUTHENTICATED");
+  if (ctx.type !== "PLATFORM") throw new Error("FORBIDDEN");
+  if (permission && !can(ctx, permission)) throw new Error("FORBIDDEN: " + permission);
+  return ctx;
+}
+
 /// Guard para PÁGINAS del portal del candidato. Redirige si no aplica.
 export async function requireCandidatePage(): Promise<CandidateCtx> {
   const ctx = await getCurrentUser();
