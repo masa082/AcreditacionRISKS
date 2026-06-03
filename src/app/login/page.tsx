@@ -12,9 +12,14 @@ const HOME: Record<string, string> = {
 
 export const metadata = { title: "Ingresar" };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ reset?: string }>;
+}) {
   const ctx = await getCurrentUser();
   if (ctx) redirect(HOME[ctx.type] ?? "/portal");
+  const { reset } = await searchParams;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-brand-800 to-brand-600 px-4 py-12">
@@ -34,7 +39,17 @@ export default async function LoginPage() {
           <p className="mb-6 text-sm text-slate-500">
             Acceda a su panel de administración o portal de candidato.
           </p>
+          {reset ? (
+            <div className="mb-4 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700 ring-1 ring-emerald-200">
+              Su contraseña se actualizó. Inicie sesión con la nueva contraseña.
+            </div>
+          ) : null}
           <LoginForm />
+          <p className="mt-4 text-center text-sm">
+            <Link href="/recuperar" className="text-brand-700 hover:underline">
+              ¿Olvidó su contraseña?
+            </Link>
+          </p>
         </div>
         <p className="mt-6 text-center text-xs text-brand-100">
           ¿No tiene cuenta?{" "}

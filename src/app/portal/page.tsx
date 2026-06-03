@@ -1,20 +1,10 @@
-import { redirect } from "next/navigation";
-import { getCurrentUser } from "@/lib/session";
+import Link from "next/link";
+import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
-import { Card, StatTile, PageHeader, Badge, EmptyState } from "@/components/ui";
+import { StatTile, PageHeader, Badge, EmptyState, Card } from "@/components/ui";
+import { dateOnly } from "@/lib/format";
 
 export const metadata = { title: "Mi portal" };
-
-const NAV: NavItem[] = [
-  { href: "/portal", label: "Mi proceso" },
-  { href: "/portal/evaluaciones", label: "Evaluaciones disponibles", disabled: true },
-  { href: "/portal/pagos", label: "Mis pagos", disabled: true },
-  { href: "/portal/agenda", label: "Mi agenda", disabled: true },
-  { href: "/portal/resultados", label: "Resultados", disabled: true },
-  { href: "/portal/certificados", label: "Mis certificados", disabled: true },
-  { href: "/portal/perfil", label: "Mi perfil", disabled: true },
-];
 
 const ENROLL_STATUS_ES: Record<string, string> = {
   STARTED: "Iniciado",
@@ -33,47 +23,52 @@ const ENROLL_STATUS_ES: Record<string, string> = {
   CANCELLED: "Cancelado",
 };
 
+function toneFor(status: string): "green" | "amber" | "blue" | "slate" {
+  if (status === "CERTIFIED" || status === "APPROVED") return "green";
+  if (status.endsWith("PENDING") || status === "SCHEDULING") return "amber";
+  if (status === "CANCELLED" || status === "REJECTED" || status === "EXPIRED") return "slate";
+  return "blue";
+}
+
 export default async function CandidatePortal() {
-  const ctx = await getCurrentUser();
-  if (!ctx) redirect("/login");
-  if (ctx.type !== "CANDIDATE") {
-    redirect(ctx.type === "PLATFORM" ? "/admin" : "/panel");
-  }
+  const { candidateId } = await requireCandidatePage();
 
-  const candidate = await prisma.candidate.findFirst({
-    where: { userId: ctx.userId },
-    include: {
-      enrollments: {
-        orderBy: { createdAt: "desc" },
-        include: { exam: true, scheme: true },
-      },
-      certificates: { orderBy: { issuedAt: "desc" } },
-    },
-  });
+  const [enrollments, certificates] = await Promise.all([
+    prisma.enrollment.findMany({
+      where: { candidateId },
+      orderBy: { createdAt: "desc" },
+      include: { exam: { select: { name: true } }, scheme: { select: { name: true } } },
+    }),
+    prisma.certificate.findMany({
+      where: { candidateId },
+      orderBy: { issuedAt: "desc" },
+    }),
+  ]);
 
-  const enrollments = candidate?.enrollments ?? [];
-  const certificates = candidate?.certificates ?? [];
   const activeCerts = certificates.filter((c) => c.status === "VALID");
+  const pending = enrollments.filter(
+    (e) => e.status.endsWith("PENDING") || e.status === "SCHEDULING",
+  ).length;
 
   return (
-    <DashboardShell
-      area="Portal del candidato"
-      nav={NAV}
-      user={{ name: `${ctx.firstName} ${ctx.lastName}`, role: "Candidato" }}
-    >
+    <>
       <PageHeader
-        title={`Hola, ${ctx.firstName}`}
+        title="Mi proceso"
         subtitle="Estado de sus procesos de certificación."
+        actions={
+          <Link
+            href="/portal/evaluaciones"
+            className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900"
+          >
+            Inscribirme en una evaluación
+          </Link>
+        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatTile label="Inscripciones" value={enrollments.length} />
         <StatTile label="Certificados vigentes" value={activeCerts.length} tone="good" />
-        <StatTile
-          label="Acciones pendientes"
-          value={enrollments.filter((e) => e.status.endsWith("PENDING")).length}
-          tone="warn"
-        />
+        <StatTile label="Acciones pendientes" value={pending} tone="warn" />
       </div>
 
       <Card className="mt-6">
@@ -83,23 +78,28 @@ export default async function CandidatePortal() {
         <div className="p-5">
           {enrollments.length === 0 ? (
             <EmptyState>
-              Aún no tiene inscripciones. Las evaluaciones disponibles se
-              habilitarán en su portal próximamente.
+              Aún no tiene inscripciones.{" "}
+              <Link href="/portal/evaluaciones" className="text-brand-700 hover:underline">
+                Vea las evaluaciones disponibles
+              </Link>
+              .
             </EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
               {enrollments.map((e) => (
-                <li key={e.id} className="flex items-center justify-between py-3">
-                  <div>
-                    <div className="font-medium text-slate-800">
-                      {e.scheme?.name ?? e.exam?.name ?? "Proceso de certificación"}
-                    </div>
+                <li key={e.id} className="flex items-center justify-between gap-3 py-3">
+                  <div className="min-w-0">
+                    <Link
+                      href={`/portal/inscripcion/${e.id}`}
+                      className="font-medium text-slate-800 hover:text-brand-800 hover:underline"
+                    >
+                      {e.exam?.name ?? e.scheme?.name ?? "Proceso de certificación"}
+                    </Link>
                     <div className="text-xs text-slate-400">
-                      Folio {e.code} ·{" "}
-                      {e.createdAt.toLocaleDateString("es-CO")}
+                      Folio {e.code} · {dateOnly(e.createdAt)}
                     </div>
                   </div>
-                  <Badge tone={e.status === "CERTIFIED" ? "green" : e.status.endsWith("PENDING") ? "amber" : "blue"}>
+                  <Badge tone={toneFor(e.status)}>
                     {ENROLL_STATUS_ES[e.status] ?? e.status}
                   </Badge>
                 </li>
@@ -131,6 +131,6 @@ export default async function CandidatePortal() {
           )}
         </div>
       </Card>
-    </DashboardShell>
+    </>
   );
 }

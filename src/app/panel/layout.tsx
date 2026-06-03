@@ -5,14 +5,15 @@ import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 
 const NAV: NavItem[] = [
   { href: "/panel", label: "Resumen" },
+  { href: "/panel/organizacion", label: "Organización" },
   { href: "/panel/esquemas", label: "Esquemas de certificación" },
   { href: "/panel/preguntas", label: "Banco de preguntas" },
   { href: "/panel/evaluaciones", label: "Evaluaciones" },
-  { href: "/panel/candidatos", label: "Candidatos", disabled: true },
-  { href: "/panel/agenda", label: "Agenda de pruebas", disabled: true },
-  { href: "/panel/calificacion", label: "Calificación", disabled: true },
-  { href: "/panel/comite", label: "Comité evaluador", disabled: true },
-  { href: "/panel/certificados", label: "Certificados", disabled: true },
+  { href: "/panel/candidatos", label: "Candidatos" },
+  { href: "/panel/agenda", label: "Agenda de pruebas" },
+  { href: "/panel/calificacion", label: "Calificación" },
+  { href: "/panel/comite", label: "Comité evaluador" },
+  { href: "/panel/certificados", label: "Certificados" },
   { href: "/panel/reportes", label: "Reportes", disabled: true },
 ];
 
