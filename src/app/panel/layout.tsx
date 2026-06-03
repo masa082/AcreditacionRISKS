@@ -6,6 +6,8 @@ import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 const NAV: NavItem[] = [
   { href: "/panel", label: "Resumen" },
   { href: "/panel/organizacion", label: "Organización" },
+  { href: "/panel/usuarios", label: "Usuarios" },
+  { href: "/panel/roles", label: "Roles y permisos" },
   { href: "/panel/esquemas", label: "Esquemas de certificación" },
   { href: "/panel/preguntas", label: "Banco de preguntas" },
   { href: "/panel/evaluaciones", label: "Evaluaciones" },
@@ -17,6 +19,7 @@ const NAV: NavItem[] = [
   { href: "/panel/vencimientos", label: "Vencimientos" },
   { href: "/panel/reportes", label: "Reportes" },
   { href: "/panel/auditoria", label: "Auditoría" },
+  { href: "/panel/cuenta", label: "Mi cuenta" },
 ];
 
 export default async function PanelLayout({

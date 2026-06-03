@@ -7,7 +7,7 @@ const NAV: NavItem[] = [
   { href: "/admin/suscriptores", label: "Suscriptores" },
   { href: "/admin/planes", label: "Planes" },
   { href: "/admin/logs", label: "Logs globales" },
-  { href: "/admin/config", label: "Configuración", disabled: true },
+  { href: "/admin/cuenta", label: "Mi cuenta" },
 ];
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
