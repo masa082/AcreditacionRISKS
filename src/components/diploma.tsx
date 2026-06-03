@@ -15,6 +15,7 @@ export interface DiplomaData {
     legalName: string;
     authorizedSigner: string | null;
     logoUrl: string | null;
+    signatureImageUrl: string | null;
     normReference: string | null;
   };
   qr: string; // data URL
@@ -45,6 +46,10 @@ export function Diploma({ data }: { data: DiplomaData }) {
         ) : null}
 
         <div className="text-center">
+          {data.org.logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={data.org.logoUrl} alt={data.org.name} className="mx-auto mb-4 h-16 w-auto object-contain" />
+          ) : null}
           <div className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-700">
             {data.org.name}
           </div>
@@ -72,9 +77,15 @@ export function Diploma({ data }: { data: DiplomaData }) {
             <div><span className="font-semibold text-slate-700">Emisión:</span> {d(data.issuedAt)}</div>
             <div><span className="font-semibold text-slate-700">Vigencia hasta:</span> {data.expiresAt ? d(data.expiresAt) : "No vence"}</div>
             {data.org.normReference ? <div className="mt-1">Referencia: {data.org.normReference}</div> : null}
-            <div className="mt-3 border-t border-slate-300 pt-1 text-center">
-              <div className="font-semibold text-slate-700">{data.org.authorizedSigner ?? data.org.legalName}</div>
-              <div className="text-[10px] uppercase tracking-wide text-slate-400">Firma autorizada</div>
+            <div className="mt-3 text-center">
+              {data.org.signatureImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={data.org.signatureImageUrl} alt="Firma autorizada" className="mx-auto h-12 w-auto object-contain" />
+              ) : null}
+              <div className="border-t border-slate-300 pt-1">
+                <div className="font-semibold text-slate-700">{data.org.authorizedSigner ?? data.org.legalName}</div>
+                <div className="text-[10px] uppercase tracking-wide text-slate-400">Firma autorizada</div>
+              </div>
             </div>
           </div>
 

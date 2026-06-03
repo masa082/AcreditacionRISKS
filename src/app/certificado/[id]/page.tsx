@@ -21,7 +21,7 @@ export default async function CertificatePage({
   const cert = await prisma.certificate.findUnique({
     where: { id },
     include: {
-      subscriber: { select: { tradeName: true, legalName: true, authorizedSigner: true, logoUrl: true } },
+      subscriber: { select: { tradeName: true, legalName: true, authorizedSigner: true, logoUrl: true, signatureImageUrl: true } },
       scheme: { select: { normReference: true } },
       candidate: { select: { userId: true } },
     },
@@ -61,6 +61,7 @@ export default async function CertificatePage({
             legalName: cert.subscriber.legalName,
             authorizedSigner: cert.subscriber.authorizedSigner,
             logoUrl: cert.subscriber.logoUrl,
+            signatureImageUrl: cert.subscriber.signatureImageUrl,
             normReference: cert.scheme?.normReference ?? null,
           },
           qr,

@@ -72,6 +72,16 @@ export async function loginAction(
   if (user.status === "PENDING_VERIFICATION") {
     return { error: "Debe validar su correo electrónico antes de ingresar." };
   }
+  // Bloquea el acceso si el organismo (tenant) está inactivo. No aplica a plataforma.
+  if (user.subscriberId) {
+    const sub = await prisma.subscriber.findUnique({
+      where: { id: user.subscriberId },
+      select: { status: true },
+    });
+    if (sub && (sub.status === "SUSPENDED" || sub.status === "CANCELLED")) {
+      return { error: "El acceso de su organización está inactivo. Contacte al administrador de la plataforma." };
+    }
+  }
 
   await createUserSession(user.id);
   redirect(HOME_BY_TYPE[user.type] ?? "/portal");
