@@ -143,6 +143,64 @@ export const Icon = {
       <path d="M7 7h4v4H7zM7 11c0 3 1 5 4 5M13 7h4v4h-4zM13 11c0 3 1 5 4 5" />
     </Base>
   ),
+  // ─────────── nuevos íconos enfocados en crecimiento profesional ───────────
+  Briefcase: (p: IconProps) => (
+    <Base {...p}>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+      <path d="M3 13h18" />
+    </Base>
+  ),
+  Trophy: (p: IconProps) => (
+    <Base {...p}>
+      <path d="M8 21h8M12 17v4" />
+      <path d="M7 4h10v4a5 5 0 0 1-10 0V4Z" />
+      <path d="M17 6h3v2a3 3 0 0 1-3 3M7 6H4v2a3 3 0 0 0 3 3" />
+    </Base>
+  ),
+  BadgeCheck: (p: IconProps) => (
+    <Base {...p}>
+      <path d="m12 2 2.4 2 3.2-.4.4 3.2 2 2.4-2 2.4-.4 3.2-3.2-.4L12 17l-2.4-2-3.2.4-.4-3.2L4 9.8l2-2.4.4-3.2 3.2.4Z" />
+      <path d="m9 11 2 2 4-4" />
+    </Base>
+  ),
+  Sparkles: (p: IconProps) => (
+    <Base {...p}>
+      <path d="m12 3 1.8 4.5L18 9l-4.2 1.5L12 15l-1.8-4.5L6 9l4.2-1.5Z" />
+      <path d="M19 14v3M17.5 15.5h3" />
+    </Base>
+  ),
+  Coins: (p: IconProps) => (
+    <Base {...p}>
+      <ellipse cx="8" cy="8" rx="5" ry="3" />
+      <path d="M3 8v4c0 1.7 2.2 3 5 3s5-1.3 5-3V8" />
+      <path d="M13 12c0 1.7 2.2 3 5 3s5-1.3 5-3" transform="translate(-2 0)" />
+      <ellipse cx="16" cy="14" rx="5" ry="3" />
+      <path d="M11 14v4c0 1.7 2.2 3 5 3s5-1.3 5-3v-4" />
+    </Base>
+  ),
+  Rocket: (p: IconProps) => (
+    <Base {...p}>
+      <path d="M4.5 16.5 3 21l4.5-1.5" />
+      <path d="M14 4c3-1 6 0 6 0s1 3 0 6c-1 3-7 9-7 9l-3-3s6-6 4-12Z" />
+      <circle cx="15.5" cy="8.5" r="1.5" />
+      <path d="M9 13c-2 0-3 1-3 3M7 17c-1 0-2 1-2 2" />
+    </Base>
+  ),
+  Linkedin: (p: IconProps) => (
+    <Base {...p}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 0 1 4 0v4M12 10v7" />
+    </Base>
+  ),
+  Users: (p: IconProps) => (
+    <Base {...p}>
+      <circle cx="9" cy="8" r="3" />
+      <path d="M3 20c0-3 3-5 6-5s6 2 6 5" />
+      <circle cx="17" cy="9" r="2.5" />
+      <path d="M15 20c0-2.5 2-4 4-4s2 0 2 0" />
+    </Base>
+  ),
 };
 
 export type IconKey = keyof typeof Icon;

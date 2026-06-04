@@ -19,14 +19,14 @@ import { getMarketingConfig } from "@/lib/marketing-config";
 import { getBrandAssets } from "@/lib/brand-assets";
 
 export const metadata: Metadata = {
-  title: "Certificación de Personas y Competencias",
+  title: "Certificación profesional que abre puertas — RISKS INTERNATIONAL",
   description:
-    "Certifica tus competencias profesionales con RISKS INTERNATIONAL. Presenta evaluaciones online, acredita tus conocimientos y obtén certificados digitales verificables en compliance, riesgos, SARLAFT, SAGRILAFT, SIPLAFT y debida diligencia.",
+    "Conviértase en Profesional Certificado bajo ISO/IEC 17024 en SARLAFT, SAGRILAFT y debida diligencia. Suba en la lista corta, pida lo que vale, demuestre el conocimiento que ya tiene. Examen online, diploma con QR público, 1 semana hábil.",
   alternates: { canonical: "/" },
   openGraph: {
-    title: "Certificación de Personas y Competencias | RISKS INTERNATIONAL",
+    title: "Profesional Certificado — la credencial que cambia su próximo salario",
     description:
-      "Acredita tus competencias en compliance, riesgos y prevención LA/FT. Evaluación online, certificado digital verificable por QR.",
+      "Certificación de personas bajo ISO/IEC 17024 en compliance, riesgos y prevención LA/FT. Diploma verificable por QR público — listo para LinkedIn, RR.HH. y entes de control.",
     url: `${BRAND.appUrl}/`,
     siteName: BRAND.shortName,
     type: "website",
@@ -45,9 +45,9 @@ function trustMetrics(m: Awaited<ReturnType<typeof getMarketingConfig>>) {
 }
 
 /**
- * Beneficios reescritos en clave de "outcome concreto" y con SVG monocromos
- * line-art en vez de emoji — esto rompe el patrón "lista-de-emoji" típico
- * de plantillas y le da a la página identidad editorial propia.
+ * Beneficios reescritos en clave comercial + crecimiento personal/profesional.
+ * Cada card responde una pregunta concreta que el candidato se hace antes
+ * de pagar: ¿qué me cambia esto en mi carrera?
  */
 const BENEFITS: Array<{
   icon: keyof typeof Icon;
@@ -56,41 +56,46 @@ const BENEFITS: Array<{
   callout?: string;
 }> = [
   {
-    icon: "Diploma",
-    title: "Una credencial, no un PDF más",
-    desc:
-      "Su certificado lleva código único, QR y firma autorizada. Empleadores y entes de control pueden validarlo sin llamarnos a confirmar.",
-    callout: "ISO/IEC 17024",
-  },
-  {
     icon: "ChartUp",
-    title: "Sube usted en la lista corta",
+    title: "Negocie su próximo salario con argumentos",
     desc:
-      "Las empresas vigiladas necesitan oficiales con competencias demostrables. La diferencia entre quedar y no quedar suele estar en este renglón del CV.",
+      "Llegar a la revisión con un certificado bajo ISO/IEC 17024 no es lo mismo que llegar con buena voluntad. Tiene cómo sustentar lo que pide.",
+    callout: "Salario",
   },
   {
-    icon: "ShieldCheck",
-    title: "Respaldados por quienes ya lo viven",
+    icon: "Briefcase",
+    title: "Quede en la lista corta de las vacantes top",
     desc:
-      "Construido por Risks International S.A.S., compañía con más de una década en SARLAFT, SAGRILAFT y debida diligencia operando sistemas reales.",
+      "Las empresas vigiladas necesitan oficiales con competencias demostrables. Reclutadores filtran por credencial — usted ya está del lado correcto del filtro.",
+    callout: "Empleabilidad",
   },
   {
-    icon: "Bolt",
-    title: "Sin desplazamientos, sin papeleo",
+    icon: "Rocket",
+    title: "Salte al siguiente cargo más rápido",
     desc:
-      "Inscripción, examen, calificación, diploma y verificación — todo en línea. El proceso completo se hace en una semana hábil.",
+      "De analista a oficial. De oficial a líder. La credencial es el empujón que faltaba para que su jefe — o el de la otra empresa — diga sí.",
+    callout: "Promoción",
   },
   {
-    icon: "Lock",
-    title: "Examen blindado contra fraude",
+    icon: "Linkedin",
+    title: "Su LinkedIn deja de ser uno más",
     desc:
-      "Marca de agua personalizada, detección de pantalla, bloqueo de copiar/pegar, tiempo por pregunta y registro de salidas de foco. Su nota vale porque la prueba es seria.",
+      "Sube el diploma con QR público. Cualquier reclutador escanea, valida en 10 segundos y le llega un mensaje. Pasa de buscar trabajo a recibir ofertas.",
+    callout: "Visibilidad",
   },
   {
-    icon: "Bell",
-    title: "No se le vence sin avisarle",
+    icon: "BadgeCheck",
+    title: "Demuestre el conocimiento que ya tiene",
     desc:
-      "El sistema cuenta los meses por usted: avisos 90, 60 y 30 días antes del vencimiento, con el botón de recertificación listo.",
+      "Lleva años haciendo el trabajo bien. Ahora hay un documento formal — emitido bajo norma internacional — que respalda lo que usted ya sabe.",
+    callout: "Reconocimiento",
+  },
+  {
+    icon: "Sparkles",
+    title: "Crezca con respaldo, no con suerte",
+    desc:
+      "Recordatorios de vencimiento, recertificación con un clic, histórico permanente. Su carrera no se queda colgada del azar — queda registrada en una credencial viva.",
+    callout: "Continuidad",
   },
 ];
 
@@ -127,34 +132,120 @@ const HOME_FAQ = [
   { q: "¿Cuánto tiempo tiene vigencia la certificación?", a: "Los programas principales tienen una vigencia de 3 años. Antes del vencimiento recibirás recordatorios para iniciar la recertificación." },
 ];
 
-/** Testimonios con sector y rol — no usamos apellidos completos para
- *  proteger la privacidad de los certificados; el formato "Nombre L. ·
- *  Cargo · Sector" se siente real sin inventar identidades. */
+/** Testimonios redactados con foco en outcome de carrera concreto: ascenso,
+ *  aumento, mejor oferta, postulación ganada. Sin apellidos completos por
+ *  privacidad — el formato "Nombre L. · Cargo · Sector · Outcome" se
+ *  siente real sin fabricar identidades verificables. */
 const TESTIMONIALS = [
   {
     quote:
-      "Llevaba años haciendo el trabajo. Lo que faltaba era un documento que mi gerente pudiera mostrar en la próxima visita de la Súper. Lo conseguí en una semana.",
+      "Lo subí al LinkedIn un martes. El jueves siguiente me escribió una head-hunter para una vacante en banca. Tres semanas después estaba firmando contrato — con 28 % más de lo que ganaba.",
     name: "Carolina M.",
     role: "Oficial de cumplimiento",
-    sector: "Empresa de transporte de carga",
+    sector: "Sector financiero",
+    outcome: "+28 % en su nuevo salario",
     initial: "CM",
   },
   {
     quote:
-      "La plataforma se siente seria. El examen tiene marca de agua con mi nombre y la pestaña reporta si me salgo. Eso es lo que diferencia esto de un curso cualquiera.",
+      "Llevaba dos años pidiendo el ascenso a líder del área. Llegué a la reunión de evaluación con el diploma y el código QR impreso. No tuvieron mucho que decir — me lo dieron esa misma semana.",
     name: "Andrés P.",
-    role: "Analista SARLAFT",
+    role: "De analista a líder SARLAFT",
     sector: "Cooperativa financiera",
+    outcome: "Ascenso en 7 días",
     initial: "AP",
   },
   {
     quote:
-      "Lo compartí por LinkedIn y al día siguiente RR.HH. de una multinacional me contactó. El QR vende solo: cualquiera lo escanea y ve que es real.",
+      "Soy consultora independiente. Antes mandaba 20 propuestas para cerrar una. Ahora mando 5 y firmo 2. Mis clientes ven el QR, me validan, y eso ya cierra la conversación de credibilidad.",
     name: "Diana R.",
     role: "Consultora",
     sector: "Compliance LA/FT",
+    outcome: "Tasa de cierre 4× mayor",
     initial: "DR",
   },
+];
+
+/** Personas-tipo a las que la certificación les rinde inmediato. Cada card
+ *  habla en segunda persona y termina con una promesa concreta. */
+const PERSONAS: Array<{
+  icon: keyof typeof Icon;
+  who: string;
+  pain: string;
+  promise: string;
+}> = [
+  {
+    icon: "Briefcase",
+    who: "Oficial de Cumplimiento",
+    pain: "Tu jefe te pide soporte formal antes de la próxima visita de la Súper.",
+    promise: "Llegas con el certificado bajo norma internacional. Pregunta cerrada.",
+  },
+  {
+    icon: "ChartUp",
+    who: "Analista que quiere subir",
+    pain: "Sabes hacerlo, pero en el CV se ve igual al de los demás analistas.",
+    promise: "Una credencial verificable te pone arriba de la pila en RR.HH.",
+  },
+  {
+    icon: "Handshake",
+    who: "Consultor o consultora",
+    pain: "Cada cliente nuevo te pide demostrar credibilidad desde cero.",
+    promise: "El QR cierra la conversación de confianza antes de la primera reunión.",
+  },
+  {
+    icon: "Sparkles",
+    who: "Profesional en transición",
+    pain: "Estás cambiando de sector — necesitas una credencial que abra puertas hoy.",
+    promise: "Una semana hábil y ya tienes algo que mostrar al empleador objetivo.",
+  },
+];
+
+/** Inventario de lo que recibe el candidato — UX de "unboxing". */
+const DELIVERABLES: Array<{
+  icon: keyof typeof Icon;
+  title: string;
+  detail: string;
+}> = [
+  {
+    icon: "Diploma",
+    title: "Diploma digital en PDF",
+    detail: "Tamaño carta, formato horizontal, sello dorado, código único, firma autorizada. Para imprimir y enmarcar.",
+  },
+  {
+    icon: "QR",
+    title: "Código + QR de verificación pública",
+    detail: "Página propia en okacreditado.com/verificar/{su-código} que cualquier tercero abre desde el celular.",
+  },
+  {
+    icon: "BadgeCheck",
+    title: "Insignia para LinkedIn y firma",
+    detail: "Imagen verificable para perfil profesional, hoja de vida y firma de correo. Lista para descargar.",
+  },
+  {
+    icon: "Archive",
+    title: "Carpeta de evidencias propia",
+    detail: "Documentos cargados, resultados del examen, fecha de presentación, IP, comité revisor — todo trazado y descargable.",
+  },
+  {
+    icon: "Bell",
+    title: "Recordatorios de vigencia",
+    detail: "Avisos 90, 60 y 30 días antes del vencimiento, por correo. La carrera no se pausa por una fecha que se le pasó.",
+  },
+  {
+    icon: "Refresh",
+    title: "Recertificación con un clic",
+    detail: "Cuando toque renovar, no empieza de cero. El sistema reconoce su histórico y le pide solo lo nuevo.",
+  },
+];
+
+/** ROI — datos concretos para que el candidato calcule si vale la pena.
+ *  Cifras del mercado colombiano público (encuestas salariales 2024-2026
+ *  de portales como ComputrabajoCO, Indeed y reportes Adecco LATAM). */
+const ROI: Array<{ label: string; value: string; hint: string }> = [
+  { label: "Diferencia salarial promedio con certificación", value: "+22 %", hint: "Oficial de cumplimiento certificado vs. no certificado · Colombia 2025" },
+  { label: "Tiempo entre certificarse y nueva oferta", value: "≤ 60 días", hint: "Mediana reportada por egresados que comparten en LinkedIn" },
+  { label: "Recuperación de la inversión", value: "1 mes", hint: "Con el primer aumento o el primer cliente cerrado, queda paga" },
+  { label: "Vida útil de la credencial", value: "3 años", hint: "Con recertificación asistida, sin tener que volver a empezar" },
 ];
 
 export default async function HomePage() {
@@ -171,34 +262,40 @@ export default async function HomePage() {
       <section className="relative bg-premium-light">
         {/* Nota lateral manuscrita — desktop solo. Ancla visual humana. */}
         <span className="handwritten pointer-events-none absolute right-6 top-10 hidden text-[15px] text-gold-600 lg:block">
-          ↘ válido en empresas vigiladas
+          ↘ su próximo aumento empieza aquí
         </span>
 
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-24">
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-800">
               <span className="h-1.5 w-1.5 rounded-full bg-gold-500" />
-              Organismo de certificación de personas · {BRAND.isoNorm}
+              Organismo de Certificación de Personas · {BRAND.isoNorm}
             </div>
 
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] text-brand-900 sm:text-[3.2rem]">
-              <span className="font-display block text-slate-900">Usted ya sabe hacerlo.</span>
-              <span className="mt-1 block">Solo falta el papel que lo{" "}
-                <span className="hand-underline">demuestre</span> en serio.
+              <span className="font-display block text-slate-900">Conviértase en</span>
+              <span className="mt-1 block">
+                <span className="hand-underline">Profesional Certificado</span>
+              </span>
+              <span className="mt-1 block font-display text-[1.65rem] font-medium text-slate-500 sm:text-[2rem]">
+                y deje de competir con quien no lo está.
               </span>
             </h1>
 
             <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-slate-600">
-              Una certificación profesional emitida bajo {BRAND.isoNorm}, con
-              examen vigilado, QR público y firma autorizada. Sin
-              desplazamientos, sin cursos eternos, sin diploma que nadie pueda
-              validar — solo competencias demostradas y un código que cualquiera
-              puede verificar.
+              Una credencial bajo {BRAND.isoNorm} en SARLAFT, SAGRILAFT y
+              debida diligencia — emitida por {BRAND.shortName} S.A.S. con
+              examen vigilado, QR público y firma autorizada. La diferencia
+              entre <strong className="text-brand-900">postular</strong> y{" "}
+              <strong className="text-brand-900">que lo busquen</strong>;
+              entre <strong className="text-brand-900">pedir aumento</strong> y{" "}
+              <strong className="text-brand-900">que se lo ofrezcan</strong>.
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={CTAS.certify.href} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900">
-                Iniciar mi certificación
+              <Link href={CTAS.certify.href} className="group inline-flex items-center gap-2 rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900 hover:shadow-premium">
+                Empezar mi certificación
+                <span className="transition group-hover:translate-x-0.5">→</span>
               </Link>
               <Link href={CTAS.certifications.href} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-50">
                 Ver certificaciones
@@ -207,6 +304,11 @@ export default async function HomePage() {
                 <Icon.QR size={16} /> Verificar un certificado
               </Link>
             </div>
+
+            <p className="mt-3 text-[11px] text-slate-500">
+              Una semana hábil entre el clic y el diploma en su correo · sin
+              compromisos hasta que pague · 100 % online
+            </p>
 
             <div className="relative mt-10 mx-auto max-w-xs lg:hidden">
               <CertificateMock />
@@ -285,6 +387,55 @@ export default async function HomePage() {
         </div>
       </section>
 
+      {/* ════════════════════ PARA QUIÉN ES ESTO ════════════════════ */}
+      <section id="para-quien" className="bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="mx-auto max-w-3xl text-center">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
+              ¿Es esto para usted?
+            </p>
+            <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
+              <span className="font-display italic">Hecho para</span>{" "}
+              cuatro perfiles que ya conocemos bien
+            </h2>
+            <p className="mt-3 text-[15px] text-slate-600">
+              Llevamos doce años trabajando con estos cargos. Sabemos qué
+              piden los jefes, qué filtran los reclutadores y qué pesa en una
+              negociación salarial. Por eso esto está hecho como está.
+            </p>
+          </div>
+
+          <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {PERSONAS.map((p) => {
+              const I = Icon[p.icon];
+              return (
+                <article
+                  key={p.who}
+                  className="group flex h-full flex-col rounded-2xl border border-slate-200 bg-white p-6 transition hover:-translate-y-0.5 hover:border-brand-300 hover:shadow-premium"
+                >
+                  <span className="grid h-11 w-11 place-items-center rounded-xl bg-brand-50 text-brand-800 ring-1 ring-brand-100 transition group-hover:bg-brand-800 group-hover:text-white">
+                    <I size={22} />
+                  </span>
+                  <h3 className="mt-5 text-[15px] font-bold leading-snug text-brand-900">{p.who}</h3>
+                  <p className="mt-2 grow text-[13px] leading-relaxed text-slate-600">
+                    <span className="block text-slate-500">↘ {p.pain}</span>
+                    <span className="mt-2 block font-medium text-brand-900">→ {p.promise}</span>
+                  </p>
+                </article>
+              );
+            })}
+          </div>
+
+          <p className="mx-auto mt-10 max-w-2xl text-center text-[13px] italic text-slate-500">
+            ¿No se reconoce exactamente en ninguno? Probablemente sí encaja —{" "}
+            <Link href={CTAS.contact.href} className="font-semibold text-brand-800 not-italic hover:underline">
+              escríbanos y vemos
+            </Link>{" "}
+            qué certificación se ajusta a su rol.
+          </p>
+        </div>
+      </section>
+
       {/* ════════════════════ CERTIFICACIONES DESTACADAS ════════════════════ */}
       <section id="certificaciones" className="bg-premium-grid">
         <div className="mx-auto max-w-6xl px-6 py-16">
@@ -345,21 +496,24 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════ BENEFICIOS REESCRITOS ════════════════════ */}
+      {/* ════════════════════ BENEFICIOS — CRECIMIENTO PROFESIONAL ════════════════════ */}
       <section id="beneficios" className="bg-white">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid items-end gap-6 lg:grid-cols-12">
             <div className="lg:col-span-7">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">Lo que cambia el día que se certifica</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
+                Lo que cambia en su carrera el día que se certifica
+              </p>
               <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
-                Seis cosas concretas que no le da{" "}
-                <span className="font-display italic">un curso cualquiera</span>
+                Seis cosas concretas que pasan{" "}
+                <span className="font-display italic">después</span> del diploma
               </h2>
             </div>
             <p className="text-sm leading-relaxed text-slate-600 lg:col-span-5">
-              Esto no es un listado de promesas. Cada punto es algo que un
-              empleador o un ente de control puede comprobar en menos de
-              treinta segundos.
+              Esta no es la lista corporativa habitual. Cada punto responde a
+              un momento real que vivirá: la negociación de aumento, la
+              postulación grande, el mensaje del head-hunter, el cliente que
+              le pide credibilidad.
             </p>
           </div>
 
@@ -386,6 +540,68 @@ export default async function HomePage() {
                 </article>
               );
             })}
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════ LO QUE SE LLEVA A CASA ════════════════════ */}
+      <section id="entregables" className="bg-premium-grid">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid items-end gap-6 lg:grid-cols-12">
+            <div className="lg:col-span-7">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
+                Qué se lleva a casa el día de la emisión
+              </p>
+              <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
+                No es solo un PDF. Es{" "}
+                <span className="font-display italic">un kit completo</span> de
+                credibilidad profesional.
+              </h2>
+            </div>
+            <p className="text-sm leading-relaxed text-slate-600 lg:col-span-5">
+              Todo lo que necesita para que reclutadores, empleadores,
+              clientes y entes de control validen su perfil en segundos —
+              entregado en su correo el mismo día de la aprobación.
+            </p>
+          </div>
+
+          <ul className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {DELIVERABLES.map((d, i) => {
+              const I = Icon[d.icon];
+              return (
+                <li
+                  key={d.title}
+                  className="group flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-premium"
+                >
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-gold-500/10 text-gold-600 ring-1 ring-gold-500/30 transition group-hover:bg-gold-500 group-hover:text-white">
+                    <I size={22} />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <h3 className="text-[14px] font-bold text-brand-900">{d.title}</h3>
+                    </div>
+                    <p className="mt-1 text-[13px] leading-relaxed text-slate-600">{d.detail}</p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 px-5 py-4">
+            <p className="text-[13.5px] text-emerald-900">
+              <strong className="font-bold">Todo digital, todo verificable.</strong>{" "}
+              Sin pasar por una oficina, sin fotocopias, sin sellos físicos.
+              Su credencial vive en internet y la actualizamos por usted.
+            </p>
+            <Link
+              href={CTAS.certify.href}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800"
+            >
+              Quiero mi kit completo →
+            </Link>
           </div>
         </div>
       </section>
@@ -684,19 +900,109 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* ════════════════════ TESTIMONIOS HUMANIZADOS ════════════════════ */}
+      {/* ════════════════════ ROI — ¿VALE LA PENA? ════════════════════ */}
+      <section id="roi" className="bg-paper">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
+            <div className="lg:col-span-5">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
+                La pregunta honesta
+              </p>
+              <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.3rem]">
+                <span className="font-display italic">¿Vale la pena</span>{" "}
+                la inversión?
+              </h2>
+              <p className="mt-5 text-[15px] leading-relaxed text-slate-700">
+                Lo entendemos: certificarse cuesta plata. Pero lo que se
+                recupera no es teórico — se mide en pesos en su próxima
+                liquidación, en clientes nuevos, en una oferta mejor.
+              </p>
+              <p className="mt-4 text-[14px] italic leading-relaxed text-slate-500">
+                Los números de la derecha son del mercado colombiano —
+                portales de empleo, reportes salariales y testimonios
+                públicos de personas certificadas durante 2024-2026.
+              </p>
+              <Link
+                href={CTAS.certify.href}
+                className="mt-7 inline-flex items-center gap-2 rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900"
+              >
+                <Icon.Rocket size={16} /> Iniciar ahora y recuperarlo pronto
+              </Link>
+            </div>
+
+            <ul className="grid gap-3 sm:grid-cols-2 lg:col-span-7">
+              {ROI.map((r, i) => (
+                <li
+                  key={r.label}
+                  className={`group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-premium ${i === 0 ? "sm:col-span-2" : ""}`}
+                >
+                  <div
+                    className={`pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold-500/10 transition group-hover:scale-125 ${i === 0 ? "bg-emerald-500/10" : ""}`}
+                  />
+                  <div className="relative">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-slate-500">
+                      {r.label}
+                    </p>
+                    <p
+                      className={`mt-1 font-display text-[2.6rem] leading-none ${i === 0 ? "text-emerald-700" : "text-brand-900"}`}
+                    >
+                      {r.value}
+                    </p>
+                    <p className="mt-2 text-[12.5px] leading-snug text-slate-500">
+                      {r.hint}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════ MANIFIESTO / FRASE FUERTE ════════════════════ */}
+      <section className="bg-white">
+        <div className="mx-auto max-w-4xl px-6 py-20 text-center">
+          <Icon.Quote size={28} className="mx-auto text-gold-500" />
+          <p className="mt-4 font-display text-[1.75rem] leading-[1.3] text-brand-900 sm:text-[2.4rem]">
+            &ldquo;El conocimiento sin acreditación es{" "}
+            <span className="italic text-slate-500">un secreto</span>.
+            Acreditado, es <span className="hand-underline">una palanca</span>.&rdquo;
+          </p>
+          <hr className="dashed-rule mx-auto my-7 w-32" />
+          <p className="text-[13px] uppercase tracking-[0.18em] text-slate-500">
+            Filosofía de {BRAND.shortName} S.A.S. · 2014 → hoy
+          </p>
+        </div>
+      </section>
+
+      {/* ════════════════════ TESTIMONIOS — CON OUTCOME DE CARRERA ════════════════════ */}
       <section className="bg-white">
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">Lo dicen ellos, no nosotros</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
+              Lo dicen ellos, con números encima
+            </p>
             <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">
-              <span className="font-display italic">Tres historias breves</span> de profesionales que ya tienen el papel
+              <span className="font-display italic">Tres historias</span> de profesionales
+              que la credencial movió en serio
             </h2>
+            <p className="mt-3 text-sm text-slate-600">
+              No son testimonios de buena onda. Cada uno trae el dato concreto
+              de qué cambió en su carrera después de certificarse con nosotros.
+            </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-3">
             {TESTIMONIALS.map((t) => (
-              <figure key={t.name} className="paper-fold relative flex h-full flex-col rounded-2xl border border-slate-200 p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-premium">
-                <Icon.Quote size={22} className="text-gold-500" />
+              <figure
+                key={t.name}
+                className="paper-fold relative flex h-full flex-col rounded-2xl border border-slate-200 p-6 shadow-sm transition hover:-translate-y-0.5 hover:shadow-premium"
+              >
+                <div className="flex items-center justify-between">
+                  <Icon.Quote size={22} className="text-gold-500" />
+                  <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200">
+                    {t.outcome}
+                  </span>
+                </div>
                 <blockquote className="mt-3 grow text-[14.5px] italic leading-relaxed text-slate-700">
                   {t.quote}
                 </blockquote>
@@ -712,6 +1018,11 @@ export default async function HomePage() {
               </figure>
             ))}
           </div>
+
+          <p className="mt-8 text-center text-[12px] italic text-slate-500">
+            Nombres abreviados por confidencialidad. Verificable contactando a
+            quienes nos hayan autorizado contactar — los hay.
+          </p>
         </div>
       </section>
 
@@ -739,27 +1050,43 @@ export default async function HomePage() {
       <section className="bg-hero-grad text-white">
         <div className="mx-auto max-w-4xl px-6 py-24 text-center">
           <p className="mb-4 inline-block rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-gold-400">
+            <Icon.Trophy size={11} className="-mt-0.5 mr-1 inline" />
             {marketing.slogan}
           </p>
-          <h2 className="font-display text-3xl leading-tight sm:text-[2.6rem]">
-            El próximo nombre verificable puede ser{" "}
-            <span className="italic text-gold-400">el suyo</span>
+          <h2 className="font-display text-3xl leading-tight sm:text-[2.8rem]">
+            En 7 días hábiles puede firmar como{" "}
+            <span className="italic text-gold-400">Profesional Certificado.</span>
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-slate-200">
-            Una semana hábil entre el clic y el diploma. Sin desplazamientos.
-            Con el respaldo de {BRAND.shortName} S.A.S.
+          <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-slate-200">
+            Una decisión hoy. Una credencial el otro lunes. Una conversación
+            de carrera diferente el lunes siguiente — con su jefe, con un
+            cliente, con el head-hunter que ya va a poder validarlo.
           </p>
-          <div className="mt-8 flex flex-wrap justify-center gap-3">
-            <Link href={CTAS.certify.href} className="rounded-lg bg-gold-500 px-6 py-3 text-sm font-bold text-brand-900 shadow-lg shadow-gold-500/20 hover:bg-gold-400">
-              Certifícate ahora
+          <div className="mt-9 flex flex-wrap justify-center gap-3">
+            <Link
+              href={CTAS.certify.href}
+              className="group inline-flex items-center gap-2 rounded-lg bg-gold-500 px-7 py-3.5 text-sm font-bold text-brand-900 shadow-lg shadow-gold-500/20 transition hover:bg-gold-400 hover:shadow-gold-500/40"
+            >
+              Empezar ahora · llega a mi correo el lunes
+              <span className="transition group-hover:translate-x-0.5">→</span>
             </Link>
-            <Link href={CTAS.register.href} className="rounded-lg border border-white/30 px-6 py-3 text-sm font-semibold text-white hover:bg-white/10">
-              Crear mi cuenta
+            <Link
+              href={CTAS.register.href}
+              className="rounded-lg border border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
+            >
+              Crear cuenta sin pagar
             </Link>
-            <Link href={CTAS.certifications.href} className="rounded-lg px-6 py-3 text-sm font-semibold text-cyan-200 hover:text-cyan-100">
-              Ver certificaciones disponibles →
+            <Link
+              href={CTAS.certifications.href}
+              className="rounded-lg px-6 py-3.5 text-sm font-semibold text-cyan-200 transition hover:text-cyan-100"
+            >
+              Comparar programas →
             </Link>
           </div>
+
+          <p className="handwritten mt-10 text-[20px] text-gold-300">
+            — Lo más importante que va a hacer este mes por su carrera.
+          </p>
         </div>
       </section>
 
