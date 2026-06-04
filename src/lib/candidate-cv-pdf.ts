@@ -41,7 +41,6 @@ const COLOR_LIGHT_BG = rgb(0.95, 0.97, 1);
 const COLOR_RULE = rgb(0.85, 0.88, 0.94);
 const COLOR_HEADER_BG = rgb(0.992, 0.984, 0.957); // #fdfbf4 crema MUY claro
 const COLOR_HEADER_LINE = rgb(0.784, 0.604, 0.208); // dorada
-const COLOR_AMBER = rgb(0.85, 0.50, 0.05);
 
 interface Cursor { page: PDFPage; y: number }
 
@@ -132,66 +131,170 @@ function _drawText(
   return cy + opts.size * 1.3 - opts.size * 1.3 * lines.length; // not strictly used by callers; return final y consumed
 }
 
-/// Encabezado claro y limpio para la portada: fondo crema, franja dorada
-/// inferior, logo del suscriptor a la izquierda, título centrado, badge
-/// ONAC a la derecha. Mantenido en tonos claros para que se vea
-/// correctamente cualquier logotipo (incluido el de RISKS, que es oscuro).
+// Colores de marca ONAC oficiales (extraídos del logotipo real):
+//   – Azul ONAC (texto "ONAC")         #142b6f → rgb(0.078, 0.169, 0.435)
+//   – Turquesa anillo                    #1ab4ad → rgb(0.102, 0.706, 0.678)
+//   – Gris subtítulo                     #4a4a4a → rgb(0.290, 0.290, 0.290)
+const ONAC_BLUE   = rgb(0.078, 0.169, 0.435);
+const ONAC_TURQ   = rgb(0.102, 0.706, 0.678);
+const ONAC_GREY   = rgb(0.290, 0.290, 0.290);
+
+/// Layout de 3 zonas con anchos calculados:
+///   ┌─ logo (84px) ─┬───── título centrado ─────┬─ badge ONAC (148px) ─┐
+/// El badge ONAC queda justificado a la derecha con un colchón de 4px
+/// respecto al margen y NUNCA invade la zona del título: si el título es
+/// muy largo, su tamaño de fuente se reduce automáticamente para encajar.
 function drawHeader(
   page: PDFPage,
   fonts: Fonts,
   opts: { orgName: string; subscriberLogoImg: import("pdf-lib").PDFImage | null; title: string; subtitle?: string },
 ): void {
   const headerH = 110;
+  const ONAC_W = 148;
+  const ONAC_H = 78;
+  const LOGO_W = 84;
+  const GAP = 18;
+
   page.drawRectangle({ x: 0, y: PAGE_H - headerH, width: PAGE_W, height: headerH, color: COLOR_HEADER_BG });
   page.drawRectangle({ x: 0, y: PAGE_H - headerH - 3, width: PAGE_W, height: 3, color: COLOR_HEADER_LINE });
 
-  // Logo del suscriptor (izquierda)
-  let leftCursor = MARGIN;
+  // ── Zona izquierda: logo del suscriptor ───────────────────────────────
+  let textStartX = MARGIN;
   if (opts.subscriberLogoImg) {
-    const W = 84;
-    const H = Math.min(70, (opts.subscriberLogoImg.height / opts.subscriberLogoImg.width) * W);
-    page.drawImage(opts.subscriberLogoImg, { x: MARGIN, y: PAGE_H - 22 - H, width: W, height: H });
-    leftCursor = MARGIN + W + 18;
-  }
-  // Texto principal
-  page.drawText(opts.title.toUpperCase(), { x: leftCursor, y: PAGE_H - 50, size: 18, font: fonts.bold, color: COLOR_NAVY });
-  page.drawText(opts.orgName, { x: leftCursor, y: PAGE_H - 68, size: 10, font: fonts.bold, color: COLOR_GOLD });
-  if (opts.subtitle) {
-    page.drawText(opts.subtitle, { x: leftCursor, y: PAGE_H - 82, size: 8.5, font: fonts.italic, color: COLOR_GREY });
+    const H = Math.min(70, (opts.subscriberLogoImg.height / opts.subscriberLogoImg.width) * LOGO_W);
+    page.drawImage(opts.subscriberLogoImg, {
+      x: MARGIN,
+      y: PAGE_H - 22 - H,
+      width: LOGO_W,
+      height: H,
+    });
+    textStartX = MARGIN + LOGO_W + GAP;
   }
 
-  // Badge ONAC a la derecha
-  drawOnacBadge(page, fonts, { x: PAGE_W - MARGIN - 150, y: PAGE_H - 90, w: 150, h: 70 });
+  // ── Zona derecha: badge ONAC justificado a la derecha (no tapa nada) ──
+  const onacX = PAGE_W - MARGIN - ONAC_W;
+  const onacY = PAGE_H - 22 - ONAC_H;
+  drawOnacBadge(page, fonts, { x: onacX, y: onacY, w: ONAC_W, h: ONAC_H });
+
+  // ── Zona central: título + organismo + subtítulo ──────────────────────
+  // Ancho disponible = entre el logo y el badge ONAC, con margen de seguridad.
+  const SAFE = 16; // colchón visual contra el badge ONAC
+  const availableW = onacX - textStartX - SAFE;
+
+  // Title con tamaño dinámico para encajar en availableW
+  const title = opts.title.toUpperCase();
+  let titleSize = 18;
+  while (titleSize > 12 && fonts.bold.widthOfTextAtSize(title, titleSize) > availableW) {
+    titleSize -= 0.5;
+  }
+  page.drawText(title, {
+    x: textStartX, y: PAGE_H - 48, size: titleSize, font: fonts.bold, color: COLOR_NAVY,
+  });
+
+  // Organismo en una sola línea (también con tamaño autoajustado)
+  let orgSize = 10;
+  while (orgSize > 7 && fonts.bold.widthOfTextAtSize(opts.orgName, orgSize) > availableW) {
+    orgSize -= 0.5;
+  }
+  page.drawText(opts.orgName, {
+    x: textStartX, y: PAGE_H - 64, size: orgSize, font: fonts.bold, color: COLOR_GOLD,
+  });
+
+  // Subtítulo: truncar con elipsis si excede el ancho disponible
+  if (opts.subtitle) {
+    let sub = opts.subtitle;
+    const subSize = 8;
+    while (sub.length > 8 && fonts.italic.widthOfTextAtSize(sub, subSize) > availableW) {
+      sub = sub.slice(0, -2);
+    }
+    if (sub !== opts.subtitle) sub = sub.replace(/[ .·-]*$/, "") + "…";
+    page.drawText(sub, {
+      x: textStartX, y: PAGE_H - 80, size: subSize, font: fonts.italic, color: COLOR_GREY,
+    });
+  }
 }
 
-/// Badge ONAC dibujado con primitivas (sin SVG): círculo azul + media luna
-/// turquesa que evoca el logo + leyenda "EN PROCESO DE ACREDITACIÓN ONAC".
-/// Hecho con primitivas para garantizar nitidez en cualquier resolución y
-/// no depender de assets en runtime.
+/// Badge ONAC dibujado con primitivas siguiendo el LOGO OFICIAL:
+///   ┌─ caja blanca con borde dorado ──────────────┐
+///   │  [ ◯ ] EN PROCESO DE                        │
+///   │  ONAC ACREDITACIÓN ONAC                     │
+///   │  ─────────────────────                      │
+///   │  ORGANISMO NACIONAL DE                      │
+///   │  ACREDITACIÓN DE COLOMBIA                   │
+///   └────────────────────────────────────────────┘
+/// El logotipo se reconstruye con primitivas:
+///   – anillo exterior azul ONAC (#142b6f)
+///   – corona/media luna turquesa (#1ab4ad) que recorta el anillo
+///   – círculo interior blanco para definir el grosor del anillo
+///   – tipografía ONAC bold (Helvetica Bold) ajustada con tracking
 function drawOnacBadge(
   page: PDFPage,
   fonts: Fonts,
   box: { x: number; y: number; w: number; h: number },
 ): void {
+  // Caja contenedora con borde dorado sutil y ligera sombra interior
   page.drawRectangle({
     x: box.x, y: box.y, width: box.w, height: box.h,
     color: rgb(1, 1, 1),
-    borderColor: COLOR_AMBER, borderWidth: 1,
+    borderColor: COLOR_HEADER_LINE, borderWidth: 0.8,
   });
-  // Círculo azul ONAC con anillo turquesa (estilizado)
-  const cx = box.x + 22, cy = box.y + box.h / 2, r = 14;
-  page.drawCircle({ x: cx, y: cy, size: r, color: rgb(1, 1, 1), borderColor: rgb(0.07, 0.39, 0.69), borderWidth: 3 });
-  page.drawCircle({ x: cx + 6, y: cy + 2, size: r * 0.65, color: rgb(0.07, 0.69, 0.68) });
-  page.drawCircle({ x: cx + 6, y: cy + 2, size: r * 0.50, color: rgb(1, 1, 1) });
-  page.drawText("ONAC", { x: cx - 11, y: cy - 3, size: 7, font: fonts.bold, color: rgb(0.07, 0.39, 0.69) });
+  // Pequeña franja dorada arriba para coronar el badge
+  page.drawRectangle({
+    x: box.x, y: box.y + box.h - 3, width: box.w, height: 3, color: COLOR_HEADER_LINE,
+  });
 
-  // Leyenda
-  const tx = box.x + 44;
-  page.drawText("EN PROCESO DE", { x: tx, y: box.y + box.h - 18, size: 8, font: fonts.bold, color: COLOR_AMBER });
-  page.drawText("ACREDITACIÓN", { x: tx, y: box.y + box.h - 28, size: 8, font: fonts.bold, color: COLOR_AMBER });
-  page.drawRectangle({ x: tx, y: box.y + 22, width: box.w - 48, height: 1, color: COLOR_AMBER });
-  page.drawText("ORGANISMO NACIONAL DE", { x: tx, y: box.y + 13, size: 5, font: fonts.bold, color: COLOR_GREY });
-  page.drawText("ACREDITACIÓN DE COLOMBIA", { x: tx, y: box.y + 6, size: 5, font: fonts.bold, color: COLOR_GREY });
+  // ─── Logo ONAC (primitivas) ─────────────────────────────────────────
+  // Posición y tamaño del logo dentro de la caja
+  const LOGO_BOX = { x: box.x + 8, y: box.y + 10, w: 56, h: 58 };
+  const cx = LOGO_BOX.x + LOGO_BOX.w / 2;
+  const cy = LOGO_BOX.y + 40;
+  const R_OUTER = 13;        // radio exterior anillo azul
+  const R_INNER = 9.5;       // radio del corte blanco (define grosor del anillo)
+  const R_TURQ  = 12;        // radio de la corona turquesa
+  const R_TURQ_INNER = 8.8;  // radio del corte interior turquesa
+
+  // Anillo azul exterior
+  page.drawCircle({ x: cx, y: cy, size: R_OUTER, color: ONAC_BLUE });
+  // Recorte interior blanco que deja un aro azul de ~3.5pt de grosor
+  page.drawCircle({ x: cx, y: cy, size: R_INNER, color: rgb(1, 1, 1) });
+  // Corona/media luna turquesa: dibujamos un círculo turquesa desplazado a
+  // la derecha y luego recortamos con un círculo blanco interno.
+  page.drawCircle({ x: cx + 3.5, y: cy + 1.2, size: R_TURQ, color: ONAC_TURQ });
+  page.drawCircle({ x: cx + 5.5, y: cy + 2.4, size: R_TURQ_INNER, color: rgb(1, 1, 1) });
+
+  // Texto "ONAC" debajo del símbolo, centrado
+  const onacText = "ONAC";
+  const onacSize = 11;
+  const onacW = fonts.bold.widthOfTextAtSize(onacText, onacSize);
+  page.drawText(onacText, {
+    x: cx - onacW / 2, y: LOGO_BOX.y + 8, size: onacSize, font: fonts.bold, color: ONAC_BLUE,
+  });
+  // Subtítulo del logo en dos líneas pequeñas
+  const subA = "ORGANISMO NACIONAL DE";
+  const subB = "ACREDITACIÓN DE COLOMBIA";
+  const subSize = 3.4;
+  const subAW = fonts.bold.widthOfTextAtSize(subA, subSize);
+  const subBW = fonts.bold.widthOfTextAtSize(subB, subSize);
+  page.drawText(subA, { x: cx - subAW / 2, y: LOGO_BOX.y + 3, size: subSize, font: fonts.bold, color: ONAC_GREY });
+  page.drawText(subB, { x: cx - subBW / 2, y: LOGO_BOX.y - 1, size: subSize, font: fonts.bold, color: ONAC_GREY });
+
+  // ─── Leyenda "EN PROCESO DE ACREDITACIÓN" a la derecha del logo ──────
+  const tx = LOGO_BOX.x + LOGO_BOX.w + 8;
+  const tw = box.w - (LOGO_BOX.w + 16);
+  // Dos líneas en navy uppercase + separador dorado + dos líneas en gris
+  const legSize = 7;
+  const lineH = legSize + 2;
+  let ly = box.y + box.h - 14;
+  page.drawText("EN PROCESO DE", { x: tx, y: ly, size: legSize, font: fonts.bold, color: ONAC_BLUE });
+  ly -= lineH;
+  page.drawText("ACREDITACIÓN", { x: tx, y: ly, size: legSize, font: fonts.bold, color: ONAC_BLUE });
+  ly -= 6;
+  page.drawRectangle({ x: tx, y: ly, width: Math.min(tw, 70), height: 0.6, color: COLOR_HEADER_LINE });
+  ly -= 8;
+  const sub2Size = 5;
+  page.drawText("ORGANISMO NACIONAL DE", { x: tx, y: ly, size: sub2Size, font: fonts.bold, color: ONAC_GREY });
+  ly -= sub2Size + 1;
+  page.drawText("ACREDITACIÓN DE COLOMBIA", { x: tx, y: ly, size: sub2Size, font: fonts.bold, color: ONAC_GREY });
 }
 
 function sectionTitle(cursor: Cursor, title: string, fonts: Fonts): Cursor {
