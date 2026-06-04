@@ -6,6 +6,7 @@ import { NotificationBellServer } from "@/components/notification-bell-server";
 import { OnacBadge } from "@/components/onac-badge";
 import { LegalTimeCO } from "@/components/legal-time-co";
 import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
+import { FeedbackButton } from "@/components/feedback-button";
 
 const APP_NAME = "CIOC";
 const APP_LONG = "Certificado de Idoneidad como Oficial de Cumplimiento";
@@ -95,6 +96,8 @@ export function DashboardShell({
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
       </div>
+      {/* Botón flotante global de Feedback (lateral derecho, no tapa WhatsApp) */}
+      <FeedbackButton authenticated initialName={user.name} />
     </div>
   );
 }

@@ -299,6 +299,7 @@ model Subscriber {
   users              User[]
   roles              Role[]
   candidates         Candidate[]
+  feedbackTickets    FeedbackTicket[]
   schemes            CertificationScheme[]
   programs           Program[]
   competencies       Competency[]
@@ -374,9 +375,10 @@ model User {
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  candidate     Candidate?
-  notifications Notification[]
-  sessions      Session[]
+  candidate       Candidate?
+  notifications   Notification[]
+  sessions        Session[]
+  feedbackTickets FeedbackTicket[]
 
   @@unique([email, subscriberId])
   @@index([subscriberId])
@@ -1313,4 +1315,73 @@ enum ReferralStatus {
   CONFIRMED    // Payment APPROVED — el referidor ya gana recompensa
   PAID         // Recompensa pagada al referidor
   CANCELLED    // El enrollment fue cancelado/rechazado
+}
+
+// ─── Feedback de usuarios (tickets para SUPERADMIN) ─────────────────────
+/// Ticket de feedback enviado por cualquier usuario (suscriptor, candidato,
+/// visitante anónimo del sitio público) al SUPERADMIN. Cubre sugerencias,
+/// mejoras, ideas de desarrollo, reportes de bugs y felicitaciones. Cada
+/// envío crea un ticket nuevo con su propio estado y conversación.
+model FeedbackTicket {
+  id             String          @id @default(cuid())
+  number         Int             @unique @default(autoincrement())
+  // Quién envía (todo opcional para soportar feedback público)
+  subscriberId   String?
+  subscriber     Subscriber?     @relation(fields: [subscriberId], references: [id], onDelete: SetNull)
+  userId         String?
+  user           User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
+  authorName     String          // capturado del User o del formulario público
+  authorEmail    String          // ídem
+  authorRole     String?         // "SUBSCRIBER" | "CANDIDATE" | "PLATFORM" | "VISITOR"
+  // Contenido
+  category       FeedbackCategory @default(SUGGESTION)
+  priority       FeedbackPriority @default(NORMAL)
+  status         FeedbackStatus   @default(OPEN)
+  title          String
+  message        String          @db.Text
+  /// Claves de storage de los archivos adjuntos (capturas, fotos). Hasta 5.
+  attachments    String[]        @default([])
+  /// Página desde donde se envió (ayuda al equipo a entender contexto).
+  contextUrl     String?
+  userAgent      String?
+  ip             String?
+  // Respuesta del SUPERADMIN (sólo una iteración por ahora; los comentarios
+  // adicionales pueden añadirse vía AuditLog/notas internas)
+  response       String?         @db.Text
+  respondedAt    DateTime?
+  respondedById  String?
+  // Notas internas del equipo (no visibles al autor)
+  internalNotes  String?         @db.Text
+  closedAt       DateTime?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([status])
+  @@index([category])
+  @@index([subscriberId])
+  @@index([userId])
+}
+
+enum FeedbackCategory {
+  SUGGESTION       // sugerencia
+  IMPROVEMENT      // aspecto por mejorar
+  DEVELOPMENT      // idea de desarrollo / feature
+  BUG              // reporte de error
+  PRAISE           // felicitación
+  OTHER            // otro
+}
+
+enum FeedbackPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum FeedbackStatus {
+  OPEN             // recibido, sin atender
+  IN_REVIEW        // SUPERADMIN lo está revisando
+  IN_PROGRESS      // tomado, en desarrollo / atención
+  RESOLVED         // resuelto (respondido)
+  CLOSED           // cerrado sin acción
 }

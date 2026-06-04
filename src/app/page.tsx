@@ -11,6 +11,7 @@ import { HeroMicroForm } from "@/components/landing/hero-micro-form";
 import { GuaranteesSection } from "@/components/landing/guarantees-section";
 import { ExamPreview } from "@/components/landing/exam-preview";
 import { WhatsAppFloat } from "@/components/landing/whatsapp-float";
+import { FeedbackButton } from "@/components/feedback-button";
 import { MobileStickyCTA } from "@/components/landing/mobile-sticky-cta";
 import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
 import { getMarketingConfig } from "@/lib/marketing-config";
@@ -450,6 +451,7 @@ export default async function HomePage() {
 
       {/* Componentes flotantes globales */}
       <WhatsAppFloat />
+      <FeedbackButton authenticated={false} />
       <MobileStickyCTA />
 
       {/* Schema markup: Organization */}

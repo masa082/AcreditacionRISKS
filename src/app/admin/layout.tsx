@@ -11,6 +11,7 @@ const NAV: NavItem[] = [
   { href: "/admin/tarifas", label: "Tarifas y precios", group: "SaaS", icon: "💲" },
 
   // PLATAFORMA ─ operación y trazabilidad global
+  { href: "/admin/feedback", label: "Feedback de usuarios", group: "Plataforma", icon: "💬" },
   { href: "/admin/logs", label: "Logs globales", group: "Plataforma", icon: "🗂" },
 
   // CONFIGURACIÓN
