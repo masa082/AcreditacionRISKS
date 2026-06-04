@@ -196,3 +196,67 @@ export async function upsertPlan(
   revalidatePath("/admin/planes");
   return { ok: true };
 }
+
+// ─── Rapyd: el SUPERADMIN puede editar las claves de cualquier suscriptor ──
+const rapydPlatformSchema = z.object({
+  subscriberId: z.string().min(5),
+  rapydEnabled: z.boolean(),
+  rapydEnv: z.enum(["sandbox", "production"]),
+  rapydAccessKey: z.string().max(120).optional().nullable(),
+  rapydSecretKey: z.string().max(400).optional().nullable(),
+  rapydMerchantNote: z.string().max(200).optional().nullable(),
+});
+
+/// SUPERADMIN configura las claves Rapyd de cualquier suscriptor.
+/// Misma semántica que la versión del lado del propio suscriptor:
+/// si la nueva secret viene vacía, se conserva la existente.
+export async function updateRapydConfigForSubscriber(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const ctx = await requirePlatformAction(PERMISSIONS.SUBSCRIBER_MANAGE);
+  const parsed = rapydPlatformSchema.safeParse({
+    subscriberId: formData.get("subscriberId"),
+    rapydEnabled: formData.get("rapydEnabled") === "on",
+    rapydEnv: (formData.get("rapydEnv") as string) || "sandbox",
+    rapydAccessKey: clean(formData.get("rapydAccessKey")),
+    rapydSecretKey: clean(formData.get("rapydSecretKey")),
+    rapydMerchantNote: clean(formData.get("rapydMerchantNote")),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const d = parsed.data;
+
+  const current = await prisma.subscriber.findUnique({
+    where: { id: d.subscriberId },
+    select: { rapydAccessKey: true, rapydSecretKey: true, rapydEnabled: true, rapydEnv: true },
+  });
+  if (!current) return { ok: false, error: "Suscriptor no encontrado." };
+
+  const nextSecret = d.rapydSecretKey ?? current.rapydSecretKey ?? null;
+  const nextAccess = d.rapydAccessKey ?? current.rapydAccessKey ?? null;
+
+  if (d.rapydEnabled && (!nextAccess || !nextSecret)) {
+    return { ok: false, error: "Para activar Rapyd se requieren ambas claves." };
+  }
+
+  await prisma.subscriber.update({
+    where: { id: d.subscriberId },
+    data: {
+      rapydEnabled: d.rapydEnabled,
+      rapydEnv: d.rapydEnv,
+      rapydAccessKey: nextAccess,
+      rapydSecretKey: nextSecret,
+      rapydMerchantNote: d.rapydMerchantNote,
+    },
+  });
+  await audit(ctx, {
+    action: "platform.rapyd.update",
+    entity: "Subscriber",
+    entityId: d.subscriberId,
+    subscriberId: d.subscriberId,
+    before: { rapydEnabled: current.rapydEnabled, rapydEnv: current.rapydEnv, rapydAccessKey: current.rapydAccessKey },
+    after: { rapydEnabled: d.rapydEnabled, rapydEnv: d.rapydEnv, rapydAccessKey: nextAccess, secretChanged: !!d.rapydSecretKey },
+  });
+  revalidatePath(`/admin/suscriptores/${d.subscriberId}`);
+  return { ok: true, message: "Configuración Rapyd actualizada." };
+}

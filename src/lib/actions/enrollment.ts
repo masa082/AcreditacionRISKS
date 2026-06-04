@@ -278,8 +278,30 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     ? lines.map((l) => l.label).join(" + ")
     : "Inscripción a evaluación";
 
-  const providerEnv = (process.env.PAYMENT_PROVIDER || "manual").toLowerCase();
+  // Resolución del proveedor de pago en orden de prioridad:
+  //   1. Cubierto por pago previo del mismo programa → "internal", APPROVED.
+  //   2. Suscriptor con Rapyd habilitado y claves configuradas → "rapyd"
+  //      (PENDING + crear Hosted Checkout + redirigir al candidato).
+  //   3. Variable de entorno PAYMENT_PROVIDER (mock / manual / wompi / payu).
+  const subscriberPayment = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: {
+      country: true,
+      rapydEnabled: true,
+      rapydAccessKey: true,
+      rapydSecretKey: true,
+      rapydEnv: true,
+    },
+  });
+  const subscriberHasRapyd = !!(
+    subscriberPayment?.rapydEnabled &&
+    subscriberPayment.rapydAccessKey &&
+    subscriberPayment.rapydSecretKey
+  );
+  const envProvider = (process.env.PAYMENT_PROVIDER || "manual").toLowerCase();
+  const providerEnv = subscriberHasRapyd ? "rapyd" : envProvider;
   const isMock = providerEnv === "mock";
+  const isRapyd = providerEnv === "rapyd";
   const isCovered = !!coveredBy;
 
   // Aplicación de descuento por código de referido.
@@ -363,6 +385,63 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
   revalidatePath("/portal/pagos");
   revalidatePath("/panel/pagos");
   revalidatePath("/panel/referidos");
+
+  // Si el proveedor activo es Rapyd y el Payment quedó PENDING, intentamos
+  // abrir el Hosted Checkout y redirigimos al candidato. Si Rapyd responde
+  // con error (claves inválidas, monto fuera de rango, etc.) dejamos el
+  // Payment como PENDING y mostramos la inscripción para reintentar.
+  if (isRapyd && status === "PENDING" && amount.greaterThan(0) && subscriberHasRapyd) {
+    const { createRapydCheckout } = await import("@/lib/payments/rapyd");
+    const env = {
+      accessKey: subscriberPayment!.rapydAccessKey as string,
+      secretKey: subscriberPayment!.rapydSecretKey as string,
+      env: (subscriberPayment!.rapydEnv === "production" ? "production" : "sandbox") as "sandbox" | "production",
+      baseUrl:
+        subscriberPayment!.rapydEnv === "production"
+          ? "https://api.rapyd.net"
+          : "https://sandboxapi.rapyd.net",
+    };
+    const { appBaseUrl } = await import("@/lib/app-url");
+    const base = appBaseUrl();
+    const checkout = await createRapydCheckout({
+      env,
+      amount: Number(amount.toString()),
+      currency,
+      country: subscriberPayment?.country ?? "CO",
+      merchantReferenceId: payment.id,
+      completeUrl: `${base}/portal/inscripcion/${enrollmentId}?rapyd=ok`,
+      cancelUrl: `${base}/portal/inscripcion/${enrollmentId}?rapyd=cancel`,
+      description: description.slice(0, 80),
+    });
+    if ("redirectUrl" in checkout) {
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          provider: "rapyd",
+          providerRef: checkout.id,
+          metadata: {
+            ...(payment.metadata as Prisma.JsonObject | null) ?? {},
+            rapyd: { checkoutId: checkout.id, redirectUrl: checkout.redirectUrl, env: env.env },
+          } as Prisma.InputJsonValue,
+        },
+      });
+      // Redirige al candidato al Hosted Checkout de Rapyd.
+      const { redirect } = await import("next/navigation");
+      redirect(checkout.redirectUrl);
+    } else {
+      // El cobro queda PENDING; el suscriptor lo verá en /panel/pagos para
+      // aprobarlo manualmente, y se registra el motivo de falla para soporte.
+      await prisma.payment.update({
+        where: { id: payment.id },
+        data: {
+          metadata: {
+            ...(payment.metadata as Prisma.JsonObject | null) ?? {},
+            rapydError: checkout.error,
+          } as Prisma.InputJsonValue,
+        },
+      });
+    }
+  }
 }
 
 // ----------------------------------------------------------------------------

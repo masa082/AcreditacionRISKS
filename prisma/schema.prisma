@@ -282,6 +282,17 @@ model Subscriber {
   // whatsapp, social proof, banner de urgencia, garantías, slogan y
   // datos bancarios visibles al candidato durante el flujo de pago manual.
   marketingConfig Json  @default("{}")
+  // ─── Pasarela de pagos Rapyd (por suscriptor) ──────────────────────────
+  // Cada organismo certificador puede tener su propia cuenta Rapyd. Las
+  // claves se editan SOLO por el ADMIN del suscriptor (permiso ORG_MANAGE)
+  // o por el SUPERADMIN de la plataforma. Si rapydEnabled = true y
+  // accessKey + secretKey están configuradas, el flujo de pago redirige al
+  // candidato a un Checkout de Rapyd y confirma el cobro vía webhook.
+  rapydEnabled    Boolean @default(false)
+  rapydEnv        String  @default("sandbox")   // "sandbox" | "production"
+  rapydAccessKey  String?
+  rapydSecretKey  String?
+  rapydMerchantNote String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

@@ -19,30 +19,53 @@ export const runtime = "nodejs"; // crypto + prisma
  *
  * URL pública: https://www.okacreditado.com/api/payments/rapyd/webhook
  *
- * Verifica la firma HMAC-SHA256 con RAPYD_SECRET_KEY antes de aceptar el
- * evento. Mapea PAYMENT_COMPLETED/FAILED/EXPIRED/REFUNDED a estados locales
- * de Payment y notifica al candidato.
+ * Resuelve la SECRET_KEY a usar para validar la firma así:
+ *   1. Si el `access_key` del header coincide con la clave de algún
+ *      Subscriber activo, se usa la `rapydSecretKey` de ese suscriptor.
+ *   2. Si no, se cae a las variables de entorno RAPYD_*.
+ *
+ * Esto permite que cada organismo certificador tenga su propia cuenta
+ * Rapyd con sus claves; el webhook funciona para todos sin reconfiguración.
  */
 export async function POST(req: Request) {
-  const env = getRapydEnv();
-  if (!env) {
-    // Sin claves configuradas: aceptamos la conexión pero no autenticamos.
-    // Esto permite probar el endpoint desde Rapyd dashboard antes de tener
-    // las credenciales en Vercel.
-    return new Response(JSON.stringify({ ok: false, reason: "RAPYD_ACCESS_KEY / RAPYD_SECRET_KEY no configurados todavía" }), {
-      status: 503,
-      headers: { "content-type": "application/json" },
-    });
-  }
-
   const h = await headers();
   const signature = h.get("signature") ?? "";
   const salt = h.get("salt") ?? "";
   const timestamp = h.get("timestamp") ?? "";
-  const accessKey = h.get("access_key") ?? env.accessKey;
+  const accessKey = h.get("access_key") ?? "";
 
   // Leemos el cuerpo crudo (la firma se calcula sobre el body exacto).
   const bodyText = await req.text();
+
+  // Resolvemos la clave secreta del suscriptor que firmó el webhook.
+  let secretKey: string | null = null;
+  let resolvedSubscriberId: string | null = null;
+  if (accessKey) {
+    const sub = await prisma.subscriber.findFirst({
+      where: { rapydAccessKey: accessKey, rapydEnabled: true },
+      select: { id: true, rapydSecretKey: true },
+    });
+    if (sub?.rapydSecretKey) {
+      secretKey = sub.rapydSecretKey;
+      resolvedSubscriberId = sub.id;
+    }
+  }
+  if (!secretKey) {
+    const env = getRapydEnv();
+    if (env && (!accessKey || accessKey === env.accessKey)) {
+      secretKey = env.secretKey;
+    }
+  }
+  if (!secretKey) {
+    return new Response(
+      JSON.stringify({
+        ok: false,
+        reason:
+          "access_key no reconocido. Configure las claves Rapyd del suscriptor en /panel/organizacion o las variables RAPYD_* del entorno.",
+      }),
+      { status: 401, headers: { "content-type": "application/json" } },
+    );
+  }
 
   // La URL que Rapyd usó para firmar debe ser la URL pública sin query.
   const proto = h.get("x-forwarded-proto") ?? "https";
@@ -56,13 +79,13 @@ export async function POST(req: Request) {
     timestamp,
     accessKey,
     body: bodyText,
-    secretKey: env.secretKey,
+    secretKey,
   });
   if (!valid) {
-    return new Response(JSON.stringify({ ok: false, reason: "firma inválida" }), {
-      status: 401,
-      headers: { "content-type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ ok: false, reason: "firma inválida", subscriberId: resolvedSubscriberId }),
+      { status: 401, headers: { "content-type": "application/json" } },
+    );
   }
 
   let event: RapydPaymentEvent;
@@ -183,11 +206,15 @@ export async function POST(req: Request) {
 // Health-check del webhook: permite a Rapyd validar la URL sin enviar evento.
 export async function GET() {
   const env = getRapydEnv();
+  const tenantsConfigured = await prisma.subscriber.count({
+    where: { rapydEnabled: true, rapydAccessKey: { not: null }, rapydSecretKey: { not: null } },
+  });
   return new Response(
     JSON.stringify({
       ok: true,
       service: "rapyd-webhook",
-      configured: !!env,
+      envConfigured: !!env,
+      tenantsConfigured,
     }),
     { status: 200, headers: { "content-type": "application/json" } },
   );

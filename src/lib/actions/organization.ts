@@ -207,3 +207,80 @@ export async function uploadOrgAsset(
   revalidatePath("/panel/organizacion");
   return { ok: true };
 }
+
+// ─── Configuración de la pasarela Rapyd por suscriptor ────────────────────
+const rapydSchema = z.object({
+  rapydEnabled: z.boolean(),
+  rapydEnv: z.enum(["sandbox", "production"]),
+  rapydAccessKey: z.string().max(120).optional().nullable(),
+  rapydSecretKey: z.string().max(400).optional().nullable(),
+  rapydMerchantNote: z.string().max(200).optional().nullable(),
+});
+
+/// Actualiza las credenciales Rapyd del suscriptor.
+///
+/// Solo lo puede invocar el admin del suscriptor (permiso ORG_MANAGE). El
+/// SUPERADMIN tiene una acción equivalente en /admin/suscriptores.
+///
+/// Si la secret key llega vacía y ya hay una guardada, conservamos la
+/// existente (la UI muestra solo los últimos 4 caracteres por seguridad).
+export async function updateRapydConfig(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.ORG_MANAGE);
+  const enabled = formData.get("rapydEnabled") === "on";
+  const parsed = rapydSchema.safeParse({
+    rapydEnabled: enabled,
+    rapydEnv: (formData.get("rapydEnv") as string) || "sandbox",
+    rapydAccessKey: clean(formData.get("rapydAccessKey")),
+    rapydSecretKey: clean(formData.get("rapydSecretKey")),
+    rapydMerchantNote: clean(formData.get("rapydMerchantNote")),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+
+  const current = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: { rapydAccessKey: true, rapydSecretKey: true, rapydEnabled: true, rapydEnv: true },
+  });
+
+  // Si el operador no escribió una nueva secret, conservamos la actual.
+  const nextSecret = parsed.data.rapydSecretKey ?? current?.rapydSecretKey ?? null;
+  const nextAccess = parsed.data.rapydAccessKey ?? current?.rapydAccessKey ?? null;
+
+  if (parsed.data.rapydEnabled && (!nextAccess || !nextSecret)) {
+    return { ok: false, error: "Para activar Rapyd debe proveer la Clave de acceso y la Clave secreta." };
+  }
+
+  await prisma.subscriber.update({
+    where: { id: subscriberId },
+    data: {
+      rapydEnabled: parsed.data.rapydEnabled,
+      rapydEnv: parsed.data.rapydEnv,
+      rapydAccessKey: nextAccess,
+      rapydSecretKey: nextSecret,
+      rapydMerchantNote: parsed.data.rapydMerchantNote,
+    },
+  });
+  await audit(ctx, {
+    action: "org.rapyd.update",
+    entity: "Subscriber",
+    entityId: subscriberId,
+    subscriberId,
+    before: {
+      rapydEnabled: current?.rapydEnabled,
+      rapydEnv: current?.rapydEnv,
+      // NUNCA loggeamos la secret en claro.
+      rapydAccessKey: current?.rapydAccessKey,
+    },
+    after: {
+      rapydEnabled: parsed.data.rapydEnabled,
+      rapydEnv: parsed.data.rapydEnv,
+      rapydAccessKey: nextAccess,
+      secretChanged: !!parsed.data.rapydSecretKey,
+    },
+  });
+  revalidatePath("/panel/organizacion");
+  revalidatePath(`/admin/suscriptores/${subscriberId}`);
+  return { ok: true, message: parsed.data.rapydEnabled ? "Rapyd activado." : "Configuración Rapyd guardada." };
+}

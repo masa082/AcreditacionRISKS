@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader, Card } from "@/components/ui";
 import { OrganizationForm } from "@/components/organization-form";
 import { MarketingConfigForm } from "@/components/marketing-config-form";
+import { RapydConfigForm } from "@/components/rapyd-config-form";
 import { getMarketingConfig } from "@/lib/marketing-config";
 
 export const metadata = { title: "Organización" };
@@ -41,6 +42,19 @@ export default async function OrganizationPage() {
             }}
           />
         </Card>
+
+        <div className="max-w-3xl">
+          <RapydConfigForm
+            variant="self"
+            initial={{
+              rapydEnabled: s.rapydEnabled,
+              rapydEnv: s.rapydEnv,
+              rapydAccessKey: s.rapydAccessKey,
+              rapydSecretKey: s.rapydSecretKey,
+              rapydMerchantNote: s.rapydMerchantNote,
+            }}
+          />
+        </div>
 
         <Card className="max-w-3xl p-6">
           <h2 className="mb-4 text-base font-bold text-slate-900">Marketing y conversión</h2>
