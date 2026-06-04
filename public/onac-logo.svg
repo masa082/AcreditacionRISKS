@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 220" role="img" aria-label="ONAC — Organismo Nacional de Acreditación de Colombia">
+  <title>ONAC — Organismo Nacional de Acreditación de Colombia</title>
+  <!-- Marca compuesta: anillo azul interceptado por una luna turquesa creando la "O" característica -->
+  <g>
+    <!-- Anillo azul -->
+    <circle cx="105" cy="100" r="78" fill="none" stroke="#2818f5" stroke-width="34"/>
+    <!-- Luna turquesa que se superpone para formar la O entrelazada -->
+    <path d="M 135 30 a 80 80 0 1 0 0 140 a 60 60 0 1 1 0 -140 z" fill="#27e3a4"/>
+    <!-- Pequeña sobreposición para el cruce visual -->
+    <path d="M 135 28 a 78 78 0 0 1 26 6 l -10 18 a 58 58 0 0 0 -16 -4 z" fill="#2818f5"/>
+  </g>
+  <!-- Wordmark ONAC -->
+  <text x="215" y="135" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="120" letter-spacing="6" fill="#2818f5">ONAC</text>
+  <!-- Subtítulo institucional -->
+  <text x="215" y="180" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#2818f5">ORGANISMO NACIONAL DE</text>
+  <text x="215" y="208" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#2818f5">ACREDITACIÓN DE COLOMBIA</text>
+</svg>

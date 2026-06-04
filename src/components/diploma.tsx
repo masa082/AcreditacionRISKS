@@ -189,17 +189,22 @@ export function Diploma({ data }: { data: DiplomaData }) {
           {/* Footer: acreditación ONAC */}
           <div className="mt-8 flex items-center justify-between gap-6 border-t border-[#c89a35]/40 pt-4">
             <div className="text-[9px] uppercase tracking-[0.25em] text-slate-500">
-              Acreditación nacional
+              Documento con valor probatorio
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/onac-acreditado.svg" alt="ONAC Acreditado" className="h-10 w-auto" />
-              <div className="text-[8px] uppercase tracking-[0.25em] text-slate-500">
-                Organismo Nacional<br />de Acreditación de Colombia
+              <img src="/onac-logo.svg" alt="ONAC" className="h-10 w-auto" />
+              <div className="leading-tight">
+                <div className="text-[9px] font-extrabold uppercase tracking-[0.25em] text-amber-700">
+                  En proceso de acreditación
+                </div>
+                <div className="text-[7px] uppercase tracking-[0.2em] text-slate-500">
+                  Organismo Nacional de Acreditación de Colombia
+                </div>
               </div>
             </div>
             <div className="text-right text-[9px] uppercase tracking-[0.25em] text-slate-500">
-              Documento con valor probatorio
+              ISO/IEC 17024
             </div>
           </div>
         </div>

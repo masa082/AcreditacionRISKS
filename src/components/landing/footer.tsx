@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { BRAND } from "@/lib/brand";
 import { getBrandAssets } from "@/lib/brand-assets";
+import { OnacBadge } from "@/components/onac-badge";
 
 export async function LandingFooter() {
   const year = 2026;
@@ -63,8 +64,9 @@ export async function LandingFooter() {
           </div>
         </div>
 
-        <div className="mt-10 border-t border-slate-800 pt-6 text-xs text-slate-500">
-          <p>© {year} {BRAND.legalName}. Todos los derechos reservados. {BRAND.shortName} es un organismo de certificación de personas que opera bajo los principios de la norma {BRAND.isoNorm}.</p>
+        <div className="mt-10 flex flex-wrap items-center justify-between gap-6 border-t border-slate-800 pt-6 text-xs text-slate-500">
+          <p className="max-w-2xl">© {year} {BRAND.legalName}. Todos los derechos reservados. {BRAND.shortName} es un organismo de certificación de personas que opera bajo los principios de la norma {BRAND.isoNorm}.</p>
+          <OnacBadge variant="dark" />
         </div>
       </div>
     </footer>
