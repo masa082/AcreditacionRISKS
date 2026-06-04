@@ -22,6 +22,8 @@ export function DonutChart({
   centerValue,
   size = 220,
   thickness = 28,
+  href,
+  hrefLabel,
 }: {
   title: string;
   subtitle?: string;
@@ -30,11 +32,13 @@ export function DonutChart({
   centerValue?: string | number;
   size?: number;
   thickness?: number;
+  href?: string;
+  hrefLabel?: string;
 }) {
   const total = slices.reduce((s, x) => s + x.value, 0);
 
   return (
-    <ChartShell title={title} subtitle={subtitle}>
+    <ChartShell title={title} subtitle={subtitle} href={href} hrefLabel={hrefLabel}>
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         <div className="relative shrink-0" style={{ width: size, height: size }}>
           <svg viewBox={`0 0 ${size} ${size}`} className="block">

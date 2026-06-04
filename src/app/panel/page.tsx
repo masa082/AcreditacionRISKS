@@ -111,6 +111,19 @@ export default async function SubscriberDashboard({
   const orgName = subscriber?.tradeName ?? subscriber?.legalName ?? "Suscriptor";
   const k = kpi.current, p = kpi.previous, y = kpi.yoy;
 
+  // ── Helpers para construir URLs filtradas hacia las tablas origen ──
+  // Cada KPI navega a la tabla de donde se sacó el dato, pasando
+  // `from=YYYY-MM-DD&to=YYYY-MM-DD` para que la tabla cargue el mismo
+  // período seleccionado en el dashboard. Si se agregan filtros extra
+  // (status=APPROVED, etc.) van por encima.
+  const fromISO = range.from.toISOString().slice(0, 10);
+  const toISO = range.to.toISOString().slice(0, 10);
+  const dateQs = `from=${fromISO}&to=${toISO}`;
+  const buildHref = (base: string, extra: Record<string, string> = {}) => {
+    const qs = [dateQs, ...Object.entries(extra).map(([k, v]) => `${k}=${encodeURIComponent(v)}`)].join("&");
+    return `${base}?${qs}`;
+  };
+
   // Sparklines = serie cruda para KPI cards (sin YoY)
   const sparkRev = tsRev.map((t) => t.value);
   const sparkCand = tsCand.map((t) => t.value);
@@ -148,21 +161,29 @@ export default async function SubscriberDashboard({
               format="currency" currency="COP" icon="💰"
               accent="emerald" spark={sparkRev}
               hint="vs período anterior" yoyHint="vs año anterior"
+              href={buildHref("/panel/pagos", { status: "APPROVED" })}
+              hrefLabel="Ver pagos aprobados"
             />
             <KpiCard
               label="Nuevos candidatos" value={k.candidatesNew}
               prev={p.candidatesNew} yoy={y.candidatesNew}
               icon="👥" accent="brand" spark={sparkCand}
+              href={buildHref("/panel/candidatos")}
+              hrefLabel="Ver candidatos del período"
             />
             <KpiCard
               label="Certificados emitidos" value={k.certificatesIssued}
               prev={p.certificatesIssued} yoy={y.certificatesIssued}
               icon="🎓" accent="violet" spark={sparkCerts}
+              href={buildHref("/panel/certificados", { status: "VALID" })}
+              hrefLabel="Ver certificados emitidos"
             />
             <KpiCard
               label="Pruebas presentadas" value={k.attemptsSubmitted}
               prev={p.attemptsSubmitted} yoy={y.attemptsSubmitted}
               icon="📝" accent="cyan" spark={sparkAttempts}
+              href={buildHref("/panel/candidatos", { status: "IN_PROGRESS" })}
+              hrefLabel="Ver candidatos presentando"
             />
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -174,18 +195,26 @@ export default async function SubscriberDashboard({
               }
               hint={`${k.attemptsPassed} de ${k.attemptsSubmitted} pruebas`}
               icon="✓" accent="emerald"
+              href={buildHref("/panel/candidatos", { status: "APPROVED" })}
+              hrefLabel="Ver aprobados"
             />
             <KpiCard
               label="Pendientes de pago" value={k.pendingPayment}
               prev={p.pendingPayment} icon="⏳" accent="amber" goodDirection="down"
+              href="/panel/pagos?status=PENDING"
+              hrefLabel="Ver pagos pendientes"
             />
             <KpiCard
               label="Pendientes de calificar" value={k.pendingGrading}
               prev={p.pendingGrading} icon="📋" accent="amber" goodDirection="down"
+              href="/panel/calificacion"
+              hrefLabel="Ir a calificar"
             />
             <KpiCard
               label="Apelaciones abiertas" value={k.openAppeals}
               prev={p.openAppeals} icon="⚖" accent="rose" goodDirection="down"
+              href="/panel/apelaciones?status=OPEN"
+              hrefLabel="Ver apelaciones"
             />
           </div>
         </section>
@@ -203,6 +232,8 @@ export default async function SubscriberDashboard({
                 { key: "now", label: range.label, color: COLORS.primary, data: tsRev },
                 { key: "yoy", label: "Año anterior", color: COLORS.yoy, data: alignYoY(tsRev, tsRevYoY), dashed: true },
               ]}
+              href={buildHref("/panel/pagos", { status: "APPROVED" })}
+              hrefLabel="Ver pagos"
             />
           </div>
         </Widget>
@@ -217,6 +248,8 @@ export default async function SubscriberDashboard({
               { key: "now", label: range.label, color: COLORS.primary, data: tsCand },
               { key: "yoy", label: "Año anterior", color: COLORS.yoy, data: alignYoY(tsCand, tsCandYoY), dashed: true },
             ]}
+            href={buildHref("/panel/candidatos")}
+            hrefLabel="Ver candidatos"
           />
         </Widget>
         <Widget scope="panel" id="certificates">
@@ -227,6 +260,8 @@ export default async function SubscriberDashboard({
               { key: "now", label: range.label, color: COLORS.good, data: tsCerts },
               { key: "yoy", label: "Año anterior", color: COLORS.yoy, data: alignYoY(tsCerts, tsCertsYoY), dashed: true },
             ]}
+            href={buildHref("/panel/certificados", { status: "VALID" })}
+            hrefLabel="Ver certificados"
           />
         </Widget>
       </div>
@@ -237,6 +272,8 @@ export default async function SubscriberDashboard({
             title="Embudo de conversión"
             subtitle="Del lead al certificado"
             steps={funnel.map((s) => ({ key: s.key, label: s.label, value: s.value }))}
+            href={buildHref("/panel/candidatos")}
+            hrefLabel="Ver embudo"
           />
         </Widget>
         <Widget scope="panel" id="status">
@@ -249,12 +286,24 @@ export default async function SubscriberDashboard({
               color: STATUS_COLORS[i % STATUS_COLORS.length],
             }))}
             centerLabel="Inscripciones"
+            href={buildHref("/panel/candidatos")}
+            hrefLabel="Ver inscripciones"
           />
         </Widget>
         <Widget scope="panel" id="schemes">
           <div className="rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200">
-            <h3 className="text-sm font-semibold text-slate-900">Top esquemas del período</h3>
-            <p className="text-xs text-slate-500">Inscripciones y certificados por esquema</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h3 className="text-sm font-semibold text-slate-900">Top esquemas del período</h3>
+                <p className="text-xs text-slate-500">Inscripciones y certificados por esquema</p>
+              </div>
+              <Link
+                href="/panel/esquemas"
+                className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-brand-800 transition hover:border-brand-300 hover:bg-brand-50"
+              >
+                Ver todos →
+              </Link>
+            </div>
             <ul className="mt-3 space-y-2">
               {schemes.length === 0 ? (
                 <li className="rounded bg-slate-50 px-3 py-2 text-center text-xs text-slate-400">

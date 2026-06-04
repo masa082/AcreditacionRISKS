@@ -20,6 +20,8 @@ export function LineChart({
   format = "number",
   currency = "COP",
   showArea = true,
+  href,
+  hrefLabel,
 }: {
   title: string;
   subtitle?: string;
@@ -28,10 +30,12 @@ export function LineChart({
   format?: "number" | "currency";
   currency?: string;
   showArea?: boolean;
+  href?: string;
+  hrefLabel?: string;
 }) {
   if (!series.length || !series[0].data.length) {
     return (
-      <ChartShell title={title} subtitle={subtitle}>
+      <ChartShell title={title} subtitle={subtitle} href={href} hrefLabel={hrefLabel}>
         <EmptyChart />
       </ChartShell>
     );
@@ -75,7 +79,7 @@ export function LineChart({
   const xLabelStep = Math.max(1, Math.ceil(n / 8));
 
   return (
-    <ChartShell title={title} subtitle={subtitle} legend={series}>
+    <ChartShell title={title} subtitle={subtitle} legend={series} href={href} hrefLabel={hrefLabel}>
       <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
         {/* Grid Y */}
         {yTicks.map((v, i) => (
@@ -145,11 +149,17 @@ export function ChartShell({
   title,
   subtitle,
   legend,
+  href,
+  hrefLabel,
   children,
 }: {
   title: string;
   subtitle?: string;
   legend?: LineSeries[];
+  /// Si está presente, en la cabecera del chart aparece un link
+  /// "Ver detalle →" que lleva a la tabla con los mismos filtros.
+  href?: string;
+  hrefLabel?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -159,19 +169,29 @@ export function ChartShell({
           <h3 className="text-sm font-semibold text-slate-900">{title}</h3>
           {subtitle ? <p className="text-xs text-slate-500">{subtitle}</p> : null}
         </div>
-        {legend?.length ? (
-          <ul className="flex flex-wrap items-center gap-3 text-[11px]">
-            {legend.map((s) => (
-              <li key={s.key} className="inline-flex items-center gap-1.5">
-                <span
-                  className="inline-block h-2 w-3 rounded-sm"
-                  style={{ background: s.color, opacity: s.dashed ? 0.5 : 1 }}
-                />
-                <span className="text-slate-600">{s.label}</span>
-              </li>
-            ))}
-          </ul>
-        ) : null}
+        <div className="flex items-start gap-3">
+          {legend?.length ? (
+            <ul className="flex flex-wrap items-center gap-3 text-[11px]">
+              {legend.map((s) => (
+                <li key={s.key} className="inline-flex items-center gap-1.5">
+                  <span
+                    className="inline-block h-2 w-3 rounded-sm"
+                    style={{ background: s.color, opacity: s.dashed ? 0.5 : 1 }}
+                  />
+                  <span className="text-slate-600">{s.label}</span>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          {href ? (
+            <a
+              href={href}
+              className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-brand-800 transition hover:border-brand-300 hover:bg-brand-50"
+            >
+              {hrefLabel ?? "Ver detalle"} →
+            </a>
+          ) : null}
+        </div>
       </div>
       <div className="p-4">{children}</div>
     </div>

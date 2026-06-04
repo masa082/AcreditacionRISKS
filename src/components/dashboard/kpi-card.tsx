@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { fmtNumber, fmtPercent, pctDelta } from "@/lib/metrics";
 
 /// Tarjeta de KPI con valor grande, delta vs período anterior + YoY y
@@ -26,6 +27,14 @@ export interface KpiCardProps {
   icon?: string;
   /// Color de acento de la tarjeta (CSS color).
   accent?: "brand" | "emerald" | "amber" | "rose" | "violet" | "cyan";
+  /// Si está presente, la tarjeta entera se vuelve un Link a esta ruta:
+  /// click → navega a la tabla/listado del que se sacó el dato (ya con
+  /// los filtros del período aplicados como query params). Sin `href`,
+  /// se renderiza como `<div>` no clickable (compat).
+  href?: string;
+  /// Texto opcional que aparece como microcopia ("Ver candidatos →").
+  /// Si se omite y hay `href`, se infiere "Ver detalle →".
+  hrefLabel?: string;
 }
 
 const ACCENT: Record<NonNullable<KpiCardProps["accent"]>, { ring: string; bg: string; ic: string; spark: string }> = {
@@ -61,6 +70,7 @@ export function KpiCard({
   label, value, prev, yoy, format = "number", currency = "COP",
   hint = "vs período anterior", yoyHint = "vs año anterior",
   goodDirection = "up", spark, icon, accent = "brand",
+  href, hrefLabel,
 }: KpiCardProps) {
   const fmt = (n: number) =>
     format === "currency"
@@ -85,8 +95,18 @@ export function KpiCard({
 
   const a = ACCENT[accent];
 
-  return (
-    <div className="group relative overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition hover:shadow-md">
+  // Cuando se da `href`, la tarjeta es Link. El borde se torna brand al hover,
+  // aparece una micro-flecha en la esquina inferior y un microcopy
+  // ("Ver detalle →") para que el usuario sepa que es clickable.
+  const isLink = Boolean(href);
+  const containerCls = `group relative block overflow-hidden rounded-xl bg-white p-5 shadow-sm ring-1 ring-slate-200 transition ${
+    isLink
+      ? "cursor-pointer hover:-translate-y-0.5 hover:shadow-md hover:ring-brand-300"
+      : "hover:shadow-md"
+  }`;
+
+  const inner = (
+    <>
       <div className={`pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full ${a.bg} opacity-60`} />
       <div className="relative">
         <div className="flex items-start justify-between gap-2">
@@ -114,7 +134,29 @@ export function KpiCard({
             </>
           ) : null}
         </div>
+        {isLink ? (
+          <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-2 text-[11px]">
+            <span className={`font-semibold ${a.ic} opacity-70 transition group-hover:opacity-100`}>
+              {hrefLabel ?? "Ver detalle"}
+            </span>
+            <span
+              aria-hidden
+              className={`inline-flex h-5 w-5 items-center justify-center rounded-full bg-slate-50 text-slate-400 transition group-hover:bg-brand-50 group-hover:text-brand-700`}
+            >
+              →
+            </span>
+          </div>
+        ) : null}
       </div>
-    </div>
+    </>
   );
+
+  if (isLink && href) {
+    return (
+      <Link href={href} className={containerCls} aria-label={`${label} — abrir detalle`}>
+        {inner}
+      </Link>
+    );
+  }
+  return <div className={containerCls}>{inner}</div>;
 }

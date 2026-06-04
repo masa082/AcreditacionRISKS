@@ -10,6 +10,8 @@ export function BarChart({
   height = 280,
   format = "number",
   currency = "COP",
+  href,
+  hrefLabel,
 }: {
   title: string;
   subtitle?: string;
@@ -17,10 +19,12 @@ export function BarChart({
   height?: number;
   format?: "number" | "currency";
   currency?: string;
+  href?: string;
+  hrefLabel?: string;
 }) {
   if (!series.length || !series[0].data.length) {
     return (
-      <ChartShell title={title} subtitle={subtitle}>
+      <ChartShell title={title} subtitle={subtitle} href={href} hrefLabel={hrefLabel}>
         <EmptyChart />
       </ChartShell>
     );
@@ -47,7 +51,7 @@ export function BarChart({
       : fmtNumber(n);
 
   return (
-    <ChartShell title={title} subtitle={subtitle} legend={series}>
+    <ChartShell title={title} subtitle={subtitle} legend={series} href={href} hrefLabel={hrefLabel}>
       <svg viewBox={`0 0 ${w} ${h}`} className="block w-full">
         {/* Grid Y */}
         {yTicks.map((v, i) => (

@@ -16,14 +16,18 @@ export function FunnelChart({
   title,
   subtitle,
   steps,
+  href,
+  hrefLabel,
 }: {
   title: string;
   subtitle?: string;
   steps: FunnelStep[];
+  href?: string;
+  hrefLabel?: string;
 }) {
   const top = Math.max(steps[0]?.value ?? 0, 1);
   return (
-    <ChartShell title={title} subtitle={subtitle}>
+    <ChartShell title={title} subtitle={subtitle} href={href} hrefLabel={hrefLabel}>
       <ul className="space-y-3">
         {steps.map((s, i) => {
           const pct = (s.value / top) * 100;
