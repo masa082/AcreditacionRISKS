@@ -4,6 +4,7 @@ import { logoutAction } from "@/lib/actions/auth";
 import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
 import { OnacBadge } from "@/components/onac-badge";
+import { LegalTimeCO } from "@/components/legal-time-co";
 
 const APP_NAME = "CIOC";
 const APP_LONG = "Certificado de Idoneidad como Oficial de Cumplimiento";
@@ -36,9 +37,10 @@ export function DashboardShell({
           {area}
         </div>
         <SidebarNav items={nav} />
-        <div className="border-t border-slate-200 p-3">
+        <div className="border-t border-slate-200 p-3 space-y-3">
+          <LegalTimeCO variant="compact" />
           <OnacBadge variant="compact" />
-          <div className="mt-2 text-center text-[10px] text-slate-400">ISO/IEC 17024</div>
+          <div className="text-center text-[10px] text-slate-400">ISO/IEC 17024</div>
         </div>
       </aside>
 
