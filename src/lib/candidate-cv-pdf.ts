@@ -161,15 +161,30 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
         orderBy: { createdAt: "desc" },
         include: {
           exam: { select: { name: true, passingScore: true } },
-          scheme: { select: { name: true, code: true } },
-          documents: { include: { requiredDocument: { select: { name: true } } }, orderBy: { uploadedAt: "asc" } },
+          scheme: { select: { name: true, code: true, scope: true, normReference: true, validityMonths: true } },
+          documents: {
+            include: { requiredDocument: { select: { name: true, description: true, code: true } } },
+            orderBy: { uploadedAt: "asc" },
+          },
           payments: { orderBy: { createdAt: "desc" } },
-          attempts: { orderBy: { attemptNumber: "desc" }, select: { id: true, attemptNumber: true, status: true, scorePercent: true, passed: true, submittedAt: true } },
+          attempts: {
+            orderBy: { attemptNumber: "desc" },
+            select: {
+              id: true, attemptNumber: true, status: true, scorePercent: true, passed: true,
+              submittedAt: true, startedAt: true,
+            },
+          },
           bookings: { where: { status: { in: ["BOOKED", "CONFIRMED"] } }, include: { session: { select: { startsAt: true, location: true, modality: true } } } },
         },
       },
-      consents: { orderBy: { acceptedAt: "desc" }, take: 1 },
-      user: { select: { email: true, lastLoginAt: true, status: true, additionalEmails: true } },
+      consents: { orderBy: { acceptedAt: "desc" }, take: 5 },
+      certificates: { orderBy: { issuedAt: "desc" }, include: { scheme: { select: { name: true } } } },
+      user: {
+        select: {
+          id: true, email: true, lastLoginAt: true, lastLoginIp: true,
+          status: true, additionalEmails: true, createdAt: true,
+        },
+      },
     },
   });
   if (!candidate) throw new Error("Candidato no encontrado");
@@ -289,60 +304,196 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   }
   cursor = row(cursor, "Teléfono", candidate.phone ?? "—", fonts);
 
-  if (candidate.consents[0]) {
-    cursor.y -= 8;
-    cursor = sectionTitle(cursor, "Autorización de tratamiento de datos", fonts);
-    cursor = row(cursor, "Aceptada el", fmtDateTime(candidate.consents[0].acceptedAt), fonts);
-    cursor = row(cursor, "IP de aceptación", candidate.consents[0].ip ?? "—", fonts);
-    cursor = row(cursor, "Versión de política", candidate.consents[0].policyVersion ?? "—", fonts);
-  }
-
-  // ── INSCRIPCIONES / RESULTADOS ─────────────────────────────────────
+  // ── 3. DATOS DE CONOCIMIENTO (esquemas + alcance + norma) ──────────
   cursor.y -= 8;
   cursor = ensureSpace(pdf, cursor, 80, fonts);
-  cursor = sectionTitle(cursor, "Inscripciones y resultados de pruebas", fonts);
+  cursor = sectionTitle(cursor, "Datos de conocimiento — esquemas de certificación", fonts);
+  // Esquemas únicos a los que el candidato se ha inscrito
+  const schemes = new Map<string, { name: string; code: string; scope: string | null; norm: string | null; validity: number | null }>();
+  for (const e of candidate.enrollments) {
+    if (e.scheme && !schemes.has(e.scheme.code)) {
+      schemes.set(e.scheme.code, {
+        name: e.scheme.name,
+        code: e.scheme.code,
+        scope: e.scheme.scope ?? null,
+        norm: e.scheme.normReference ?? null,
+        validity: e.scheme.validityMonths ?? null,
+      });
+    }
+  }
+  if (schemes.size === 0) {
+    cursor = row(cursor, "Sin esquemas inscritos", "—", fonts);
+  } else {
+    for (const s of schemes.values()) {
+      cursor = ensureSpace(pdf, cursor, 56, fonts);
+      cursor.page.drawText(`${s.code} — ${s.name}`, { x: MARGIN, y: cursor.y, size: 10, font: fonts.bold, color: COLOR_NAVY });
+      cursor.y -= 13;
+      if (s.scope) cursor = row(cursor, "Alcance", s.scope, fonts);
+      if (s.norm) cursor = row(cursor, "Norma de referencia", s.norm, fonts);
+      if (s.validity) cursor = row(cursor, "Vigencia del certificado", `${s.validity} meses`, fonts);
+      cursor.y -= 4;
+    }
+  }
+
+  // ── 4. FORMACIÓN ACADÉMICA, 5. ANTECEDENTES, 6. HISTORIAL LABORAL ─
+  // Categorizamos los documentos del candidato por el nombre del
+  // RequiredDocument para presentar tres secciones temáticas. Los
+  // archivos físicos se mantienen como ANEXOS al final del informe.
+  const allDocs = candidate.enrollments.flatMap((e) => e.documents.map((d) => ({ ...d, enrollment: e })));
+
+  function matchAny(text: string, patterns: RegExp[]): boolean {
+    return patterns.some((p) => p.test(text));
+  }
+  const RE_FORMACION = [/(formac|académic|academic|diploma|t[ií]tulo|estudios?|escolar|escolaridad|grado|posgrado|pregrado|maestr|doctorad|t[eé]cnic|tecn[oó]logo|bachiller|certificad[oa] educ)/i];
+  const RE_ANTECEDENTES = [/(antecedent|judicial|disciplinari|penal|procuradur|contralor|polic[ií]a|inhabilit|rama judicial|sric)/i];
+  const RE_LABORAL = [/(experiencia|laboral|hoja de vida|hv|cv|cert\.?\s*laboral|certificac[ií]on(es)?\s*laboral|trabajo|emple|cargo|funci[oó]n)/i];
+
+  const docsFormacion: typeof allDocs = [];
+  const docsAnte: typeof allDocs = [];
+  const docsLaboral: typeof allDocs = [];
+  const docsOtros: typeof allDocs = [];
+  for (const d of allDocs) {
+    const name = `${d.requiredDocument?.name ?? ""} ${d.requiredDocument?.description ?? ""} ${d.fileName ?? ""}`;
+    if (matchAny(name, RE_FORMACION)) docsFormacion.push(d);
+    else if (matchAny(name, RE_ANTECEDENTES)) docsAnte.push(d);
+    else if (matchAny(name, RE_LABORAL)) docsLaboral.push(d);
+    else docsOtros.push(d);
+  }
+
+  function listDocs(cursorRef: Cursor, list: typeof allDocs, emptyMsg: string): Cursor {
+    let c = cursorRef;
+    if (list.length === 0) {
+      c.page.drawText(emptyMsg, { x: MARGIN, y: c.y, size: 9, font: fonts.italic, color: COLOR_GREY });
+      c.y -= 14;
+      return c;
+    }
+    for (const d of list) {
+      c = ensureSpace(pdf, c, 24, fonts);
+      const statusLabel: Record<string, string> = { SUBMITTED: "en revisión", APPROVED: "aprobado", REJECTED: "rechazado", PENDING: "pendiente" };
+      c.page.drawText(`• ${d.requiredDocument?.name ?? "Documento"}`, {
+        x: MARGIN, y: c.y, size: 10, font: fonts.bold, color: COLOR_DARK,
+      });
+      c.y -= 12;
+      c.page.drawText(`   Archivo: ${d.fileName ?? ""} · ${statusLabel[d.status] ?? d.status} · ${fmtDate(d.uploadedAt)}`, {
+        x: MARGIN, y: c.y, size: 8, font: fonts.italic, color: COLOR_GREY,
+      });
+      c.y -= 12;
+      if (d.requiredDocument?.description) {
+        c.page.drawText(`   ${d.requiredDocument.description}`, { x: MARGIN, y: c.y, size: 8, font: fonts.regular, color: COLOR_DARK });
+        c.y -= 12;
+      }
+    }
+    return c;
+  }
+
+  cursor.y -= 4;
+  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = sectionTitle(cursor, "Formación académica", fonts);
+  cursor.page.drawText("Los siguientes documentos académicos fueron aportados por el candidato. El detalle completo se incluye como anexo al final de este informe.",
+    { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
+  cursor.y -= 14;
+  cursor = listDocs(cursor, docsFormacion, "Sin documentos académicos cargados todavía.");
+
+  cursor.y -= 6;
+  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = sectionTitle(cursor, "Antecedentes disciplinarios, judiciales y penales", fonts);
+  cursor.page.drawText("Certificados expedidos por las autoridades de control. Verifíquense por sus canales oficiales antes de la emisión final.",
+    { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
+  cursor.y -= 14;
+  cursor = listDocs(cursor, docsAnte, "Sin certificados de antecedentes cargados todavía.");
+
+  cursor.y -= 6;
+  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = sectionTitle(cursor, "Historial laboral y experiencia", fonts);
+  cursor.page.drawText("Documentos que evidencian la experiencia y trayectoria laboral del candidato.",
+    { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
+  cursor.y -= 14;
+  cursor = listDocs(cursor, docsLaboral, "Sin documentos de experiencia laboral cargados todavía.");
+
+  if (docsOtros.length > 0) {
+    cursor.y -= 6;
+    cursor = ensureSpace(pdf, cursor, 50, fonts);
+    cursor = sectionTitle(cursor, "Otros documentos del proceso", fonts);
+    cursor = listDocs(cursor, docsOtros, "—");
+  }
+
+  // ── 7. EVALUACIONES PRESENTADAS + VIGENCIA + INTENTOS ──────────────
+  cursor.y -= 6;
+  cursor = ensureSpace(pdf, cursor, 80, fonts);
+  cursor = sectionTitle(cursor, "Evaluaciones presentadas — resultados, vigencia e intentos", fonts);
   if (candidate.enrollments.length === 0) {
-    cursor = row(cursor, "Sin inscripciones", "Aún no hay inscripciones registradas.", fonts);
+    cursor = row(cursor, "Sin inscripciones", "—", fonts);
   } else {
     for (const e of candidate.enrollments) {
-      cursor = ensureSpace(pdf, cursor, 90, fonts);
+      cursor = ensureSpace(pdf, cursor, 110, fonts);
       const title = e.exam?.name ?? e.scheme?.name ?? "Inscripción";
-      cursor.page.drawRectangle({
-        x: MARGIN, y: cursor.y - 4, width: PAGE_W - MARGIN * 2, height: 1, color: COLOR_RULE,
+      const cert = candidate.certificates.find((c) => c.enrollmentId === e.id);
+      cursor.page.drawRectangle({ x: MARGIN, y: cursor.y - 6, width: PAGE_W - MARGIN * 2, height: 1, color: COLOR_RULE });
+      cursor.page.drawText(title, { x: MARGIN, y: cursor.y - 16, size: 11, font: fonts.bold, color: COLOR_NAVY });
+      cursor.page.drawText(`Folio ${e.code ?? "—"} · Estado de la inscripción: ${e.status} · ${fmtDate(e.createdAt)}`, {
+        x: MARGIN, y: cursor.y - 30, size: 8, font: fonts.italic, color: COLOR_GREY,
       });
-      cursor.page.drawText(title, { x: MARGIN, y: cursor.y - 14, size: 11, font: fonts.bold, color: COLOR_NAVY });
-      cursor.page.drawText(`Folio ${e.code ?? "—"} · Estado: ${e.status} · Creada ${fmtDate(e.createdAt)}`, {
-        x: MARGIN, y: cursor.y - 28, size: 8, font: fonts.italic, color: COLOR_GREY,
-      });
-      cursor.y -= 40;
+      cursor.y -= 42;
 
-      if (e.attempts.length > 0) {
+      // Intentos
+      if (e.attempts.length === 0) {
+        cursor.page.drawText("Estado: EVALUACIÓN PENDIENTE — el candidato aún no ha presentado esta prueba.",
+          { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: rgb(0.73, 0.43, 0.05) });
+        cursor.y -= 14;
+      } else {
+        cursor.page.drawText(`Intentos realizados: ${e.attempts.length}`, {
+          x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_DARK,
+        });
+        cursor.y -= 13;
         for (const a of e.attempts) {
           cursor = ensureSpace(pdf, cursor, 18, fonts);
-          const r = `Intento #${a.attemptNumber}: ${a.status}${a.scorePercent != null ? ` · ${Number(a.scorePercent).toFixed(1)}%` : ""}${a.passed === true ? " · APROBÓ" : a.passed === false ? " · NO APROBÓ" : ""}${a.submittedAt ? ` · ${fmtDate(a.submittedAt)}` : ""}`;
-          cursor.page.drawText(r, { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK });
-          cursor.y -= 14;
+          const score = a.scorePercent != null ? `${Number(a.scorePercent).toFixed(1)}%` : "—";
+          const verdict = a.passed === true ? "APROBÓ" : a.passed === false ? "NO APROBÓ" : a.status;
+          const verdictColor = a.passed === true ? rgb(0.04, 0.55, 0.34) : a.passed === false ? rgb(0.73, 0.13, 0.20) : COLOR_GREY;
+          cursor.page.drawText(`#${a.attemptNumber} · Estado: ${a.status} · Puntaje: ${score} · ${verdict}`, {
+            x: MARGIN + 16, y: cursor.y, size: 9, font: fonts.regular, color: verdictColor,
+          });
+          cursor.y -= 12;
+          if (a.submittedAt) {
+            cursor.page.drawText(`   Presentado: ${fmtDateTime(a.submittedAt)}`, { x: MARGIN + 16, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
+            cursor.y -= 11;
+          }
         }
-      } else {
-        cursor.page.drawText("Sin intentos registrados.", { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.italic, color: COLOR_GREY });
-        cursor.y -= 14;
       }
+
+      // Vigencia del certificado emitido (si lo hay)
+      if (cert) {
+        cursor = ensureSpace(pdf, cursor, 30, fonts);
+        const vigenteHasta = cert.expiresAt ? fmtDate(cert.expiresAt) : "No vence";
+        const estado = cert.status;
+        const vigColor = estado === "VALID" ? rgb(0.04, 0.55, 0.34) : estado === "EXPIRED" ? rgb(0.73, 0.43, 0.05) : rgb(0.73, 0.13, 0.20);
+        cursor.page.drawText(`Certificado: ${cert.code}`, { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY });
+        cursor.y -= 12;
+        cursor.page.drawText(`Estado: ${estado} · Emitido: ${fmtDate(cert.issuedAt)} · Vigente hasta: ${vigenteHasta}`, {
+          x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: vigColor,
+        });
+        cursor.y -= 12;
+      } else if (e.attempts.some((a) => a.passed === true)) {
+        cursor.page.drawText("Certificado: pendiente de emisión.", { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.italic, color: COLOR_GREY });
+        cursor.y -= 12;
+      }
+
+      // Agenda
       if (e.bookings.length > 0) {
         for (const b of e.bookings) {
           cursor = ensureSpace(pdf, cursor, 14, fonts);
-          cursor.page.drawText(`Agenda: ${fmtDateTime(b.session.startsAt)} · ${b.session.modality ?? ""} · ${b.session.location ?? ""}`, {
-            x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
-          });
-          cursor.y -= 14;
+          cursor.page.drawText(`Agenda: ${fmtDateTime(b.session.startsAt)} · ${b.session.modality ?? ""} · ${b.session.location ?? ""}`,
+            { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK });
+          cursor.y -= 12;
         }
       }
       cursor.y -= 6;
     }
   }
 
-  // ── PAGOS ──────────────────────────────────────────────────────────
+  // ── 8. SOPORTES DE PAGO ─────────────────────────────────────────────
   cursor = ensureSpace(pdf, cursor, 60, fonts);
-  cursor = sectionTitle(cursor, "Pagos y soportes", fonts);
+  cursor = sectionTitle(cursor, "Soportes de pago", fonts);
   const allPayments = candidate.enrollments.flatMap((e) => e.payments.map((p) => ({ ...p, enrollment: e })));
   if (allPayments.length === 0) {
     cursor = row(cursor, "Sin pagos", "—", fonts);
@@ -372,8 +523,88 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
     }
   }
 
+  // ── 9. SOPORTES DOCUMENTALES (lista consolidada) ───────────────────
+  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = sectionTitle(cursor, "Soportes documentales del proceso", fonts);
+  if (allDocs.length === 0) {
+    cursor = row(cursor, "Sin documentos", "El candidato aún no ha cargado documentos.", fonts);
+  } else {
+    cursor.page.drawText("Listado consolidado de los archivos cargados por el candidato. Los archivos completos se anexan al final de este informe.",
+      { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
+    cursor.y -= 14;
+    for (const d of allDocs) {
+      cursor = ensureSpace(pdf, cursor, 16, fonts);
+      const statusLabel: Record<string, string> = { SUBMITTED: "en revisión", APPROVED: "aprobado", REJECTED: "rechazado", PENDING: "pendiente" };
+      cursor.page.drawText(
+        `• ${d.requiredDocument?.name ?? "Documento"} — ${d.fileName ?? ""} (${statusLabel[d.status] ?? d.status})`,
+        { x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK },
+      );
+      cursor.y -= 12;
+    }
+  }
+
+  // ── 10. AUTORIZACIONES (TRATAMIENTO DE DATOS + TÉRMINOS) ───────────
+  cursor.y -= 6;
+  cursor = ensureSpace(pdf, cursor, 80, fonts);
+  cursor = sectionTitle(cursor, "Autorizaciones y aceptaciones del candidato", fonts);
+
+  // 10.a Tratamiento de datos
+  cursor.page.drawText("a) Autorización de tratamiento de datos personales (Ley 1581 de 2012)", {
+    x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY,
+  });
+  cursor.y -= 14;
+  if (candidate.consents.length === 0) {
+    cursor.page.drawText("Sin registro de aceptación. Verifique el proceso del candidato.", {
+      x: MARGIN, y: cursor.y, size: 9, font: fonts.italic, color: rgb(0.73, 0.13, 0.20),
+    });
+    cursor.y -= 14;
+  } else {
+    for (const c of candidate.consents) {
+      cursor = ensureSpace(pdf, cursor, 40, fonts);
+      cursor.page.drawText(`• Aceptada: ${fmtDateTime(c.acceptedAt)} · IP: ${c.ip ?? "—"}`, {
+        x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
+      });
+      cursor.y -= 12;
+      cursor.page.drawText(`  Política versión: ${c.policyVersion ?? "—"} · Titular: ${c.holderName ?? "—"}`, {
+        x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY,
+      });
+      cursor.y -= 12;
+    }
+  }
+
+  // 10.b Términos y condiciones del cobro/proceso
+  cursor.y -= 6;
+  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor.page.drawText("b) Aceptación de términos y condiciones del proceso de certificación", {
+    x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY,
+  });
+  cursor.y -= 14;
+  const termsPayments = allPayments
+    .map((p) => {
+      const m = (p.metadata as { terms?: { acceptRefund?: boolean; acceptEconomic?: boolean; acceptedAt?: string } } | null) ?? {};
+      return m.terms ? { ...m.terms, payment: p } : null;
+    })
+    .filter((t): t is NonNullable<typeof t> => t !== null);
+  if (termsPayments.length === 0) {
+    cursor.page.drawText("Sin registros de aceptación de términos (pagos creados antes de esta política).", {
+      x: MARGIN, y: cursor.y, size: 9, font: fonts.italic, color: COLOR_GREY,
+    });
+    cursor.y -= 14;
+  } else {
+    for (const t of termsPayments) {
+      cursor = ensureSpace(pdf, cursor, 50, fonts);
+      cursor.page.drawText(`• Pago ${t.payment.id.slice(-8).toUpperCase()} · Folio ${t.payment.enrollment.code ?? "—"} · ${fmtDateTime(t.acceptedAt ? new Date(t.acceptedAt) : t.payment.createdAt)}`, {
+        x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
+      });
+      cursor.y -= 12;
+      cursor.page.drawText(`  No reembolso (obligación de medio): ${t.acceptRefund ? "ACEPTADO" : "NO"} · Uso para actividad económica/profesión: ${t.acceptEconomic ? "ACEPTADO" : "NO"}`, {
+        x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: t.acceptRefund && t.acceptEconomic ? rgb(0.04, 0.55, 0.34) : rgb(0.73, 0.43, 0.05),
+      });
+      cursor.y -= 14;
+    }
+  }
+
   // ── ANEXOS: DOCUMENTOS DEL CANDIDATO ───────────────────────────────
-  const allDocs = candidate.enrollments.flatMap((e) => e.documents.map((d) => ({ ...d, enrollment: e })));
   for (const d of allDocs) {
     const docTitle = `${d.requiredDocument?.name ?? "Documento"} · ${d.fileName ?? ""}`;
     const ext = extFromName(d.fileUrl);

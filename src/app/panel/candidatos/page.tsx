@@ -105,14 +105,25 @@ export default async function CandidatesListPage({
 
   // Para conteo de logins agregamos AuditLog por actorId.
   const userIds = candidates.map((c) => c.user?.id).filter(Boolean) as string[];
-  const loginAgg = userIds.length
-    ? await prisma.auditLog.groupBy({
-        by: ["actorId"],
-        where: { actorId: { in: userIds }, action: "auth.login" },
-        _count: { _all: true },
-      })
-    : [];
+  const [loginAgg, activeSessions] = await Promise.all([
+    userIds.length
+      ? prisma.auditLog.groupBy({
+          by: ["actorId"],
+          where: { actorId: { in: userIds }, action: "auth.login" },
+          _count: { _all: true },
+        })
+      : Promise.resolve([] as { actorId: string | null; _count: { _all: number } }[]),
+    // Sesiones activas ahora mismo (no revocadas y no expiradas).
+    userIds.length
+      ? prisma.session.findMany({
+          where: { userId: { in: userIds }, revokedAt: null, expiresAt: { gt: new Date() } },
+          select: { userId: true },
+          distinct: ["userId"],
+        })
+      : Promise.resolve([] as { userId: string }[]),
+  ]);
   const loginsByUser = new Map<string, number>(loginAgg.map((r) => [r.actorId as string, r._count._all]));
+  const onlineUsers = new Set(activeSessions.map((s) => s.userId));
 
   const rows: CandidateRow[] = candidates.map((c) => {
     const last = c.enrollments[0];
@@ -150,6 +161,7 @@ export default async function CandidatesListPage({
       lastLoginLabel: c.user?.lastLoginAt ? dateTime(c.user.lastLoginAt) : null,
       lastLoginIp: c.user?.lastLoginIp ?? null,
       loginCount: c.user?.id ? loginsByUser.get(c.user.id) ?? 0 : 0,
+      isOnline: c.user?.id ? onlineUsers.has(c.user.id) : false,
     };
   });
 

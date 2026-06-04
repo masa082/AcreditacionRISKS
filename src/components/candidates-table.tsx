@@ -25,6 +25,8 @@ export interface CandidateRow {
   lastLoginLabel: string | null;
   lastLoginIp: string | null;
   loginCount: number;
+  /** True si el candidato tiene una sesión activa (no revocada, no expirada). */
+  isOnline: boolean;
 }
 
 const PAYMENT_BADGE: Record<CandidateRow["paymentLabel"], { label: string; cls: string }> = {
@@ -34,13 +36,77 @@ const PAYMENT_BADGE: Record<CandidateRow["paymentLabel"], { label: string; cls: 
   none: { label: "—", cls: "bg-slate-100 text-slate-500" },
 };
 
+// Llaves de columnas ordenables. El orden por defecto es "fullName asc".
+type SortKey =
+  | "online" | "fullName" | "documentLabel" | "enrollments" | "lastStatus"
+  | "payment" | "consent" | "docs" | "lastLogin" | "loginCount";
+type SortDir = "asc" | "desc";
+
+const SORTERS: Record<SortKey, (r: CandidateRow) => number | string> = {
+  online:        (r) => (r.isOnline ? 0 : 1),
+  fullName:      (r) => r.fullName.toLowerCase(),
+  documentLabel: (r) => r.documentLabel.toLowerCase(),
+  enrollments:   (r) => r.enrollments,
+  lastStatus:    (r) => r.lastStatusLabel.toLowerCase(),
+  payment:       (r) => ["approved", "pending", "rejected", "none"].indexOf(r.paymentLabel),
+  consent:       (r) => (r.consentGiven ? 0 : 1),
+  docs:          (r) => -(r.docsApproved * 100 + r.docsPending * 10 + r.docsRejected),
+  lastLogin:     (r) => r.lastLoginLabel ?? "",
+  loginCount:    (r) => r.loginCount,
+};
+
+function SortHeader({
+  label, sortKey, current, onSort,
+}: { label: string; sortKey: SortKey; current: { key: SortKey; dir: SortDir }; onSort: (k: SortKey) => void }) {
+  const active = current.key === sortKey;
+  return (
+    <button
+      type="button"
+      onClick={() => onSort(sortKey)}
+      className={`group inline-flex items-center gap-1 text-left font-bold uppercase tracking-wider transition hover:text-brand-800 ${
+        active ? "text-brand-800" : "text-slate-400"
+      }`}
+      title={`Ordenar por ${label}`}
+    >
+      {label}
+      <span aria-hidden className="text-[8px] opacity-70 group-hover:opacity-100">
+        {active ? (current.dir === "asc" ? "▲" : "▼") : "↕"}
+      </span>
+    </button>
+  );
+}
+
 export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const allChecked = useMemo(() => rows.length > 0 && rows.every((r) => selected.has(r.id)), [rows, selected]);
+  const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "fullName", dir: "asc" });
+  const [onlyOnline, setOnlyOnline] = useState(false);
+
+  function onSort(key: SortKey) {
+    setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
+  }
+
+  // Filtrado + ordenamiento en memoria sobre las filas ya entregadas por el server.
+  const visible = useMemo(() => {
+    let v = rows;
+    if (onlyOnline) v = v.filter((r) => r.isOnline);
+    const sorter = SORTERS[sort.key];
+    const factor = sort.dir === "asc" ? 1 : -1;
+    return [...v].sort((a, b) => {
+      const va = sorter(a), vb = sorter(b);
+      if (typeof va === "number" && typeof vb === "number") return (va - vb) * factor;
+      return String(va).localeCompare(String(vb)) * factor;
+    });
+  }, [rows, sort, onlyOnline]);
+
+  const allChecked = useMemo(() => visible.length > 0 && visible.every((r) => selected.has(r.id)), [visible, selected]);
+  const onlineCount = useMemo(() => rows.filter((r) => r.isOnline).length, [rows]);
 
   function toggleAll() {
-    if (allChecked) setSelected(new Set());
-    else setSelected(new Set(rows.map((r) => r.id)));
+    if (allChecked) {
+      setSelected(new Set([...selected].filter((id) => !visible.some((r) => r.id === id))));
+    } else {
+      setSelected(new Set([...selected, ...visible.map((r) => r.id)]));
+    }
   }
   function toggle(id: string) {
     setSelected((s) => {
@@ -53,37 +119,69 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
 
   return (
     <div className="space-y-4">
-      <CandidatesToolbar selected={Array.from(selected)} allInView={rows.length} />
+      <CandidatesToolbar selected={Array.from(selected)} allInView={visible.length} />
 
-      {rows.length === 0 ? (
+      <div className="flex flex-wrap items-center gap-3 text-xs">
+        <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 transition ${
+          onlyOnline ? "border-emerald-400 bg-emerald-50 text-emerald-800" : "border-slate-300 text-slate-600 hover:bg-slate-50"
+        }`}>
+          <input
+            type="checkbox"
+            checked={onlyOnline}
+            onChange={(e) => setOnlyOnline(e.target.checked)}
+            className="h-3.5 w-3.5 accent-emerald-600"
+          />
+          <span className="relative inline-flex h-2.5 w-2.5">
+            <span className="absolute inset-0 rounded-full bg-emerald-500" />
+            <span className="absolute inset-0 animate-ping rounded-full bg-emerald-500 opacity-60" />
+          </span>
+          Solo en línea ({onlineCount})
+        </label>
+        <span className="text-slate-400">Haga clic en cualquier título de columna para ordenar.</span>
+      </div>
+
+      {visible.length === 0 ? (
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-10 text-center text-sm text-slate-500">
-          No hay candidatos que coincidan con los filtros.
+          {onlyOnline ? "No hay candidatos con sesión activa en este momento." : "No hay candidatos que coincidan con los filtros."}
         </div>
       ) : (
         <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-400">
+              <tr className="border-b border-slate-200 text-left text-[10px] tracking-wider">
                 <th className="px-3 py-2"><input type="checkbox" checked={allChecked} onChange={toggleAll} /></th>
-                <th className="px-3 py-2">Candidato</th>
-                <th className="px-3 py-2">Documento</th>
-                <th className="px-3 py-2">Insc.</th>
-                <th className="px-3 py-2">Último estado</th>
-                <th className="px-3 py-2">Pago</th>
-                <th className="px-3 py-2">Autoriz.</th>
-                <th className="px-3 py-2">Archivos</th>
-                <th className="px-3 py-2">Último ingreso</th>
-                <th className="px-3 py-2">IP</th>
-                <th className="px-3 py-2 text-center">Logins</th>
+                <th className="px-3 py-2">
+                  <SortHeader label="● En línea" sortKey="online" current={sort} onSort={onSort} />
+                </th>
+                <th className="px-3 py-2"><SortHeader label="Candidato" sortKey="fullName" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Documento" sortKey="documentLabel" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Insc." sortKey="enrollments" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Último estado" sortKey="lastStatus" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Pago" sortKey="payment" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Autoriz." sortKey="consent" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Archivos" sortKey="docs" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="Último ingreso" sortKey="lastLogin" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">IP</span></th>
+                <th className="px-3 py-2 text-center"><SortHeader label="Logins" sortKey="loginCount" current={sort} onSort={onSort} /></th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {rows.map((c) => {
+              {visible.map((c) => {
                 const pay = PAYMENT_BADGE[c.paymentLabel];
                 return (
                   <tr key={c.id} className={`hover:bg-slate-50 ${selected.has(c.id) ? "bg-brand-50/40" : ""}`}>
                     <td className="px-3 py-2 align-top">
                       <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} />
+                    </td>
+                    <td className="px-3 py-2 align-top" title={c.isOnline ? "Sesión activa ahora mismo" : "Sin sesión activa"}>
+                      {c.isOnline ? (
+                        <span className="relative inline-flex h-3 w-3" aria-label="En línea">
+                          <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
+                          <span className="absolute inset-0 rounded-full bg-emerald-500 ring-2 ring-emerald-200" />
+                        </span>
+                      ) : (
+                        <span className="inline-block h-3 w-3 rounded-full bg-slate-300 ring-2 ring-slate-100" aria-label="Desconectado" />
+                      )}
                     </td>
                     <td className="px-3 py-2 align-top">
                       <Link href={`/panel/candidatos/${c.id}`} className="font-medium text-slate-800 hover:text-brand-800 hover:underline">
@@ -117,9 +215,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                               <span aria-hidden>🖼</span><span className="font-semibold">{c.docsImg}</span>
                             </span>
                           ) : null}
-                          {c.docsPdf === 0 && c.docsImg === 0 ? (
-                            <span className="text-slate-300">—</span>
-                          ) : null}
+                          {c.docsPdf === 0 && c.docsImg === 0 ? <span className="text-slate-300">—</span> : null}
                         </div>
                         <div className="text-[10px] text-slate-500" title="Aprobados / En revisión / Rechazados">
                           <span className="text-emerald-700">{c.docsApproved}</span>
@@ -132,14 +228,14 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                           <Link
                             href={`/panel/candidatos/${c.id}/documentos`}
                             className="rounded border border-brand-300 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700 hover:bg-brand-50"
-                            title="Abrir carpeta con todos los archivos del candidato"
+                            title="Abrir carpeta del candidato"
                           >
                             📁 Carpeta
                           </Link>
                           <a
                             href={`/panel/candidatos/${c.id}/cv`}
                             className="rounded border border-violet-300 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-50"
-                            title="Descargar Hoja de Vida del Candidato (PDF con datos, fotografía, documentos, resultados y pagos)"
+                            title="Descargar Hoja de Vida del Candidato"
                           >
                             ⬇ Informe
                           </a>

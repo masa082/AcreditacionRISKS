@@ -157,6 +157,31 @@ export default async function VerificationResult({
               Verificación pública generada el{" "}
               {new Date().toLocaleString("es-CO")}.
             </div>
+
+            {/* Descarga segura del certificado. La URL usa el verifyToken
+                (token aleatorio de 192 bits) en lugar de un ID secuencial,
+                de modo que no es posible acceder a otros certificados
+                cambiando un número en la URL. */}
+            {(effectiveStatus === "VALID" || effectiveStatus === "EXPIRED") ? (
+              <div className="border-t border-slate-100 bg-slate-50 px-6 py-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="text-xs text-slate-600">
+                    <strong className="text-slate-800">Descarga oficial protegida.</strong>{" "}
+                    El enlace incluye un token criptográfico irreversible (≥192 bits) específico
+                    de este certificado: no se pueden descargar certificados ajenos cambiando
+                    secuencias en la URL.
+                  </div>
+                  <a
+                    href={`/api/certificate/${cert.verifyToken}/pdf`}
+                    rel="noopener"
+                    className="inline-flex items-center gap-2 rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand-900"
+                  >
+                    <span aria-hidden>⬇</span>
+                    Descargar certificado (PDF)
+                  </a>
+                </div>
+              </div>
+            ) : null}
           </div>
         )}
         {/* Badge ONAC visible al pie del resultado de la verificación */}
