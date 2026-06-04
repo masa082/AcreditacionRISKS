@@ -5,6 +5,7 @@ import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
 import { OnacBadge } from "@/components/onac-badge";
 import { LegalTimeCO } from "@/components/legal-time-co";
+import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
 
 const APP_NAME = "CIOC";
 const APP_LONG = "Certificado de Idoneidad como Oficial de Cumplimiento";
@@ -63,13 +64,7 @@ export function DashboardShell({
               <div className="text-xs text-slate-400">{user.role}</div>
             </div>
             {subscriberLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={subscriberLogo}
-                alt={subscriberName ?? "Suscriptor"}
-                title={subscriberName ?? "Suscriptor"}
-                className="h-10 w-auto rounded border border-slate-200 bg-white object-contain p-0.5"
-              />
+              <SubscriberLogoHeader src={subscriberLogo} name={subscriberName ?? "Suscriptor"} />
             ) : (
               <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-500">
                 {(subscriberName ?? user.name).slice(0, 1).toUpperCase()}
