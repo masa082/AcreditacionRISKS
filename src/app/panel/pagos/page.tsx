@@ -250,6 +250,20 @@ export default async function PaymentsPage({
                       </td>
                       {/* Proceso de pago (datos detallados Rapyd) */}
                       <td className="px-4 py-3 text-[11px] text-slate-700">
+                        {p.receiptUrl ? (
+                          <a
+                            href={`/api/payments/${p.id}/receipt`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mb-1 inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-200 hover:bg-emerald-100"
+                          >
+                            📎 Ver soporte de pago
+                          </a>
+                        ) : p.status === "PENDING" && (p.provider ?? "manual") !== "rapyd" ? (
+                          <div className="mb-1 rounded bg-amber-50 px-2 py-0.5 text-[10px] text-amber-800 ring-1 ring-amber-200">
+                            Soporte aún no cargado por el candidato
+                          </div>
+                        ) : null}
                         {p.providerRef ? (
                           <div>
                             <span className="text-[10px] text-slate-400">Ref.</span>{" "}
@@ -299,11 +313,11 @@ export default async function PaymentsPage({
                       {/* Acciones */}
                       {canManage ? (
                         <td className="px-4 py-3 text-right">
-                          {p.status === "PENDING" ? (
-                            <PaymentRowActions paymentId={p.id} providerRef={p.providerRef} />
-                          ) : (
-                            <span className="text-[10px] text-slate-400">—</span>
-                          )}
+                          <PaymentRowActions
+                            paymentId={p.id}
+                            providerRef={p.providerRef}
+                            status={p.status}
+                          />
                         </td>
                       ) : null}
                     </tr>

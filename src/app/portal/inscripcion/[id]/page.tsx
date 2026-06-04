@@ -7,8 +7,10 @@ import { SubmitButton } from "@/components/form";
 import { ConsentForm } from "@/components/consent-form";
 import { DocumentUpload } from "@/components/document-upload";
 import { EnrollmentNotes } from "@/components/enrollment-notes";
+import { PaymentMethodSelector } from "@/components/payment-method-selector";
+import { PaymentReceiptUpload } from "@/components/payment-receipt-upload";
 import { computeJourney, computeEnrollmentFees, type JourneyStep } from "@/lib/enrollment";
-import { payEnrollment, bookSlot, cancelEnrollment } from "@/lib/actions/enrollment";
+import { bookSlot, cancelEnrollment } from "@/lib/actions/enrollment";
 import { startAttempt } from "@/lib/actions/attempt";
 import { money, dateTime } from "@/lib/format";
 
@@ -72,6 +74,13 @@ export default async function EnrollmentProcessPage({
       scheme: { select: { id: true, name: true } },
     },
   });
+  // Saber si el suscriptor tiene Rapyd activo decide si la opción "Pago en
+  // línea" aparece habilitada o bloqueada con un aviso.
+  const subscriberPay = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: { rapydEnabled: true, rapydAccessKey: true, rapydSecretKey: true },
+  });
+  const hasRapyd = !!(subscriberPay?.rapydEnabled && subscriberPay.rapydAccessKey && subscriberPay.rapydSecretKey);
   if (!enrollment || enrollment.candidateId !== candidateId) notFound();
 
   const requirePayment = enrollment.exam?.requirePayment ?? false;
@@ -265,22 +274,45 @@ export default async function EnrollmentProcessPage({
                 <p className="text-xs text-slate-400">Ref. {payment.providerRef} · {payment.paidAt ? dateTime(payment.paidAt) : ""}</p>
               </div>
             ) : payment && payment.status === "PENDING" ? (
-              <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
-                <p className="font-semibold text-amber-900">⏳ Pago en revisión</p>
-                <p className="text-amber-800">
-                  Recibimos su intento de pago por <strong>{money(payment.amount, payment.currency)}</strong>. Realice la transferencia o consignación a la cuenta del organismo certificador y envíe el comprobante con su número de inscripción <strong>{enrollment.code}</strong>.
-                </p>
-                {marketing.bankingInfo ? (
-                  <div className="rounded-lg border border-amber-300 bg-white p-3">
-                    <div className="text-[10px] uppercase tracking-wider text-amber-700">Datos para transferencia</div>
-                    <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-xs text-slate-800">{marketing.bankingInfo}</pre>
-                  </div>
-                ) : null}
-                <p className="text-xs text-amber-700">
-                  Su pago será verificado y aprobado por el equipo del organismo. Recibirá una notificación en cuanto se confirme.
-                </p>
-                <p className="text-xs text-slate-500">Referencia interna: {payment.providerRef}</p>
-              </div>
+              (() => {
+                // ¿Ya subió el soporte de pago?
+                const meta = (payment.metadata as { receipt?: { fileName?: string }; rapyd?: { redirectUrl?: string; checkoutId?: string }; method?: string } | null) ?? {};
+                const hasReceipt = !!payment.receiptUrl || !!meta.receipt;
+                const isOnlinePending = meta.method === "online" && meta.rapyd?.redirectUrl;
+                if (isOnlinePending) {
+                  return (
+                    <div className="space-y-3 rounded-xl border-2 border-brand-300 bg-brand-50/40 p-5">
+                      <h3 className="text-base font-bold text-brand-900">⏳ Pago en línea en curso</h3>
+                      <p className="text-sm text-brand-900">
+                        Si cerró la ventana de la pasarela, puede continuar el pago aquí:
+                      </p>
+                      <a
+                        href={meta.rapyd!.redirectUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-2 rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white hover:bg-brand-900"
+                      >
+                        Continuar pago en línea ↗
+                      </a>
+                      <p className="text-xs text-slate-500">
+                        ¿Prefiere pagar por consignación? Su solicitud queda pendiente; pulse abajo
+                        para cancelar y elegir otro método.
+                      </p>
+                    </div>
+                  );
+                }
+                // Caso manual: instrucciones + carga de soporte
+                return (
+                  <PaymentReceiptUpload
+                    paymentId={payment.id}
+                    hasReceipt={hasReceipt}
+                    receiptName={meta.receipt?.fileName ?? null}
+                    bankingInfo={marketing.bankingInfo}
+                    amount={money(payment.amount, payment.currency)}
+                    currency={payment.currency}
+                  />
+                );
+              })()
             ) : payment && payment.status === "REJECTED" ? (
               <div className="space-y-2 rounded-lg border border-rose-200 bg-rose-50 p-4 text-sm">
                 <p className="font-semibold text-rose-800">⚠ Pago rechazado</p>
@@ -324,32 +356,46 @@ export default async function EnrollmentProcessPage({
                 ) : (
                   <p className="text-sm text-slate-500">Esta evaluación no tiene tarifas configuradas.</p>
                 )}
-                <form action={payEnrollment.bind(null, enrollment.id)}>
-                  <SubmitButton pendingText="Registrando solicitud…">
-                    {coveredByPrevious
-                      ? "Confirmar (cubierto por pago previo)"
-                      : fees.total && Number(fees.total.toString()) > 0
-                      ? `Reportar mi pago de ${money(fees.total, fees.currency)} + IVA`
-                      : "Confirmar (sin costo)"}
-                  </SubmitButton>
-                </form>
-                {!coveredByPrevious ? (
-                  <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
-                    <p className="font-semibold text-slate-800">Cómo pagar</p>
-                    <p>
-                      Al confirmar, generamos su solicitud de pago. Realice la transferencia o consignación y envíe el comprobante con su folio <strong>{enrollment.code}</strong>.
-                    </p>
-                    {marketing.bankingInfo ? (
-                      <div className="rounded-lg border border-slate-300 bg-white p-2">
-                        <div className="text-[10px] uppercase tracking-wider text-slate-500">Datos de la cuenta</div>
-                        <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] text-slate-800">{marketing.bankingInfo}</pre>
-                      </div>
-                    ) : null}
-                    <p className="text-slate-500">
-                      Su pago será verificado y aprobado por el equipo del organismo. La pasarela automática (Rapyd) se conectará próximamente.
-                    </p>
-                  </div>
-                ) : null}
+                {coveredByPrevious ? (
+                  <form
+                    action={async () => {
+                      "use server";
+                      const { payEnrollment } = await import("@/lib/actions/enrollment");
+                      const fd = new FormData();
+                      fd.set("method", "manual");
+                      fd.set("acceptRefund", "on");
+                      fd.set("acceptEconomicUse", "on");
+                      await payEnrollment(enrollment.id, { ok: false }, fd);
+                    }}
+                  >
+                    <SubmitButton pendingText="Confirmando…">
+                      Confirmar (cubierto por pago previo)
+                    </SubmitButton>
+                  </form>
+                ) : fees.total && Number(fees.total.toString()) > 0 ? (
+                  <PaymentMethodSelector
+                    enrollmentId={enrollment.id}
+                    enrollmentCode={enrollment.code ?? enrollment.id.slice(-6).toUpperCase()}
+                    amount={money(refFinalTotal, fees.currency)}
+                    currency={fees.currency}
+                    hasRapyd={hasRapyd}
+                    bankingInfo={marketing.bankingInfo}
+                  />
+                ) : (
+                  <form
+                    action={async () => {
+                      "use server";
+                      const { payEnrollment } = await import("@/lib/actions/enrollment");
+                      const fd = new FormData();
+                      fd.set("method", "manual");
+                      fd.set("acceptRefund", "on");
+                      fd.set("acceptEconomicUse", "on");
+                      await payEnrollment(enrollment.id, { ok: false }, fd);
+                    }}
+                  >
+                    <SubmitButton pendingText="Confirmando…">Confirmar (sin costo)</SubmitButton>
+                  </form>
+                )}
               </div>
             )}
           </StepCard>

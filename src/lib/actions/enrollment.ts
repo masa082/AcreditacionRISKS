@@ -196,7 +196,17 @@ export async function submitDocument(
     return { ok: false, error: `Formato no permitido. Use: ${accepted.join(", ")}.` };
   }
 
-  const { key } = await saveUpload(file, [subscriberId, enrollmentId, reqDoc.id]);
+  // Carpeta dedicada por candidato: <subscriber>/candidates/<candidateId>/enrollments/<enrollmentId>/<reqDocId>
+  // Así el SUSCRIPTOR puede inspeccionar todos los archivos de una persona
+  // simplemente listando su carpeta en el bucket / FS.
+  const { key } = await saveUpload(file, [
+    subscriberId,
+    "candidates",
+    candidateId,
+    "enrollments",
+    enrollmentId,
+    reqDoc.id,
+  ]);
 
   // Reemplazar entregas previas del mismo requisito (reenvío tras rechazo).
   const prev = await prisma.candidateDocument.findMany({
@@ -231,16 +241,39 @@ export async function submitDocument(
 
 // ----------------------------------------------------------------------------
 //  Inicio del pago.
-//  - Modo `mock`  → aprobación instantánea (solo para entornos demo/local).
-//  - Modo `manual`/sin variable → crea Payment PENDING; el admin del
-//    suscriptor lo aprueba en /panel/pagos al verificar la transferencia,
-//    o un webhook real lo confirmará cuando se conecte la pasarela.
-//  - Modo `wompi`/`payu` (futuro) → redirección al checkout externo. El
-//    webhook actualizará el estado.
+//
+//  El candidato elige explícitamente el método al pulsar "Pagar":
+//    - "online"  → Hosted Checkout de Rapyd (tarjeta, PSE, billeteras).
+//                  Si el suscriptor no tiene Rapyd configurado, cae a manual.
+//    - "manual"  → Reporte de consignación / transferencia: crea Payment
+//                  PENDING y el candidato luego sube el SOPORTE de pago,
+//                  que el admin del suscriptor verifica en /panel/pagos.
+//
+//  Antes de iniciar el pago el candidato DEBE aceptar los términos legales:
+//    1) Acepta cobrar el servicio entendiendo que es una obligación de
+//       MEDIO (no de resultado) y que no habrá devolución del dinero
+//       una vez iniciado el proceso de certificación.
+//    2) Declara que la certificación se solicita para el desarrollo de su
+//       actividad económica, profesión u oficio.
+//
+//  Modo demo: si PAYMENT_PROVIDER=mock o el suscriptor está configurado
+//  como demo, el pago queda APPROVED automáticamente con providerRef
+//  "MOCK-…" (solo entornos local/preview).
 // ----------------------------------------------------------------------------
-export async function payEnrollment(enrollmentId: string): Promise<void> {
+export async function payEnrollment(
+  enrollmentId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
   const { ctx, candidateId, subscriberId } = await requireCandidateAction();
   const enrollment = await loadOwnedEnrollment(candidateId, enrollmentId);
+
+  const method = (formData.get("method") as string) === "online" ? "online" : "manual";
+  const acceptRefund = formData.get("acceptRefund") === "on";
+  const acceptEconomic = formData.get("acceptEconomicUse") === "on";
+  if (!acceptRefund || !acceptEconomic) {
+    return { ok: false, error: "Debe aceptar los términos y condiciones para continuar con el pago." };
+  }
 
   // Si ya tiene un Payment activo (cualquier estado distinto de REJECTED),
   // no creamos otro: lo dejamos avanzar al flujo.
@@ -250,7 +283,7 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
   });
   if (existing) {
     revalidatePath(`/portal/inscripcion/${enrollmentId}`);
-    return;
+    return { ok: true };
   }
 
   // Si el candidato ya pagó el programa (mismo esquema) en otra inscripción,
@@ -299,7 +332,11 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
     subscriberPayment.rapydSecretKey
   );
   const envProvider = (process.env.PAYMENT_PROVIDER || "manual").toLowerCase();
-  const providerEnv = subscriberHasRapyd ? "rapyd" : envProvider;
+  // El método lo elige el candidato: "online" usa Rapyd cuando está
+  // disponible y cae a manual si no; "manual" siempre crea un Payment
+  // PENDING para que el candidato suba el soporte de la consignación.
+  const wantsOnline = method === "online" && subscriberHasRapyd;
+  const providerEnv = wantsOnline ? "rapyd" : envProvider;
   const isMock = providerEnv === "mock";
   const isRapyd = providerEnv === "rapyd";
   const isCovered = !!coveredBy;
@@ -341,10 +378,10 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
       receiptUrl: null,
       paidAt,
       metadata: isCovered
-        ? ({ coveredBy: coveredBy!.id, originalAmount: coveredBy!.amount, note: "Cubierto por inscripción previa del mismo programa." } as Prisma.InputJsonValue)
+        ? ({ coveredBy: coveredBy!.id, originalAmount: coveredBy!.amount, note: "Cubierto por inscripción previa del mismo programa.", terms: { acceptRefund, acceptEconomic, acceptedAt: new Date().toISOString() } } as Prisma.InputJsonValue)
         : isMock
-        ? ({ simulated: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue)
-        : ({ provider: providerEnv, awaitingManualApproval: true, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })) } as Prisma.InputJsonValue),
+        ? ({ simulated: true, method, lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })), terms: { acceptRefund, acceptEconomic, acceptedAt: new Date().toISOString() } } as Prisma.InputJsonValue)
+        : ({ provider: providerEnv, method, awaitingManualApproval: providerEnv !== "rapyd", lines: lines.map((l) => ({ label: l.label, amount: l.amount.toString() })), terms: { acceptRefund, acceptEconomic, acceptedAt: new Date().toISOString() } } as Prisma.InputJsonValue),
     },
   });
 
@@ -440,8 +477,89 @@ export async function payEnrollment(enrollmentId: string): Promise<void> {
           } as Prisma.InputJsonValue,
         },
       });
+      return {
+        ok: false,
+        error: `No fue posible abrir la pasarela: ${checkout.error}. Su pago quedó registrado como pendiente; el equipo del organismo lo confirmará manualmente.`,
+      };
     }
   }
+  return { ok: true };
+}
+
+// ----------------------------------------------------------------------------
+//  Subir el SOPORTE de pago (comprobante de transferencia / consignación)
+//  para un Payment PENDING. Solo el candidato dueño puede subirlo. El
+//  archivo se almacena en la carpeta del candidato y queda visible para el
+//  admin del suscriptor en /panel/pagos para verificar y aprobar.
+// ----------------------------------------------------------------------------
+export async function uploadPaymentReceipt(
+  paymentId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+
+  const payment = await prisma.payment.findFirst({
+    where: { id: paymentId, subscriberId, enrollment: { candidateId } },
+    select: { id: true, status: true, enrollmentId: true, providerRef: true },
+  });
+  if (!payment) return { ok: false, error: "Pago no encontrado." };
+  if (payment.status === "APPROVED") {
+    return { ok: false, error: "Este pago ya fue aprobado." };
+  }
+  if (payment.status === "REJECTED") {
+    return { ok: false, error: "Este pago fue rechazado. Genere un nuevo pago para reintentar." };
+  }
+
+  const file = formData.get("file");
+  if (!(file instanceof File) || file.size === 0) {
+    return { ok: false, error: "Adjunte el comprobante de pago." };
+  }
+  if (file.size > MAX_UPLOAD_BYTES) {
+    return { ok: false, error: "El comprobante supera el tamaño máximo de 10 MB." };
+  }
+  const ext = extFromName(file.name);
+  const allowed = ["pdf", "jpg", "jpeg", "png"];
+  if (!allowed.includes(ext)) {
+    return { ok: false, error: `Formato no permitido. Use ${allowed.join(", ")}.` };
+  }
+
+  const { key } = await saveUpload(file, [
+    subscriberId,
+    "candidates",
+    candidateId,
+    "payments",
+    paymentId,
+  ]);
+
+  const note = (formData.get("note") as string | null)?.trim() ?? "";
+
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: {
+      receiptUrl: key,
+      metadata: {
+        ...((await prisma.payment.findUnique({ where: { id: paymentId }, select: { metadata: true } }))?.metadata as Prisma.JsonObject | null ?? {}),
+        receipt: {
+          fileName: file.name,
+          uploadedAt: new Date().toISOString(),
+          note: note || null,
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  await audit(ctx, {
+    action: "payment.receipt.upload",
+    entity: "Payment",
+    entityId: paymentId,
+    subscriberId,
+    after: { fileName: file.name, note: note || null },
+  });
+  revalidatePath(`/portal/inscripcion/${payment.enrollmentId}`);
+  revalidatePath("/portal/pagos");
+  revalidatePath("/panel/pagos");
+  return { ok: true, message: "Soporte de pago cargado. El organismo lo revisará pronto." };
 }
 
 // ----------------------------------------------------------------------------
