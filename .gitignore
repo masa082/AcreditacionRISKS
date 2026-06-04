@@ -34,3 +34,4 @@ yarn-error.log*
 /storage
 /public/uploads
 .vercel
+.env.production.local

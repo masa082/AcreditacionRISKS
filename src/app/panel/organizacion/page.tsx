@@ -8,6 +8,7 @@ import { OrganizationForm } from "@/components/organization-form";
 import { MarketingConfigForm } from "@/components/marketing-config-form";
 import { RapydConfigForm } from "@/components/rapyd-config-form";
 import { ThemeConfigForm } from "@/components/theme-config-form";
+import { EmailDiagnosticCard } from "@/components/email-diagnostic-card";
 import { getMarketingConfig } from "@/lib/marketing-config";
 
 export const metadata = { title: "Organización" };
@@ -19,6 +20,7 @@ export default async function OrganizationPage() {
   const s = await prisma.subscriber.findUnique({ where: { id: subscriberId } });
   if (!s) return null;
   const m = await getMarketingConfig();
+  const myEmail = ctx.email;
 
   return (
     <>
@@ -61,6 +63,10 @@ export default async function OrganizationPage() {
           <ThemeConfigForm
             initial={(s.themeConfig ?? {}) as Record<string, string>}
           />
+        </div>
+
+        <div className="max-w-4xl">
+          <EmailDiagnosticCard defaultTo={myEmail} />
         </div>
 
         <Card className="max-w-3xl p-6">

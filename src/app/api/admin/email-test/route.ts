@@ -1,21 +1,34 @@
 import { NextRequest } from "next/server";
 import { getCurrentUser, can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
-import { sendEmail } from "@/lib/email";
+import { sendEmail, sanitizeFromAddress } from "@/lib/email";
 import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 /// Envía un correo de prueba con el proveedor configurado (Resend cuando
-/// EMAIL_PROVIDER=resend). Útil para verificar la integración tras
-/// configurar las variables en Vercel. Reservado al SUPERADMIN.
+/// EMAIL_PROVIDER=resend). Útil para verificar la integración y diagnosticar
+/// problemas en producción.
 ///
-///   GET  /api/admin/email-test?to=gerencia@risksint.com
-///   POST /api/admin/email-test  (body opcional)
+/// Acceso:
+///   - SUPERADMIN de plataforma (SUBSCRIBER_MANAGE) — visibilidad global.
+///   - Admin del suscriptor con ORG_MANAGE — para que el operador del
+///     organismo pueda autodiagnosticar el envío sin depender de soporte.
+///
+/// Devuelve diagnóstico completo:
+///   - Provider configurado, presencia de API key, prefijo de la key.
+///   - EMAIL_FROM RAW (lo que está en Vercel) y EMAIL_FROM SANITIZED
+///     (lo que realmente llega a Resend tras nuestra normalización).
+///   - BCC obligatorio + extra.
+///   - Últimos 10 intentos del AuditLog con su motivo de fallo.
+///
+///   GET /api/admin/email-test?to=gerencia@risksint.com
 export async function GET(req: NextRequest) {
   const ctx = await getCurrentUser();
-  if (!ctx || ctx.type !== "PLATFORM" || !can(ctx, PERMISSIONS.SUBSCRIBER_MANAGE)) {
+  const isPlatformAdmin = ctx?.type === "PLATFORM" && can(ctx, PERMISSIONS.SUBSCRIBER_MANAGE);
+  const isSubscriberAdmin = ctx?.type === "SUBSCRIBER" && can(ctx, PERMISSIONS.ORG_MANAGE);
+  if (!ctx || (!isPlatformAdmin && !isSubscriberAdmin)) {
     return new Response(JSON.stringify({ ok: false, error: "Acceso denegado." }), {
       status: 403, headers: { "content-type": "application/json" },
     });
@@ -50,15 +63,23 @@ export async function GET(req: NextRequest) {
     </div>
   `;
 
-  const result = await sendEmail({ to, subject, html, text });
+  // sendEmail incluye subscriberId del invocante para que el audit quede ligado.
+  const subscriberId = ctx.type === "SUBSCRIBER" ? ctx.subscriberId : null;
+  const result = await sendEmail({ to, subject, html, text, subscriberId });
 
-  // Trae los últimos 5 envíos para depurar (sent + failed) con su motivo
+  // Audit log: SUPERADMIN ve global, admin del suscriptor ve solo lo suyo.
   const recent = await prisma.auditLog.findMany({
-    where: { action: { in: ["email.sent", "email.failed"] } },
+    where: {
+      action: { in: ["email.sent", "email.failed"] },
+      ...(isPlatformAdmin ? {} : { subscriberId }),
+    },
     orderBy: { createdAt: "desc" },
-    take: 5,
+    take: 10,
     select: { action: true, createdAt: true, after: true },
   });
+
+  const rawFrom = process.env.EMAIL_FROM ?? "(default — fallback sandbox)";
+  const sanitizedFrom = sanitizeFromAddress(rawFrom);
 
   return new Response(
     JSON.stringify({
@@ -70,10 +91,14 @@ export async function GET(req: NextRequest) {
         EMAIL_PROVIDER: provider,
         hasResendKey: hasKey,
         keyPrefix: hasKey ? `${process.env.RESEND_API_KEY!.slice(0, 6)}…` : null,
-        EMAIL_FROM: process.env.EMAIL_FROM ?? "(default — CIOC <onboarding@resend.dev>)",
+        EMAIL_FROM_raw: rawFrom,
+        EMAIL_FROM_sanitized: sanitizedFrom,
+        EMAIL_FROM_changedBySanitizer: rawFrom !== sanitizedFrom,
         EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO ?? "(default calidad@risksint.com)",
         EMAIL_BCC: process.env.EMAIL_BCC ?? "(no configurado — usa solo BCC obligatorio)",
         mandatoryBcc: ["gerencia@risksint.com", "formacion@risksint.com"],
+        invokerType: ctx.type,
+        invokerEmail: ctx.email,
       },
       recentDelivery: recent,
     }, null, 2),
