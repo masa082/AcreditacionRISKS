@@ -1,7 +1,16 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb, type PDFPage, type PDFFont } from "pdf-lib";
+import { randomBytes } from "node:crypto";
+import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { readFileByKey, extFromName } from "@/lib/storage";
+import { appBaseUrl } from "@/lib/app-url";
+
+/// Zona horaria fija para todo el informe: hora legal colombiana.
+/// La plataforma puede ser visitada desde cualquier país, pero el informe
+/// como acto formal de certificación se sella siempre con la hora legal
+/// del país de origen del organismo (Colombia · UTC-5).
+const TZ_CO = "America/Bogota";
 
 /**
  * Generador del informe profesional "Hoja de Vida del Candidato" en PDF.
@@ -24,12 +33,15 @@ const PAGE_W = 595.28; // A4
 const PAGE_H = 841.89;
 const MARGIN = 50;
 
-const COLOR_NAVY = rgb(0.043, 0.114, 0.267);  // #0b1d44
+const COLOR_NAVY = rgb(0.043, 0.114, 0.267);  // #0b1d44 — solo para texto
 const COLOR_GOLD = rgb(0.784, 0.604, 0.208);  // #c89a35
 const COLOR_GREY = rgb(0.40, 0.45, 0.52);
 const COLOR_DARK = rgb(0.06, 0.09, 0.16);
 const COLOR_LIGHT_BG = rgb(0.95, 0.97, 1);
 const COLOR_RULE = rgb(0.85, 0.88, 0.94);
+const COLOR_HEADER_BG = rgb(0.992, 0.984, 0.957); // #fdfbf4 crema MUY claro
+const COLOR_HEADER_LINE = rgb(0.784, 0.604, 0.208); // dorada
+const COLOR_AMBER = rgb(0.85, 0.50, 0.05);
 
 interface Cursor { page: PDFPage; y: number }
 
@@ -41,24 +53,42 @@ interface Fonts {
 
 function fmtDate(d: Date | null | undefined): string {
   if (!d) return "—";
-  return new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "long", year: "numeric" }).format(d);
+  return new Intl.DateTimeFormat("es-CO", { day: "2-digit", month: "long", year: "numeric", timeZone: TZ_CO }).format(d);
 }
 function fmtDateTime(d: Date | null | undefined): string {
   if (!d) return "—";
-  return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(d);
+  return new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short", timeZone: TZ_CO }).format(d);
+}
+function fmtDateTimeFull(d: Date): string {
+  return new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "full", timeStyle: "long", timeZone: TZ_CO,
+  }).format(d);
 }
 function fmtCOP(n: number | string): string {
   return new Intl.NumberFormat("es-CO", { style: "currency", currency: "COP", maximumFractionDigits: 0 }).format(Number(n ?? 0));
 }
 
-function newPage(pdf: PDFDocument): PDFPage {
-  return pdf.addPage([PAGE_W, PAGE_H]);
+/// Contexto compartido entre páginas: identifica el informe (token único)
+/// para el QR del pie y mantiene el momento de generación constante.
+interface ReportCtx {
+  reportId: string;            // 32 chars hex (128 bits)
+  generatedAt: Date;
+  candidateName: string;
+  orgShort: string;            // suscriptor
+  qrPng: import("pdf-lib").PDFImage | null;  // PNG pre-embebido del QR
+  onacBadge: import("pdf-lib").PDFImage | null;
+  fonts: Fonts;
 }
 
-function ensureSpace(pdf: PDFDocument, cursor: Cursor, needed: number, fonts: Fonts): Cursor {
-  if (cursor.y - needed < MARGIN + 30) {
-    const page = newPage(pdf);
-    drawFooter(page, fonts, pdf.getPageCount(), pdf);
+function newPage(pdf: PDFDocument, ctx?: ReportCtx): PDFPage {
+  const p = pdf.addPage([PAGE_W, PAGE_H]);
+  if (ctx) drawFooter(p, ctx.fonts, pdf.getPageCount(), ctx);
+  return p;
+}
+
+function ensureSpace(pdf: PDFDocument, cursor: Cursor, needed: number, fonts: Fonts, ctx?: ReportCtx): Cursor {
+  if (cursor.y - needed < MARGIN + 50) {
+    const page = newPage(pdf, ctx);
     return { page, y: PAGE_H - MARGIN };
   }
   return cursor;
@@ -100,6 +130,68 @@ function _drawText(
     cy -= opts.size * 1.3;
   }
   return cy + opts.size * 1.3 - opts.size * 1.3 * lines.length; // not strictly used by callers; return final y consumed
+}
+
+/// Encabezado claro y limpio para la portada: fondo crema, franja dorada
+/// inferior, logo del suscriptor a la izquierda, título centrado, badge
+/// ONAC a la derecha. Mantenido en tonos claros para que se vea
+/// correctamente cualquier logotipo (incluido el de RISKS, que es oscuro).
+function drawHeader(
+  page: PDFPage,
+  fonts: Fonts,
+  opts: { orgName: string; subscriberLogoImg: import("pdf-lib").PDFImage | null; title: string; subtitle?: string },
+): void {
+  const headerH = 110;
+  page.drawRectangle({ x: 0, y: PAGE_H - headerH, width: PAGE_W, height: headerH, color: COLOR_HEADER_BG });
+  page.drawRectangle({ x: 0, y: PAGE_H - headerH - 3, width: PAGE_W, height: 3, color: COLOR_HEADER_LINE });
+
+  // Logo del suscriptor (izquierda)
+  let leftCursor = MARGIN;
+  if (opts.subscriberLogoImg) {
+    const W = 84;
+    const H = Math.min(70, (opts.subscriberLogoImg.height / opts.subscriberLogoImg.width) * W);
+    page.drawImage(opts.subscriberLogoImg, { x: MARGIN, y: PAGE_H - 22 - H, width: W, height: H });
+    leftCursor = MARGIN + W + 18;
+  }
+  // Texto principal
+  page.drawText(opts.title.toUpperCase(), { x: leftCursor, y: PAGE_H - 50, size: 18, font: fonts.bold, color: COLOR_NAVY });
+  page.drawText(opts.orgName, { x: leftCursor, y: PAGE_H - 68, size: 10, font: fonts.bold, color: COLOR_GOLD });
+  if (opts.subtitle) {
+    page.drawText(opts.subtitle, { x: leftCursor, y: PAGE_H - 82, size: 8.5, font: fonts.italic, color: COLOR_GREY });
+  }
+
+  // Badge ONAC a la derecha
+  drawOnacBadge(page, fonts, { x: PAGE_W - MARGIN - 150, y: PAGE_H - 90, w: 150, h: 70 });
+}
+
+/// Badge ONAC dibujado con primitivas (sin SVG): círculo azul + media luna
+/// turquesa que evoca el logo + leyenda "EN PROCESO DE ACREDITACIÓN ONAC".
+/// Hecho con primitivas para garantizar nitidez en cualquier resolución y
+/// no depender de assets en runtime.
+function drawOnacBadge(
+  page: PDFPage,
+  fonts: Fonts,
+  box: { x: number; y: number; w: number; h: number },
+): void {
+  page.drawRectangle({
+    x: box.x, y: box.y, width: box.w, height: box.h,
+    color: rgb(1, 1, 1),
+    borderColor: COLOR_AMBER, borderWidth: 1,
+  });
+  // Círculo azul ONAC con anillo turquesa (estilizado)
+  const cx = box.x + 22, cy = box.y + box.h / 2, r = 14;
+  page.drawCircle({ x: cx, y: cy, size: r, color: rgb(1, 1, 1), borderColor: rgb(0.07, 0.39, 0.69), borderWidth: 3 });
+  page.drawCircle({ x: cx + 6, y: cy + 2, size: r * 0.65, color: rgb(0.07, 0.69, 0.68) });
+  page.drawCircle({ x: cx + 6, y: cy + 2, size: r * 0.50, color: rgb(1, 1, 1) });
+  page.drawText("ONAC", { x: cx - 11, y: cy - 3, size: 7, font: fonts.bold, color: rgb(0.07, 0.39, 0.69) });
+
+  // Leyenda
+  const tx = box.x + 44;
+  page.drawText("EN PROCESO DE", { x: tx, y: box.y + box.h - 18, size: 8, font: fonts.bold, color: COLOR_AMBER });
+  page.drawText("ACREDITACIÓN", { x: tx, y: box.y + box.h - 28, size: 8, font: fonts.bold, color: COLOR_AMBER });
+  page.drawRectangle({ x: tx, y: box.y + 22, width: box.w - 48, height: 1, color: COLOR_AMBER });
+  page.drawText("ORGANISMO NACIONAL DE", { x: tx, y: box.y + 13, size: 5, font: fonts.bold, color: COLOR_GREY });
+  page.drawText("ACREDITACIÓN DE COLOMBIA", { x: tx, y: box.y + 6, size: 5, font: fonts.bold, color: COLOR_GREY });
 }
 
 function sectionTitle(cursor: Cursor, title: string, fonts: Fonts): Cursor {
@@ -144,16 +236,45 @@ function row(cursor: Cursor, label: string, value: string, fonts: Fonts): Cursor
   return { page: cursor.page, y: Math.min(cursor.y - 13, cy) };
 }
 
-function drawFooter(page: PDFPage, fonts: Fonts, pageIdx: number, _pdf: PDFDocument): void {
-  page.drawLine({ start: { x: MARGIN, y: 40 }, end: { x: PAGE_W - MARGIN, y: 40 }, thickness: 0.4, color: COLOR_RULE });
-  page.drawText("Hoja de Vida del Candidato · Documento confidencial generado por la plataforma CIOC", {
-    x: MARGIN, y: 28, size: 7, font: fonts.italic, color: COLOR_GREY,
+/// Pie de página unificado: QR del informe a la izquierda, identificación
+/// del candidato + sello de seguridad al centro y paginación a la derecha.
+/// Toda fecha incluye explícitamente "Hora legal colombiana" + UTC-5 para
+/// dejar claro el sello temporal del documento de certificación.
+function drawFooter(page: PDFPage, fonts: Fonts, pageIdx: number, ctx: ReportCtx): void {
+  const footerY = 60;
+  // Franja dorada superior + línea sutil
+  page.drawRectangle({ x: 0, y: footerY, width: PAGE_W, height: 2, color: COLOR_HEADER_LINE });
+  page.drawLine({ start: { x: MARGIN, y: footerY - 8 }, end: { x: PAGE_W - MARGIN, y: footerY - 8 }, thickness: 0.4, color: COLOR_RULE });
+
+  // QR pequeño esquina inferior izquierda
+  if (ctx.qrPng) {
+    page.drawImage(ctx.qrPng, { x: MARGIN, y: 12, width: 38, height: 38 });
+  }
+
+  // Bloque de identificación del informe (centro-izquierda)
+  const tx = MARGIN + 48;
+  page.drawText("HOJA DE VIDA DEL CANDIDATO · CIOC", { x: tx, y: 46, size: 7, font: fonts.bold, color: COLOR_NAVY });
+  page.drawText(`Titular: ${ctx.candidateName} · Organismo: ${ctx.orgShort}`, {
+    x: tx, y: 36, size: 6.5, font: fonts.regular, color: COLOR_DARK,
   });
-  page.drawText(`Pág. ${pageIdx}`, { x: PAGE_W - MARGIN - 30, y: 28, size: 7, font: fonts.regular, color: COLOR_GREY });
+  page.drawText(`Sellado: ${fmtDateTime(ctx.generatedAt)} · Hora legal colombiana (UTC-5) · Ref ${ctx.reportId.slice(0, 8).toUpperCase()}-${ctx.reportId.slice(-4).toUpperCase()}`, {
+    x: tx, y: 26, size: 6.5, font: fonts.italic, color: COLOR_GREY,
+  });
+  page.drawText("Documento confidencial. Verifique autenticidad escaneando el QR.", {
+    x: tx, y: 16, size: 6, font: fonts.italic, color: COLOR_GREY,
+  });
+
+  // Paginación a la derecha
+  page.drawText(`Pág. ${pageIdx}`, {
+    x: PAGE_W - MARGIN - 30, y: 36, size: 8, font: fonts.bold, color: COLOR_NAVY,
+  });
 }
 
 /// Punto de entrada principal: devuelve los bytes del PDF.
-export async function buildCandidateCV(candidateId: string, subscriberId: string): Promise<Uint8Array> {
+export async function buildCandidateCV(
+  candidateId: string,
+  subscriberId: string,
+): Promise<{ bytes: Uint8Array; reportId: string }> {
   const candidate = await prisma.candidate.findFirst({
     where: { id: candidateId, subscriberId },
     include: {
@@ -207,29 +328,52 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
     italic:  await pdf.embedFont(StandardFonts.HelveticaOblique),
   };
 
-  // ── PORTADA ────────────────────────────────────────────────────────
-  const cover = newPage(pdf);
-  drawFooter(cover, fonts, 1, pdf);
+  // ─── Pre-construcción del contexto del informe (QR + reportId) ───
+  // El reportId es un token aleatorio que identifica este informe en
+  // particular; queda en el pie como referencia y va al QR. El QR
+  // codifica una URL de verificación pública del informe.
+  const reportId = randomBytes(16).toString("hex");
+  const generatedAt = new Date();
+  let qrPng: import("pdf-lib").PDFImage | null = null;
+  try {
+    const verifyUrl = `${appBaseUrl()}/verificar/informe/${reportId}`;
+    const dataUrl = await QRCode.toDataURL(verifyUrl, { margin: 1, width: 200, errorCorrectionLevel: "M" });
+    const base64 = dataUrl.split(",")[1];
+    if (base64) qrPng = await pdf.embedPng(Buffer.from(base64, "base64"));
+  } catch { /* ignore */ }
 
-  // Cabecera con franja azul
-  cover.drawRectangle({ x: 0, y: PAGE_H - 110, width: PAGE_W, height: 110, color: COLOR_NAVY });
-  cover.drawText(orgName.toUpperCase(), { x: MARGIN, y: PAGE_H - 50, size: 14, font: fonts.bold, color: rgb(1, 1, 1) });
-  cover.drawText("HOJA DE VIDA DEL CANDIDATO", { x: MARGIN, y: PAGE_H - 72, size: 22, font: fonts.bold, color: COLOR_GOLD });
-  cover.drawText(`Generada el ${fmtDateTime(new Date())}`, { x: MARGIN, y: PAGE_H - 92, size: 9, font: fonts.italic, color: rgb(1, 1, 1) });
-
-  // Logo del suscriptor (esquina superior derecha) si lo tenemos
+  // Logo del suscriptor: si existe lo pre-embebemos para usar tanto en
+  // portada como en el encabezado.
+  let subscriberLogoImg: import("pdf-lib").PDFImage | null = null;
   if (subscriber?.logoUrl) {
     try {
       const key = subscriber.logoUrl.startsWith("/api/brand/") ? subscriber.logoUrl.replace("/api/brand/", "") : null;
       if (key) {
         const bytes = await readFileByKey(key);
         const ext = extFromName(key);
-        const img = ext === "png" ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
-        const W = 90, H = (img.height / img.width) * W;
-        cover.drawImage(img, { x: PAGE_W - MARGIN - W, y: PAGE_H - 100, width: W, height: H });
+        subscriberLogoImg = ext === "png" ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
       }
     } catch { /* ignore */ }
   }
+
+  const ctx: ReportCtx = {
+    reportId,
+    generatedAt,
+    candidateName: `${candidate.firstName} ${candidate.lastName}`,
+    orgShort: orgName,
+    qrPng,
+    onacBadge: null,
+    fonts,
+  };
+
+  // ── PORTADA ────────────────────────────────────────────────────────
+  const cover = newPage(pdf, ctx);
+  drawHeader(cover, fonts, {
+    orgName,
+    subscriberLogoImg,
+    title: "Hoja de Vida del Candidato",
+    subtitle: `Generada ${fmtDateTimeFull(generatedAt)} · Ref. ${reportId.slice(0, 8).toUpperCase()}-${reportId.slice(-4).toUpperCase()}`,
+  });
 
   // Tarjeta principal con foto y nombre
   const cardY = PAGE_H - 280;
@@ -286,8 +430,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   cursor = row(cursor, "Último ingreso", fmtDateTime(candidate.user?.lastLoginAt ?? null), fonts);
 
   // ── PÁGINA 2: DATOS PERSONALES ─────────────────────────────────────
-  const dataPage = newPage(pdf);
-  drawFooter(dataPage, fonts, 2, pdf);
+  const dataPage = newPage(pdf, ctx);
   cursor = { page: dataPage, y: PAGE_H - MARGIN };
   cursor = sectionTitle(cursor, "Datos personales y de contacto", fonts);
   cursor = row(cursor, "Nombres", candidate.firstName, fonts);
@@ -306,7 +449,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
 
   // ── 3. DATOS DE CONOCIMIENTO (esquemas + alcance + norma) ──────────
   cursor.y -= 8;
-  cursor = ensureSpace(pdf, cursor, 80, fonts);
+  cursor = ensureSpace(pdf, cursor, 80, fonts, ctx);
   cursor = sectionTitle(cursor, "Datos de conocimiento — esquemas de certificación", fonts);
   // Esquemas únicos a los que el candidato se ha inscrito
   const schemes = new Map<string, { name: string; code: string; scope: string | null; norm: string | null; validity: number | null }>();
@@ -325,7 +468,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
     cursor = row(cursor, "Sin esquemas inscritos", "—", fonts);
   } else {
     for (const s of schemes.values()) {
-      cursor = ensureSpace(pdf, cursor, 56, fonts);
+      cursor = ensureSpace(pdf, cursor, 56, fonts, ctx);
       cursor.page.drawText(`${s.code} — ${s.name}`, { x: MARGIN, y: cursor.y, size: 10, font: fonts.bold, color: COLOR_NAVY });
       cursor.y -= 13;
       if (s.scope) cursor = row(cursor, "Alcance", s.scope, fonts);
@@ -387,7 +530,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   }
 
   cursor.y -= 4;
-  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Formación académica", fonts);
   cursor.page.drawText("Los siguientes documentos académicos fueron aportados por el candidato. El detalle completo se incluye como anexo al final de este informe.",
     { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
@@ -395,7 +538,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   cursor = listDocs(cursor, docsFormacion, "Sin documentos académicos cargados todavía.");
 
   cursor.y -= 6;
-  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Antecedentes disciplinarios, judiciales y penales", fonts);
   cursor.page.drawText("Certificados expedidos por las autoridades de control. Verifíquense por sus canales oficiales antes de la emisión final.",
     { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
@@ -403,7 +546,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   cursor = listDocs(cursor, docsAnte, "Sin certificados de antecedentes cargados todavía.");
 
   cursor.y -= 6;
-  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Historial laboral y experiencia", fonts);
   cursor.page.drawText("Documentos que evidencian la experiencia y trayectoria laboral del candidato.",
     { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
@@ -412,20 +555,20 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
 
   if (docsOtros.length > 0) {
     cursor.y -= 6;
-    cursor = ensureSpace(pdf, cursor, 50, fonts);
+    cursor = ensureSpace(pdf, cursor, 50, fonts, ctx);
     cursor = sectionTitle(cursor, "Otros documentos del proceso", fonts);
     cursor = listDocs(cursor, docsOtros, "—");
   }
 
   // ── 7. EVALUACIONES PRESENTADAS + VIGENCIA + INTENTOS ──────────────
   cursor.y -= 6;
-  cursor = ensureSpace(pdf, cursor, 80, fonts);
+  cursor = ensureSpace(pdf, cursor, 80, fonts, ctx);
   cursor = sectionTitle(cursor, "Evaluaciones presentadas — resultados, vigencia e intentos", fonts);
   if (candidate.enrollments.length === 0) {
     cursor = row(cursor, "Sin inscripciones", "—", fonts);
   } else {
     for (const e of candidate.enrollments) {
-      cursor = ensureSpace(pdf, cursor, 110, fonts);
+      cursor = ensureSpace(pdf, cursor, 110, fonts, ctx);
       const title = e.exam?.name ?? e.scheme?.name ?? "Inscripción";
       const cert = candidate.certificates.find((c) => c.enrollmentId === e.id);
       cursor.page.drawRectangle({ x: MARGIN, y: cursor.y - 6, width: PAGE_W - MARGIN * 2, height: 1, color: COLOR_RULE });
@@ -446,7 +589,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
         });
         cursor.y -= 13;
         for (const a of e.attempts) {
-          cursor = ensureSpace(pdf, cursor, 18, fonts);
+          cursor = ensureSpace(pdf, cursor, 18, fonts, ctx);
           const score = a.scorePercent != null ? `${Number(a.scorePercent).toFixed(1)}%` : "—";
           const verdict = a.passed === true ? "APROBÓ" : a.passed === false ? "NO APROBÓ" : a.status;
           const verdictColor = a.passed === true ? rgb(0.04, 0.55, 0.34) : a.passed === false ? rgb(0.73, 0.13, 0.20) : COLOR_GREY;
@@ -463,7 +606,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
 
       // Vigencia del certificado emitido (si lo hay)
       if (cert) {
-        cursor = ensureSpace(pdf, cursor, 30, fonts);
+        cursor = ensureSpace(pdf, cursor, 30, fonts, ctx);
         const vigenteHasta = cert.expiresAt ? fmtDate(cert.expiresAt) : "No vence";
         const estado = cert.status;
         const vigColor = estado === "VALID" ? rgb(0.04, 0.55, 0.34) : estado === "EXPIRED" ? rgb(0.73, 0.43, 0.05) : rgb(0.73, 0.13, 0.20);
@@ -481,7 +624,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
       // Agenda
       if (e.bookings.length > 0) {
         for (const b of e.bookings) {
-          cursor = ensureSpace(pdf, cursor, 14, fonts);
+          cursor = ensureSpace(pdf, cursor, 14, fonts, ctx);
           cursor.page.drawText(`Agenda: ${fmtDateTime(b.session.startsAt)} · ${b.session.modality ?? ""} · ${b.session.location ?? ""}`,
             { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK });
           cursor.y -= 12;
@@ -492,14 +635,14 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   }
 
   // ── 8. SOPORTES DE PAGO ─────────────────────────────────────────────
-  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Soportes de pago", fonts);
   const allPayments = candidate.enrollments.flatMap((e) => e.payments.map((p) => ({ ...p, enrollment: e })));
   if (allPayments.length === 0) {
     cursor = row(cursor, "Sin pagos", "—", fonts);
   } else {
     for (const p of allPayments) {
-      cursor = ensureSpace(pdf, cursor, 60, fonts);
+      cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
       const meta = (p.metadata as { rapyd?: { checkoutId?: string; type?: string }; receipt?: { fileName?: string; note?: string | null } } | null) ?? {};
       cursor.page.drawText(`${p.status} · ${p.provider ?? "manual"} · ${fmtCOP(Number(p.amount.toString()))}`, {
         x: MARGIN, y: cursor.y, size: 10, font: fonts.bold, color: p.status === "APPROVED" ? rgb(0.04, 0.55, 0.34) : p.status === "REJECTED" ? rgb(0.73, 0.13, 0.20) : COLOR_NAVY,
@@ -524,7 +667,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   }
 
   // ── 9. SOPORTES DOCUMENTALES (lista consolidada) ───────────────────
-  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Soportes documentales del proceso", fonts);
   if (allDocs.length === 0) {
     cursor = row(cursor, "Sin documentos", "El candidato aún no ha cargado documentos.", fonts);
@@ -533,7 +676,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
       { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
     cursor.y -= 14;
     for (const d of allDocs) {
-      cursor = ensureSpace(pdf, cursor, 16, fonts);
+      cursor = ensureSpace(pdf, cursor, 16, fonts, ctx);
       const statusLabel: Record<string, string> = { SUBMITTED: "en revisión", APPROVED: "aprobado", REJECTED: "rechazado", PENDING: "pendiente" };
       cursor.page.drawText(
         `• ${d.requiredDocument?.name ?? "Documento"} — ${d.fileName ?? ""} (${statusLabel[d.status] ?? d.status})`,
@@ -545,7 +688,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
 
   // ── 10. AUTORIZACIONES (TRATAMIENTO DE DATOS + TÉRMINOS) ───────────
   cursor.y -= 6;
-  cursor = ensureSpace(pdf, cursor, 80, fonts);
+  cursor = ensureSpace(pdf, cursor, 80, fonts, ctx);
   cursor = sectionTitle(cursor, "Autorizaciones y aceptaciones del candidato", fonts);
 
   // 10.a Tratamiento de datos
@@ -560,7 +703,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
     cursor.y -= 14;
   } else {
     for (const c of candidate.consents) {
-      cursor = ensureSpace(pdf, cursor, 40, fonts);
+      cursor = ensureSpace(pdf, cursor, 40, fonts, ctx);
       cursor.page.drawText(`• Aceptada: ${fmtDateTime(c.acceptedAt)} · IP: ${c.ip ?? "—"}`, {
         x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
       });
@@ -574,7 +717,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
 
   // 10.b Términos y condiciones del cobro/proceso
   cursor.y -= 6;
-  cursor = ensureSpace(pdf, cursor, 60, fonts);
+  cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor.page.drawText("b) Aceptación de términos y condiciones del proceso de certificación", {
     x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY,
   });
@@ -592,7 +735,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
     cursor.y -= 14;
   } else {
     for (const t of termsPayments) {
-      cursor = ensureSpace(pdf, cursor, 50, fonts);
+      cursor = ensureSpace(pdf, cursor, 50, fonts, ctx);
       cursor.page.drawText(`• Pago ${t.payment.id.slice(-8).toUpperCase()} · Folio ${t.payment.enrollment.code ?? "—"} · ${fmtDateTime(t.acceptedAt ? new Date(t.acceptedAt) : t.payment.createdAt)}`, {
         x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
       });
@@ -611,8 +754,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
 
     if (ext === "pdf") {
       // Concatenamos el PDF: portada con título + páginas embebidas.
-      const sep = newPage(pdf);
-      drawFooter(sep, fonts, pdf.getPageCount(), pdf);
+      const sep = newPage(pdf, ctx);
       sep.drawRectangle({ x: 0, y: PAGE_H - 70, width: PAGE_W, height: 70, color: COLOR_NAVY });
       sep.drawText("ANEXO", { x: MARGIN, y: PAGE_H - 30, size: 9, font: fonts.bold, color: COLOR_GOLD });
       sep.drawText(d.requiredDocument?.name ?? "Documento", { x: MARGIN, y: PAGE_H - 50, size: 16, font: fonts.bold, color: rgb(1, 1, 1) });
@@ -626,14 +768,12 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
         const copied = await pdf.copyPages(src, indices);
         for (const pg of copied) pdf.addPage(pg);
       } catch {
-        const errPage = newPage(pdf);
-        drawFooter(errPage, fonts, pdf.getPageCount(), pdf);
+        const errPage = newPage(pdf, ctx);
         errPage.drawText("Archivo no disponible en el almacenamiento.", { x: MARGIN, y: PAGE_H / 2, size: 12, font: fonts.italic, color: rgb(0.73, 0.13, 0.20) });
       }
     } else if (ext === "png" || ext === "jpg" || ext === "jpeg") {
       // Embebemos la imagen ajustada al área útil de la página
-      const imgPage = newPage(pdf);
-      drawFooter(imgPage, fonts, pdf.getPageCount(), pdf);
+      const imgPage = newPage(pdf, ctx);
       imgPage.drawText("ANEXO", { x: MARGIN, y: PAGE_H - 30, size: 9, font: fonts.bold, color: COLOR_GOLD });
       imgPage.drawText(d.requiredDocument?.name ?? "Documento", { x: MARGIN, y: PAGE_H - 50, size: 14, font: fonts.bold, color: COLOR_NAVY });
       imgPage.drawText(docTitle, { x: MARGIN, y: PAGE_H - 65, size: 8, font: fonts.italic, color: COLOR_GREY });
@@ -656,8 +796,7 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
   for (const p of allPayments) {
     if (!p.receiptUrl) continue;
     const ext = extFromName(p.receiptUrl);
-    const sep = newPage(pdf);
-    drawFooter(sep, fonts, pdf.getPageCount(), pdf);
+    const sep = newPage(pdf, ctx);
     sep.drawText("ANEXO · SOPORTE DE PAGO", { x: MARGIN, y: PAGE_H - 30, size: 9, font: fonts.bold, color: COLOR_GOLD });
     sep.drawText(`${p.status} · ${fmtCOP(Number(p.amount.toString()))}`, { x: MARGIN, y: PAGE_H - 50, size: 14, font: fonts.bold, color: COLOR_NAVY });
     sep.drawText(`Folio ${p.enrollment.code ?? "—"} · Ref. ${p.providerRef ?? ""}`, { x: MARGIN, y: PAGE_H - 65, size: 9, font: fonts.italic, color: COLOR_GREY });
@@ -681,5 +820,6 @@ export async function buildCandidateCV(candidateId: string, subscriberId: string
     }
   }
 
-  return pdf.save();
+  const bytes = await pdf.save();
+  return { bytes, reportId };
 }
