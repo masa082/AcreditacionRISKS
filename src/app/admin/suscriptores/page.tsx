@@ -1,28 +1,35 @@
-import Link from "next/link";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Card, Badge } from "@/components/ui";
+import { PageHeader, Card } from "@/components/ui";
 import { SubscriberForm } from "@/components/subscriber-form";
-import { PlanAssign } from "@/components/plan-assign";
-import { setSubscriberStatus } from "@/lib/actions/platform";
-import { dateOnly } from "@/lib/format";
+import { SubscribersTable, type SubscriberRow } from "@/components/subscribers-table";
 
 export const metadata = { title: "Suscriptores" };
-
-const STATUS_TONE: Record<string, "green" | "amber" | "red" | "slate"> = {
-  ACTIVE: "green",
-  TRIAL: "amber",
-  SUSPENDED: "red",
-  CANCELLED: "slate",
-};
 
 export default async function SubscribersPage() {
   const [subs, plans] = await Promise.all([
     prisma.subscriber.findMany({
       orderBy: { createdAt: "desc" },
-      include: { plan: { select: { id: true, name: true } }, _count: { select: { users: true, candidates: true, certificates: true } } },
+      include: {
+        plan: { select: { id: true, name: true } },
+        _count: { select: { users: true, candidates: true, certificates: true } },
+      },
     }),
     prisma.plan.findMany({ where: { isActive: true }, orderBy: { priceMonthly: "asc" }, select: { id: true, name: true } }),
   ]);
+
+  const rows: SubscriberRow[] = subs.map((s) => ({
+    id: s.id,
+    slug: s.slug,
+    legalName: s.legalName,
+    tradeName: s.tradeName,
+    status: s.status,
+    planId: s.plan?.id ?? null,
+    planName: s.plan?.name ?? null,
+    createdAtISO: s.createdAt.toISOString(),
+    users: s._count.users,
+    candidates: s._count.candidates,
+    certificates: s._count.certificates,
+  }));
 
   return (
     <>
@@ -36,53 +43,7 @@ export default async function SubscribersPage() {
       </Card>
 
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500">
-              <tr>
-                <th className="px-5 py-3">Organización</th>
-                <th className="px-5 py-3">Plan</th>
-                <th className="px-5 py-3">Estado</th>
-                <th className="px-5 py-3">Usuarios / Candidatos / Cert.</th>
-                <th className="px-5 py-3">Creado</th>
-                <th className="px-5 py-3">Acciones</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {subs.map((s) => (
-                <tr key={s.id}>
-                  <td className="px-5 py-3">
-                    <div className="font-medium text-slate-800">{s.tradeName ?? s.legalName}</div>
-                    <div className="text-xs text-slate-400">/{s.slug}</div>
-                  </td>
-                  <td className="px-5 py-3"><PlanAssign subscriberId={s.id} plans={plans} current={s.plan?.id ?? null} /></td>
-                  <td className="px-5 py-3"><Badge tone={STATUS_TONE[s.status] ?? "slate"}>{s.status}</Badge></td>
-                  <td className="px-5 py-3 text-slate-600">{s._count.users} / {s._count.candidates} / {s._count.certificates}</td>
-                  <td className="px-5 py-3 text-slate-500">{dateOnly(s.createdAt)}</td>
-                  <td className="px-5 py-3">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <Link
-                        href={`/admin/suscriptores/${s.id}/usuarios`}
-                        className="rounded-lg border border-brand-300 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
-                      >
-                        Usuarios
-                      </Link>
-                      {s.status === "SUSPENDED" || s.status === "CANCELLED" ? (
-                        <form action={setSubscriberStatus.bind(null, s.id, "ACTIVE")}>
-                          <button type="submit" className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50">Activar</button>
-                        </form>
-                      ) : (
-                        <form action={setSubscriberStatus.bind(null, s.id, "SUSPENDED")}>
-                          <button type="submit" className="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">Suspender</button>
-                        </form>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <SubscribersTable subs={rows} plans={plans} />
       </Card>
     </>
   );

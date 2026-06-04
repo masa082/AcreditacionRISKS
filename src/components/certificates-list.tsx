@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useTransition } from "react";
 import { CertificateShareActions } from "@/components/certificate-share-actions";
 import { RevokeForm } from "@/components/revoke-form";
+import { useSortableRows, SortableHeader } from "@/components/sortable";
 
 export interface CertificateRow {
   id: string;
@@ -60,6 +61,15 @@ export function CertificatesList({
 
   const allPrograms = useMemo(() => Array.from(new Set(programs)).sort(), [programs]);
 
+  const { sorted, sort, setSort } = useSortableRows(rows, {
+    holder:  (r) => r.holderName,
+    code:    (r) => r.code,
+    program: (r) => r.title,
+    issued:  (r) => r.issuedAtISO,
+    expires: (r) => r.expiresAtISO ?? "9999",
+    status:  (r) => r.effectiveStatus,
+  }, { key: "issued", dir: "desc" });
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -115,18 +125,18 @@ export function CertificatesList({
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-slate-200 text-left text-[10px] uppercase tracking-wider text-slate-400">
-              <th className="px-3 py-2">Titular</th>
-              <th className="px-3 py-2">Código</th>
-              <th className="px-3 py-2 min-w-[260px]">Programa</th>
-              <th className="px-3 py-2">Emisión</th>
-              <th className="px-3 py-2">Vence</th>
-              <th className="px-3 py-2">Estado</th>
-              <th className="px-3 py-2 text-right">Acciones</th>
+            <tr className="border-b border-slate-200 text-left text-[10px] tracking-wider">
+              <th className="px-3 py-2"><SortableHeader label="Titular" sortKey="holder" current={sort} onSort={setSort} /></th>
+              <th className="px-3 py-2"><SortableHeader label="Código" sortKey="code" current={sort} onSort={setSort} /></th>
+              <th className="px-3 py-2 min-w-[260px]"><SortableHeader label="Programa" sortKey="program" current={sort} onSort={setSort} /></th>
+              <th className="px-3 py-2"><SortableHeader label="Emisión" sortKey="issued" current={sort} onSort={setSort} /></th>
+              <th className="px-3 py-2"><SortableHeader label="Vence" sortKey="expires" current={sort} onSort={setSort} /></th>
+              <th className="px-3 py-2"><SortableHeader label="Estado" sortKey="status" current={sort} onSort={setSort} /></th>
+              <th className="px-3 py-2 text-right"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Acciones</span></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {rows.map((c) => (
+            {sorted.map((c) => (
               <tr key={c.id} className="hover:bg-slate-50">
                 <td className="px-3 py-2 align-top">
                   <div className="font-semibold text-slate-900">{c.holderName}</div>
@@ -156,7 +166,7 @@ export function CertificatesList({
             ))}
           </tbody>
         </table>
-        {rows.length === 0 ? (
+        {sorted.length === 0 ? (
           <div className="p-10 text-center text-sm text-slate-500">
             No hay certificados que coincidan con los filtros.
           </div>
