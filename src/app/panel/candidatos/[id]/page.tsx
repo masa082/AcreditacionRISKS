@@ -94,9 +94,17 @@ export default async function CandidateDetailPage({
         title={`${candidate.firstName} ${candidate.lastName}`}
         subtitle={candidate.email}
         actions={
-          <Link href="/panel/candidatos" className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
-            Volver
-          </Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/panel/candidatos/${candidate.id}/documentos`} className="rounded-lg border border-brand-300 px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
+              📁 Carpeta de archivos
+            </Link>
+            <a href={`/panel/candidatos/${candidate.id}/cv`} className="rounded-lg bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">
+              ⬇ Descargar Hoja de Vida (PDF)
+            </a>
+            <Link href="/panel/candidatos" className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">
+              Volver
+            </Link>
+          </div>
         }
       />
 

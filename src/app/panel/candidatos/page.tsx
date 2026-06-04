@@ -95,7 +95,7 @@ export default async function CandidatesListPage({
               orderBy: [{ status: "asc" }, { paidAt: "desc" }],
               select: { status: true, amount: true, currency: true },
             },
-            documents: { select: { status: true } },
+            documents: { select: { status: true, fileName: true } },
           },
         },
       },
@@ -121,6 +121,9 @@ export default async function CandidatesListPage({
     const docsApproved = docs.filter((d) => d.status === "APPROVED").length;
     const docsPending = docs.filter((d) => d.status === "SUBMITTED").length;
     const docsRejected = docs.filter((d) => d.status === "REJECTED").length;
+    // Conteos por tipo de archivo (solo de la última inscripción visible).
+    const docsPdf = docs.filter((d) => /\.pdf$/i.test(d.fileName ?? "")).length;
+    const docsImg = docs.filter((d) => /\.(png|jpe?g)$/i.test(d.fileName ?? "")).length;
     const paymentLabel: CandidateRow["paymentLabel"] = lastPayment?.status === "APPROVED" ? "approved"
       : lastPayment?.status === "PENDING" ? "pending"
       : lastPayment?.status === "REJECTED" ? "rejected"
@@ -142,6 +145,8 @@ export default async function CandidatesListPage({
       docsApproved,
       docsPending,
       docsRejected,
+      docsPdf,
+      docsImg,
       lastLoginLabel: c.user?.lastLoginAt ? dateTime(c.user.lastLoginAt) : null,
       lastLoginIp: c.user?.lastLoginIp ?? null,
       loginCount: c.user?.id ? loginsByUser.get(c.user.id) ?? 0 : 0,

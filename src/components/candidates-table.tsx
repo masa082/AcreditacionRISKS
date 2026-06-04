@@ -19,6 +19,9 @@ export interface CandidateRow {
   docsPending: number;
   docsApproved: number;
   docsRejected: number;
+  /** Conteo por tipo de archivo, para mostrar iconos. */
+  docsPdf: number;
+  docsImg: number;
   lastLoginLabel: string | null;
   lastLoginIp: string | null;
   loginCount: number;
@@ -68,7 +71,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                 <th className="px-3 py-2">Último estado</th>
                 <th className="px-3 py-2">Pago</th>
                 <th className="px-3 py-2">Autoriz.</th>
-                <th className="px-3 py-2">Docs (✓/⏳/✗)</th>
+                <th className="px-3 py-2">Archivos</th>
                 <th className="px-3 py-2">Último ingreso</th>
                 <th className="px-3 py-2">IP</th>
                 <th className="px-3 py-2 text-center">Logins</th>
@@ -101,8 +104,47 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                     <td className="px-3 py-2 align-top text-center text-sm">
                       {c.consentGiven ? <span title="Autorizó tratamiento" className="text-emerald-600">✓</span> : <span title="Sin autorización" className="text-slate-300">—</span>}
                     </td>
-                    <td className="px-3 py-2 align-top text-[11px] text-slate-600">
-                      <span className="text-emerald-700">{c.docsApproved}</span> / <span className="text-amber-700">{c.docsPending}</span> / <span className="text-rose-700">{c.docsRejected}</span>
+                    <td className="px-3 py-2 align-top">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5 text-[11px]">
+                          {c.docsPdf > 0 ? (
+                            <span title={`${c.docsPdf} PDF`} className="inline-flex items-center gap-0.5 rounded bg-rose-50 px-1 py-0.5 ring-1 ring-rose-200 text-rose-700">
+                              <span aria-hidden>📕</span><span className="font-semibold">{c.docsPdf}</span>
+                            </span>
+                          ) : null}
+                          {c.docsImg > 0 ? (
+                            <span title={`${c.docsImg} imagen(es)`} className="inline-flex items-center gap-0.5 rounded bg-cyan-50 px-1 py-0.5 ring-1 ring-cyan-200 text-cyan-700">
+                              <span aria-hidden>🖼</span><span className="font-semibold">{c.docsImg}</span>
+                            </span>
+                          ) : null}
+                          {c.docsPdf === 0 && c.docsImg === 0 ? (
+                            <span className="text-slate-300">—</span>
+                          ) : null}
+                        </div>
+                        <div className="text-[10px] text-slate-500" title="Aprobados / En revisión / Rechazados">
+                          <span className="text-emerald-700">{c.docsApproved}</span>
+                          {" / "}
+                          <span className="text-amber-700">{c.docsPending}</span>
+                          {" / "}
+                          <span className="text-rose-700">{c.docsRejected}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Link
+                            href={`/panel/candidatos/${c.id}/documentos`}
+                            className="rounded border border-brand-300 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700 hover:bg-brand-50"
+                            title="Abrir carpeta con todos los archivos del candidato"
+                          >
+                            📁 Carpeta
+                          </Link>
+                          <a
+                            href={`/panel/candidatos/${c.id}/cv`}
+                            className="rounded border border-violet-300 px-1.5 py-0.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-50"
+                            title="Descargar Hoja de Vida del Candidato (PDF con datos, fotografía, documentos, resultados y pagos)"
+                          >
+                            ⬇ Informe
+                          </a>
+                        </div>
+                      </div>
                     </td>
                     <td className="px-3 py-2 align-top text-[11px] text-slate-600">
                       {c.lastLoginLabel ?? <span className="text-slate-300">Nunca</span>}
