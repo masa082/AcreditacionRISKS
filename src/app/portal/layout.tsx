@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { prisma } from "@/lib/prisma";
 import { requireCandidatePage } from "@/lib/guards";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 
@@ -13,12 +14,19 @@ const NAV: NavItem[] = [
 ];
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {
-  const { ctx } = await requireCandidatePage();
+  const { ctx, subscriberId } = await requireCandidatePage();
+  const subscriber = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: { tradeName: true, legalName: true, logoUrl: true },
+  });
+  const orgName = subscriber?.tradeName ?? subscriber?.legalName ?? "Portal del candidato";
   return (
     <DashboardShell
       area="Portal del candidato"
       nav={NAV}
       user={{ name: `${ctx.firstName} ${ctx.lastName}`, role: "Candidato" }}
+      subscriberLogo={subscriber?.logoUrl ?? null}
+      subscriberName={orgName}
     >
       {children}
     </DashboardShell>

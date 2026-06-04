@@ -35,7 +35,7 @@ export default async function PanelLayout({
   const { ctx, subscriberId } = await requireSubscriberPage();
   const subscriber = await prisma.subscriber.findUnique({
     where: { id: subscriberId },
-    select: { tradeName: true, legalName: true },
+    select: { tradeName: true, legalName: true, logoUrl: true },
   });
   const orgName = subscriber?.tradeName ?? subscriber?.legalName ?? "Suscriptor";
 
@@ -47,6 +47,8 @@ export default async function PanelLayout({
         name: `${ctx.firstName} ${ctx.lastName}`,
         role: ctx.roleName ?? "Suscriptor",
       }}
+      subscriberLogo={subscriber?.logoUrl ?? null}
+      subscriberName={orgName}
     >
       {children}
     </DashboardShell>

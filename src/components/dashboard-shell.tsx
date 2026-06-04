@@ -16,11 +16,18 @@ export function DashboardShell({
   nav,
   user,
   children,
+  subscriberLogo,
+  subscriberName,
 }: {
   area: string;
   nav: NavItem[];
   user: { name: string; role: string };
   children: ReactNode;
+  /** URL del logo del suscriptor (cargado en /panel/organizacion).
+   *  Si es null, en el header solo se muestra el nombre del usuario. */
+  subscriberLogo?: string | null;
+  /** Nombre comercial del suscriptor para alt y tooltip del logo. */
+  subscriberName?: string;
 }) {
   return (
     <div className="flex min-h-screen bg-slate-50">
@@ -49,12 +56,25 @@ export function DashboardShell({
           <div className="text-sm text-slate-500 md:hidden">{APP_NAME}</div>
           <div className="ml-auto flex items-center gap-3">
             <NotificationBellServer />
-            <div className="text-right">
+            <div className="hidden text-right sm:block">
               <div className="text-sm font-medium text-slate-800">
                 {user.name}
               </div>
               <div className="text-xs text-slate-400">{user.role}</div>
             </div>
+            {subscriberLogo ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={subscriberLogo}
+                alt={subscriberName ?? "Suscriptor"}
+                title={subscriberName ?? "Suscriptor"}
+                className="h-10 w-auto rounded border border-slate-200 bg-white object-contain p-0.5"
+              />
+            ) : (
+              <div className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-500">
+                {(subscriberName ?? user.name).slice(0, 1).toUpperCase()}
+              </div>
+            )}
             <form action={logoutAction}>
               <button
                 type="submit"
