@@ -3,6 +3,13 @@
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { saveAnswer, saveTextAnswer, uploadAnswerFile, submitAttempt, recordAttemptEvent } from "@/lib/actions/attempt";
 import type { ActionResult } from "@/lib/actions/schemes";
+import { ExamWatermark } from "@/components/exam-watermark";
+import {
+  HonestyGate,
+  MonitoringBanner,
+  AntifraudHooks,
+  useQuestionTimer,
+} from "@/components/exam-antifraud";
 
 export interface RunnerQuestion {
   id: string; // attemptQuestionId
@@ -84,11 +91,20 @@ export function ExamRunner({
   attemptId,
   dueAt,
   questions,
+  candidateCode,
 }: {
   attemptId: string;
   dueAt: string; // ISO
   questions: RunnerQuestion[];
+  /** Código identificador del candidato para marca de agua/auditoría. */
+  candidateCode?: string;
 }) {
+  const wmToken = candidateCode || attemptId.slice(-12).toUpperCase();
+  // ID de la pregunta visible — para medir tiempo por pregunta.
+  // El runner mostraba todas las preguntas en una sola página; calculamos
+  // cuál es la "activa" según el primer item visible en el viewport.
+  const [activeQid, setActiveQid] = useState<string | null>(questions[0]?.id ?? null);
+  useQuestionTimer({ attemptId, currentQuestionId: activeQid });
   const dueMs = useMemo(() => new Date(dueAt).getTime(), [dueAt]);
   const [now, setNow] = useState<number>(() => Date.now());
   const [answers, setAnswers] = useState<Record<string, string[]>>(() => {
@@ -147,6 +163,32 @@ export function ExamRunner({
     if (secondsLeft <= 0 && !submittedRef.current) doSubmit();
   }, [secondsLeft, doSubmit]);
 
+  // ── Detección de pregunta visible para el tracker de tiempo ────────
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const items = document.querySelectorAll<HTMLElement>("[data-qid]");
+    if (items.length === 0) return;
+    const visibility = new Map<string, number>();
+    const obs = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          const id = (e.target as HTMLElement).dataset.qid;
+          if (!id) continue;
+          visibility.set(id, e.intersectionRatio);
+        }
+        let bestId: string | null = null;
+        let bestRatio = 0;
+        for (const [id, r] of visibility) {
+          if (r > bestRatio) { bestRatio = r; bestId = id; }
+        }
+        if (bestId && bestId !== activeQid) setActiveQid(bestId);
+      },
+      { threshold: [0, 0.25, 0.5, 0.75, 1] },
+    );
+    items.forEach((el) => obs.observe(el));
+    return () => obs.disconnect();
+  }, [questions, activeQid]);
+
   const persist = useCallback(
     async (aqId: string, keys: string[], multiple: boolean) => {
       setSaving(true);
@@ -183,7 +225,18 @@ export function ExamRunner({
   const lowTime = secondsLeft <= 300;
 
   return (
-    <div className="mx-auto max-w-3xl pb-24">
+    <div className="relative mx-auto max-w-3xl pb-24">
+      <ExamWatermark token={wmToken} />
+      <HonestyGate attemptId={attemptId} candidateCode={wmToken} />
+      <AntifraudHooks
+        attemptId={attemptId}
+        onIncident={() => {
+          // Sumamos al contador visible para que el candidato sepa que
+          // el incidente quedó registrado.
+          setIncidents((n) => n + 1);
+        }}
+      />
+      <MonitoringBanner candidateCode={wmToken} />
       <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-6 py-3 backdrop-blur">
         <div className="text-sm text-slate-600">
           Respondidas <strong>{answered}</strong> / {questions.length}
@@ -203,7 +256,7 @@ export function ExamRunner({
         {questions.map((q, i) => {
           const sel = answers[q.id] ?? [];
           return (
-            <li key={q.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <li key={q.id} data-qid={q.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
               {q.sectionTitle ? (
                 <div className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-700">{q.sectionTitle}</div>
               ) : null}

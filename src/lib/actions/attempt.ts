@@ -191,18 +191,36 @@ export async function uploadAnswerFile(
   return { ok: true };
 }
 
-/// Registra un evento de proctoring/antifraude del intento (p. ej. salida de pantalla).
+/// Registra un evento de proctoring/antifraude del intento.
+/// Tipos soportados (ver hooks del exam-runner):
+///   focus_lost | blur | resume | fullscreen_exit | paste
+///   print_screen | copy | cut | context_menu | dev_tools
+///   question_time | question_change
 export async function recordAttemptEvent(
   attemptId: string,
   type: string,
+  metadata?: { questionId?: string; ms?: number; details?: string },
 ): Promise<{ ok: boolean }> {
   const { candidateId } = await requireCandidateAction();
-  const allowed = ["focus_lost", "blur", "resume", "fullscreen_exit", "paste"];
+  const allowed = [
+    "focus_lost", "blur", "resume", "fullscreen_exit", "paste",
+    "print_screen", "copy", "cut", "context_menu", "dev_tools",
+    "question_time", "question_change",
+  ];
   if (!allowed.includes(type)) return { ok: false };
   const attempt = await loadOwnedAttempt(candidateId, attemptId);
   if (attempt.status !== "IN_PROGRESS") return { ok: false };
   const meta = await reqMeta();
-  await prisma.attemptEvent.create({ data: { attemptId, type, ip: meta.ip } });
+  const data: Record<string, unknown> = {};
+  if (metadata?.questionId) data.questionId = metadata.questionId;
+  if (metadata?.ms !== undefined) data.ms = metadata.ms;
+  if (metadata?.details) data.details = metadata.details;
+  await prisma.attemptEvent.create({
+    data: {
+      attemptId, type, ip: meta.ip,
+      data: Object.keys(data).length ? (data as Prisma.InputJsonValue) : Prisma.JsonNull,
+    },
+  });
   return { ok: true };
 }
 

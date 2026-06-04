@@ -19,10 +19,18 @@ export default async function ExamPage({
     include: {
       exam: { select: { name: true, durationMin: true, instructions: true } },
       questions: { orderBy: { order: "asc" }, include: { answers: true } },
+      candidate: { select: { documentNumber: true, firstName: true, lastName: true } },
     },
   });
   if (!attempt || attempt.candidateId !== candidateId) notFound();
   if (attempt.status !== "IN_PROGRESS") redirect(`/portal/examen/${attemptId}/resultado`);
+
+  // Código de candidato visible en marca de agua y banner: usamos el
+  // documento + iniciales para que sea fácil identificar al titular en
+  // una captura de pantalla filtrada.
+  const initials =
+    `${attempt.candidate?.firstName?.[0] ?? ""}${attempt.candidate?.lastName?.[0] ?? ""}`.toUpperCase();
+  const candidateCode = `CIOC · ${initials} · DOC ${attempt.candidate?.documentNumber ?? "—"} · ${attempt.id.slice(-8).toUpperCase()}`;
 
   const questions: RunnerQuestion[] = attempt.questions.map((aq) => {
     const snap = publicSnapshot(aq.snapshot as unknown as QuestionSnapshot);
@@ -51,6 +59,7 @@ export default async function ExamPage({
         attemptId={attempt.id}
         dueAt={(attempt.dueAt ?? new Date()).toISOString()}
         questions={questions}
+        candidateCode={candidateCode}
       />
     </div>
   );
