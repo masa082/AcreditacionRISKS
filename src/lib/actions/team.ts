@@ -106,3 +106,95 @@ export async function setUserPassword(
   revalidatePath("/panel/usuarios");
   return { ok: true };
 }
+
+const editTeamSchema = z.object({
+  firstName: z.string().min(2, "Nombre requerido").max(80),
+  lastName: z.string().min(2, "Apellido requerido").max(80),
+  email: z.string().email("Correo inválido").max(190),
+  phone: z.string().max(40).optional().nullable(),
+  locale: z.string().max(10).optional().nullable(),
+});
+
+function clean(v: FormDataEntryValue | null): string | null {
+  const s = typeof v === "string" ? v.trim() : "";
+  return s.length ? s : null;
+}
+
+/// Permite al admin del SUSCRIPTOR editar los datos personales de un miembro
+/// del equipo (nombre, apellidos, correo, teléfono, locale). Sincroniza el
+/// correo con Candidate cuando el usuario tiene candidate vinculado.
+export async function updateTeamUser(
+  userId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.USER_MANAGE);
+  const parsed = editTeamSchema.safeParse({
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    email: formData.get("email"),
+    phone: clean(formData.get("phone")),
+    locale: clean(formData.get("locale")),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const d = parsed.data;
+  const email = d.email.toLowerCase();
+
+  // El usuario debe pertenecer al tenant. No exigimos type=SUBSCRIBER porque
+  // queremos poder editar también miembros con type=CANDIDATE registrados
+  // en este suscriptor (caso poco frecuente, defensa adicional).
+  const user = await prisma.user.findFirst({
+    where: { id: userId, subscriberId },
+    select: {
+      id: true, email: true, firstName: true, lastName: true, phone: true,
+      locale: true, additionalEmails: true,
+    },
+  });
+  if (!user) return { ok: false, error: "Usuario no encontrado." };
+
+  // Si cambia el correo, debemos validar que no colisione con otro usuario
+  // (principal o alterno) del mismo suscriptor.
+  if (email !== user.email) {
+    const collision = await prisma.user.findFirst({
+      where: {
+        subscriberId,
+        NOT: { id: userId },
+        OR: [{ email }, { additionalEmails: { has: email } }],
+      },
+      select: { id: true },
+    });
+    if (collision) {
+      return { ok: false, error: "Ese correo ya está en uso por otra cuenta de la organización." };
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      firstName: d.firstName,
+      lastName: d.lastName,
+      email,
+      phone: d.phone,
+      locale: d.locale ?? undefined,
+    },
+  });
+  // Sincronizar Candidate si existe (mantiene login del candidato consistente).
+  await prisma.candidate.updateMany({
+    where: { userId, subscriberId },
+    data: { firstName: d.firstName, lastName: d.lastName, email, phone: d.phone },
+  });
+
+  await audit(ctx, {
+    action: "user.update",
+    entity: "User",
+    entityId: userId,
+    subscriberId,
+    before: {
+      firstName: user.firstName, lastName: user.lastName,
+      email: user.email, phone: user.phone, locale: user.locale,
+    },
+    after: { firstName: d.firstName, lastName: d.lastName, email, phone: d.phone, locale: d.locale },
+  });
+  revalidatePath("/panel/usuarios");
+  return { ok: true, message: "Datos actualizados." };
+}

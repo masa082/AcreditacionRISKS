@@ -58,7 +58,19 @@ export default async function TeamPage() {
                   </td>
                   <td className="px-5 py-3 text-slate-500">{u.lastLoginAt ? dateOnly(u.lastLoginAt) : "—"}</td>
                   <td className="px-5 py-3">
-                    <TeamRowActions userId={u.id} currentRoleId={u.role?.id ?? null} status={u.status} roles={roles} isSelf={u.id === ctx.userId} />
+                    <TeamRowActions
+                      userId={u.id}
+                      currentRoleId={u.role?.id ?? null}
+                      status={u.status}
+                      roles={roles}
+                      isSelf={u.id === ctx.userId}
+                      initial={{
+                        firstName: u.firstName,
+                        lastName: u.lastName,
+                        email: u.email,
+                        phone: u.phone,
+                      }}
+                    />
                   </td>
                 </tr>
               ))}

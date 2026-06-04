@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { SubscriberForm } from "@/components/subscriber-form";
@@ -59,15 +60,23 @@ export default async function SubscribersPage() {
                   <td className="px-5 py-3 text-slate-600">{s._count.users} / {s._count.candidates} / {s._count.certificates}</td>
                   <td className="px-5 py-3 text-slate-500">{dateOnly(s.createdAt)}</td>
                   <td className="px-5 py-3">
-                    {s.status === "SUSPENDED" || s.status === "CANCELLED" ? (
-                      <form action={setSubscriberStatus.bind(null, s.id, "ACTIVE")}>
-                        <button type="submit" className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50">Activar</button>
-                      </form>
-                    ) : (
-                      <form action={setSubscriberStatus.bind(null, s.id, "SUSPENDED")}>
-                        <button type="submit" className="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">Suspender</button>
-                      </form>
-                    )}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <Link
+                        href={`/admin/suscriptores/${s.id}/usuarios`}
+                        className="rounded-lg border border-brand-300 px-3 py-1.5 text-xs font-medium text-brand-700 hover:bg-brand-50"
+                      >
+                        Usuarios
+                      </Link>
+                      {s.status === "SUSPENDED" || s.status === "CANCELLED" ? (
+                        <form action={setSubscriberStatus.bind(null, s.id, "ACTIVE")}>
+                          <button type="submit" className="rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50">Activar</button>
+                        </form>
+                      ) : (
+                        <form action={setSubscriberStatus.bind(null, s.id, "SUSPENDED")}>
+                          <button type="submit" className="rounded-lg border border-rose-300 px-3 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-50">Suspender</button>
+                        </form>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

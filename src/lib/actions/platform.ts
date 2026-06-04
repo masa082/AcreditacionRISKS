@@ -260,3 +260,86 @@ export async function updateRapydConfigForSubscriber(
   revalidatePath(`/admin/suscriptores/${d.subscriberId}`);
   return { ok: true, message: "Configuración Rapyd actualizada." };
 }
+
+const platformEditUserSchema = z.object({
+  userId: z.string().min(5),
+  firstName: z.string().min(2, "Nombre requerido").max(80),
+  lastName: z.string().min(2, "Apellido requerido").max(80),
+  email: z.string().email("Correo inválido").max(190),
+  phone: z.string().max(40).optional().nullable(),
+  status: z.enum(["ACTIVE", "SUSPENDED", "PENDING_VERIFICATION"]).optional().nullable(),
+});
+
+/// SUPERADMIN edita los datos de cualquier usuario de cualquier suscriptor.
+/// Útil cuando un suscriptor pierde acceso y necesita reasignación de correo.
+export async function updateUserByPlatform(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const ctx = await requirePlatformAction(PERMISSIONS.SUBSCRIBER_MANAGE);
+  const parsed = platformEditUserSchema.safeParse({
+    userId: formData.get("userId"),
+    firstName: formData.get("firstName"),
+    lastName: formData.get("lastName"),
+    email: formData.get("email"),
+    phone: clean(formData.get("phone")),
+    status: (formData.get("status") as string) || undefined,
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const d = parsed.data;
+  const email = d.email.toLowerCase();
+
+  const user = await prisma.user.findUnique({
+    where: { id: d.userId },
+    select: {
+      id: true, subscriberId: true, email: true, firstName: true,
+      lastName: true, phone: true, status: true,
+    },
+  });
+  if (!user) return { ok: false, error: "Usuario no encontrado." };
+
+  if (email !== user.email && user.subscriberId) {
+    const collision = await prisma.user.findFirst({
+      where: {
+        subscriberId: user.subscriberId,
+        NOT: { id: user.id },
+        OR: [{ email }, { additionalEmails: { has: email } }],
+      },
+      select: { id: true },
+    });
+    if (collision) {
+      return { ok: false, error: "Ese correo ya está en uso por otra cuenta del mismo suscriptor." };
+    }
+  }
+
+  await prisma.user.update({
+    where: { id: user.id },
+    data: {
+      firstName: d.firstName,
+      lastName: d.lastName,
+      email,
+      phone: d.phone,
+      status: d.status ?? user.status,
+    },
+  });
+  if (user.subscriberId) {
+    await prisma.candidate.updateMany({
+      where: { userId: user.id, subscriberId: user.subscriberId },
+      data: { firstName: d.firstName, lastName: d.lastName, email, phone: d.phone },
+    });
+  }
+  await audit(ctx, {
+    action: "platform.user.update",
+    entity: "User",
+    entityId: user.id,
+    subscriberId: user.subscriberId,
+    before: {
+      firstName: user.firstName, lastName: user.lastName,
+      email: user.email, phone: user.phone, status: user.status,
+    },
+    after: { firstName: d.firstName, lastName: d.lastName, email, phone: d.phone, status: d.status },
+  });
+  revalidatePath("/panel/usuarios");
+  revalidatePath(`/admin/suscriptores`);
+  return { ok: true, message: "Datos actualizados por la plataforma." };
+}
