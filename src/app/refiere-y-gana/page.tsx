@@ -107,7 +107,7 @@ export default function ReferralProgramPage() {
             ))}
           </div>
           <div className="mt-10 flex flex-wrap justify-center gap-3">
-            <Link href={CTAS.certify.href} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-bold text-white hover:bg-brand-900">{CTAS.certify.label}</Link>
+            <Link href={CTAS.certify.href} className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-bold text-white">{CTAS.certify.label}</Link>
             <Link href={CTAS.certifications.href} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 hover:bg-brand-50">{CTAS.certifications.label}</Link>
           </div>
         </div>

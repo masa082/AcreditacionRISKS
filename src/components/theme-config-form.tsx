@@ -133,7 +133,7 @@ export function ThemeConfigForm({
             <button
               type="submit"
               disabled={pending}
-              className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white hover:bg-brand-900 disabled:opacity-60"
+              className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
             >
               {pending ? "Guardando…" : "Guardar paleta"}
             </button>

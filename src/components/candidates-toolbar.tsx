@@ -124,7 +124,7 @@ export function CandidatesToolbar({ selected, allInView }: { selected: string[];
             type="button"
             disabled={selected.length === 0}
             onClick={() => setOpenBulk(true)}
-            className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900 disabled:opacity-50"
+            className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
           >
             ✉ Enviar correo a {selected.length || "0"}
           </button>
@@ -178,7 +178,7 @@ function BulkEmailDialog({ selected, onClose }: { selected: string[]; onClose: (
           <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
             Cerrar
           </button>
-          <button type="submit" disabled={pending} className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900 disabled:opacity-60">
+          <button type="submit" disabled={pending} className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
             {pending ? "Enviando…" : "Enviar"}
           </button>
         </div>

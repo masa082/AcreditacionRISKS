@@ -47,7 +47,7 @@ export async function LandingHeader() {
           </Link>
           <Link
             href={CTAS.certify.href}
-            className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-brand-900"
+            className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white shadow-sm"
           >
             {CTAS.certify.label}
           </Link>

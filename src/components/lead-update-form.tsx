@@ -34,7 +34,7 @@ export function LeadUpdateForm({
         placeholder="Notas internas (opcional)"
         className="rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
       />
-      <button type="submit" disabled={pending} className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900 disabled:opacity-60">
+      <button type="submit" disabled={pending} className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-60">
         {pending ? "Guardando…" : "Actualizar"}
       </button>
       {state.error ? <p className="sm:col-span-3 text-xs text-rose-600">{state.error}</p> : null}

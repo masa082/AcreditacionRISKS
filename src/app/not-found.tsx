@@ -9,7 +9,7 @@ export default function NotFound() {
         <div className="text-5xl">🔍</div>
         <h1 className="mt-4 text-xl font-semibold text-slate-900">Página no encontrada</h1>
         <p className="mt-2 text-sm text-slate-500">La página que busca no existe o fue movida.</p>
-        <Link href="/" className="mt-6 inline-block rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900">
+        <Link href="/" className="mt-6 inline-block rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white">
           Volver al inicio de {APP_NAME}
         </Link>
       </div>

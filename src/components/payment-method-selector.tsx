@@ -250,7 +250,7 @@ export function PaymentMethodSelector({
       <button
         type="submit"
         disabled={pending || !canSubmit}
-        className="w-full rounded-xl bg-brand-800 px-5 py-3 text-base font-bold text-white shadow-sm transition hover:bg-brand-900 disabled:cursor-not-allowed disabled:bg-slate-300"
+        className="w-full rounded-xl btn-grad-navy px-5 py-3 text-base font-bold text-white shadow-sm transition disabled:cursor-not-allowed disabled:bg-slate-300"
       >
         {pending
           ? "Procesando…"

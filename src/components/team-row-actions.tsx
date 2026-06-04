@@ -123,7 +123,7 @@ export function TeamRowActions({
             >
               Cancelar
             </button>
-            <button type="submit" className="rounded-md bg-brand-800 px-3 py-1 text-xs font-semibold text-white hover:bg-brand-900">
+            <button type="submit" className="rounded-md btn-grad-navy px-3 py-1 text-xs font-semibold text-white">
               Guardar
             </button>
           </div>

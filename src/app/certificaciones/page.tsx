@@ -71,7 +71,7 @@ export default function CertificationsPage() {
                         Solicitar información
                       </Link>
                     ) : (
-                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">Inscribirme</Link>
+                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white">Inscribirme</Link>
                     )}
                   </div>
                 </article>
@@ -85,7 +85,7 @@ export default function CertificationsPage() {
               Estamos ampliando el catálogo con programas en protección de datos, PTEE, monitoreo de listas y más. Cuéntanos qué necesitas.
             </p>
             <div className="mt-5 flex justify-center gap-3">
-              <Link href={CTAS.contact.href} className="rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900">Solicitar información</Link>
+              <Link href={CTAS.contact.href} className="rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white">Solicitar información</Link>
               <Link href={CTAS.register.href} className="rounded-lg border border-slate-300 px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">Crear cuenta</Link>
             </div>
           </div>

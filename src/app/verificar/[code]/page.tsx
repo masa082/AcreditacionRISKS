@@ -72,7 +72,7 @@ export default async function VerificationResult({
             </p>
             <Link
               href="/verificar"
-              className="mt-6 inline-block rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900"
+              className="mt-6 inline-block rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white"
             >
               Volver a verificar
             </Link>
@@ -174,7 +174,7 @@ export default async function VerificationResult({
                   <a
                     href={`/api/certificate/${cert.verifyToken}/pdf`}
                     rel="noopener"
-                    className="inline-flex items-center gap-2 rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand-900"
+                    className="inline-flex items-center gap-2 rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white shadow-sm"
                   >
                     <span aria-hidden>⬇</span>
                     Descargar certificado (PDF)

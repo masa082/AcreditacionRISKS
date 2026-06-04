@@ -158,7 +158,7 @@ function FeedbackModal({
           <button
             type="button"
             onClick={onClose}
-            className="mt-5 w-full rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white hover:bg-brand-900"
+            className="mt-5 w-full rounded-lg btn-grad-navy px-4 py-2.5 text-sm font-semibold text-white"
           >
             Cerrar
           </button>

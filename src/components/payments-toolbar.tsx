@@ -135,7 +135,7 @@ export function PaymentsToolbar({
           </button>
           <a
             href={`/panel/pagos/export?${sp.toString()}`}
-            className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900"
+            className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white"
             title="Exportar la vista actual a Excel/CSV"
           >
             ⬇ Exportar

@@ -24,7 +24,7 @@ export default function GlobalError({
         </p>
         {error.digest ? <p className="mt-2 font-mono text-xs text-slate-400">Ref: {error.digest}</p> : null}
         <div className="mt-6 flex justify-center gap-3">
-          <button onClick={() => reset()} className="rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900">
+          <button onClick={() => reset()} className="rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white">
             Reintentar
           </button>
           {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- recarga completa intencional desde el error boundary */}

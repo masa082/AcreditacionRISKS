@@ -35,7 +35,7 @@ export default async function ActivatePage({
         <p className="mt-2 text-sm text-slate-500">{result.message}</p>
         <Link
           href="/login"
-          className="mt-6 inline-block rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900"
+          className="mt-6 inline-block rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white"
         >
           Ir a iniciar sesión
         </Link>

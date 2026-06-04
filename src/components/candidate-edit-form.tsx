@@ -78,7 +78,7 @@ export function CandidateEditForm({ candidateId, initial }: { candidateId: strin
       {state.error ? <p className="text-xs text-rose-600">{state.error}</p> : null}
       {state.ok ? <p className="text-xs text-emerald-700">{state.message ?? "Guardado."}</p> : null}
       <div className="flex items-center gap-2">
-        <button type="submit" disabled={pending} className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900 disabled:opacity-60">
+        <button type="submit" disabled={pending} className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
           {pending ? "Guardando…" : "Guardar"}
         </button>
         <button type="button" onClick={() => setOpen(false)} className="text-xs text-slate-500 hover:text-slate-700">Cerrar</button>

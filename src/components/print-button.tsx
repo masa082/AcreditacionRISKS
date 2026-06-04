@@ -5,7 +5,7 @@ export function PrintButton({ label = "Descargar / Imprimir PDF" }: { label?: st
     <button
       type="button"
       onClick={() => window.print()}
-      className="rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900 print:hidden"
+      className="rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white print:hidden"
     >
       {label}
     </button>

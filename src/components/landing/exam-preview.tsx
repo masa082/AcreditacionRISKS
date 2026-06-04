@@ -23,7 +23,7 @@ export function ExamPreview() {
             <li className="flex items-start gap-2"><span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700">✓</span> Reglas de integridad (registro de presencia, antifraude básico).</li>
           </ul>
           <div className="mt-6">
-            <Link href="/registro?cert=sarlaft" className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-bold text-white hover:bg-brand-900">
+            <Link href="/registro?cert=sarlaft" className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-bold text-white">
               Comenzar mi inscripción →
             </Link>
           </div>

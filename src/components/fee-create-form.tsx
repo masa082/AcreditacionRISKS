@@ -86,7 +86,7 @@ export function FeeCreateForm({ subscribers }: { subscribers: SubscriberOption[]
       <button
         type="submit"
         disabled={pending}
-        className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900 disabled:opacity-60 lg:col-span-5"
+        className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white disabled:opacity-60 lg:col-span-5"
       >
         {pending ? "Creando…" : "+ Agregar tarifa"}
       </button>

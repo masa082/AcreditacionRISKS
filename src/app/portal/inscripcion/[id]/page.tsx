@@ -188,7 +188,7 @@ export default async function EnrollmentProcessPage({
         <Card className="mb-6 border-l-4 border-l-amber-500 bg-amber-50/40 p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-sm font-medium text-amber-800">Tiene un examen en curso.</p>
-            <Link href={`/portal/examen/${latestAttempt.id}`} className="rounded-lg bg-brand-800 px-5 py-2 text-sm font-semibold text-white hover:bg-brand-900">
+            <Link href={`/portal/examen/${latestAttempt.id}`} className="rounded-lg btn-grad-navy px-5 py-2 text-sm font-semibold text-white">
               Continuar examen
             </Link>
           </div>
@@ -290,7 +290,7 @@ export default async function EnrollmentProcessPage({
                         href={meta.rapyd!.redirectUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white hover:bg-brand-900"
+                        className="inline-flex items-center gap-2 rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white"
                       >
                         Continuar pago en línea ↗
                       </a>
@@ -462,7 +462,7 @@ function SessionList({
               <Badge tone="slate">Sin cupos</Badge>
             ) : (
               <form action={bookSlot.bind(null, enrollmentId, s.id)}>
-                <button type="submit" className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900">
+                <button type="submit" className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white">
                   Reservar
                 </button>
               </form>

@@ -57,7 +57,7 @@ export function RegisterForm({
         </p>
         <Link
           href={href}
-          className="inline-block rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900"
+          className="inline-block rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white"
         >
           Activar mi cuenta ahora
         </Link>
@@ -93,7 +93,7 @@ export function RegisterForm({
               <div className="flex flex-wrap gap-2 pt-1">
                 <Link
                   href="/forgot"
-                  className="inline-flex items-center gap-1 rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900"
+                  className="inline-flex items-center gap-1 rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white"
                 >
                   Restablecer contraseña →
                 </Link>

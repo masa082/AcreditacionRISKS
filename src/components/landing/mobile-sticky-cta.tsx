@@ -26,7 +26,7 @@ export function MobileStickyCTA() {
         </div>
         <Link
           href="/registro?cert=sarlaft"
-          className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white shadow-sm hover:bg-brand-900"
+          className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white shadow-sm"
         >
           Certifícate ahora
         </Link>

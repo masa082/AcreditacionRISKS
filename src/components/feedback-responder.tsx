@@ -138,7 +138,7 @@ export function FeedbackResponder({
           <button
             type="submit"
             disabled={mPending}
-            className="w-full rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white hover:bg-brand-900 disabled:opacity-60"
+            className="w-full rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white disabled:opacity-60"
           >
             {mPending ? "Guardando…" : "Guardar cambios"}
           </button>

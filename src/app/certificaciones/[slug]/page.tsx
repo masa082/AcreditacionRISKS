@@ -73,7 +73,7 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
           <p className="mt-4 max-w-2xl text-slate-600">{c.description}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             {c.status === "AVAILABLE" ? (
-              <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-brand-900">Inscribirme ahora</Link>
+              <Link href={`/registro?cert=${c.slug}`} className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white shadow-sm">Inscribirme ahora</Link>
             ) : c.status === "COMING_SOON" ? (
               <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg bg-amber-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-amber-600">Notificarme cuando esté disponible</Link>
             ) : null}
@@ -156,7 +156,7 @@ export default async function CertDetailPage({ params }: { params: Promise<{ slu
                 <li>6. Descarga tu diploma verificable</li>
               </ol>
               {c.status === "AVAILABLE" ? (
-                <Link href={`/registro?cert=${c.slug}`} className="block rounded-lg bg-brand-800 px-4 py-3 text-center text-sm font-bold text-white hover:bg-brand-900">Inscribirme</Link>
+                <Link href={`/registro?cert=${c.slug}`} className="block rounded-lg btn-grad-navy px-4 py-3 text-center text-sm font-bold text-white">Inscribirme</Link>
               ) : c.status === "COMING_SOON" ? (
                 <Link href={`/contacto?cert=${c.slug}`} className="block rounded-lg bg-amber-500 px-4 py-3 text-center text-sm font-bold text-white hover:bg-amber-600">Notificarme cuando esté disponible</Link>
               ) : null}

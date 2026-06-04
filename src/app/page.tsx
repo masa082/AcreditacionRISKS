@@ -293,7 +293,7 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={CTAS.certify.href} className="group inline-flex items-center gap-2 rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900 hover:shadow-premium">
+              <Link href={CTAS.certify.href} className="group inline-flex items-center gap-2 rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-premium">
                 Empezar mi certificación
                 <span className="transition group-hover:translate-x-0.5">→</span>
               </Link>
@@ -486,7 +486,7 @@ export default async function HomePage() {
                         Solicitar info
                       </Link>
                     ) : (
-                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900">Inscribirme</Link>
+                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white">Inscribirme</Link>
                     )}
                   </div>
                 </article>
@@ -824,7 +824,7 @@ export default async function HomePage() {
             <CertificateGallery />
           </div>
           <div className="mt-12 flex flex-wrap justify-center gap-3">
-            <Link href={CTAS.verify.href} className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-900">
+            <Link href={CTAS.verify.href} className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white">
               {CTAS.verify.label}
             </Link>
             <Link href={CTAS.certify.href} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 hover:bg-brand-50">
@@ -855,7 +855,7 @@ export default async function HomePage() {
               placeholder="Ingrese el código (p. ej. CERT-2026-XXXX)"
               className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-800 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
             />
-            <button type="submit" className="rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white hover:bg-brand-900">Verificar</button>
+            <button type="submit" className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white">Verificar</button>
           </form>
           <p className="mt-3 text-xs text-slate-400">También puede escanear el QR impreso en el diploma.</p>
         </div>
@@ -924,7 +924,7 @@ export default async function HomePage() {
               </p>
               <Link
                 href={CTAS.certify.href}
-                className="mt-7 inline-flex items-center gap-2 rounded-lg bg-brand-800 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-900"
+                className="mt-7 inline-flex items-center gap-2 rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white shadow-sm transition"
               >
                 <Icon.Rocket size={16} /> Iniciar ahora y recuperarlo pronto
               </Link>

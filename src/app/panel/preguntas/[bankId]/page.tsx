@@ -138,7 +138,7 @@ export default async function BankDetailPage({
           <div className="flex gap-2">
             <Link href="/panel/preguntas" className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">Volver</Link>
             {canCreate ? (
-              <Link href={`/panel/preguntas/${bankId}/pregunta/nueva`} className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">+ Nueva pregunta</Link>
+              <Link href={`/panel/preguntas/${bankId}/pregunta/nueva`} className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white">+ Nueva pregunta</Link>
             ) : null}
           </div>
         }

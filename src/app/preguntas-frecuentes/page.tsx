@@ -56,7 +56,7 @@ export default function FaqPage() {
           <div className="mt-10 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-6 text-center">
             <p className="text-sm text-slate-700">¿No encuentras tu respuesta?</p>
             <div className="mt-3 flex justify-center gap-3">
-              <Link href={CTAS.contact.href} className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">Solicitar información</Link>
+              <Link href={CTAS.contact.href} className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white">Solicitar información</Link>
               <Link href={CTAS.certify.href} className="rounded-lg border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">Iniciar mi certificación</Link>
             </div>
           </div>

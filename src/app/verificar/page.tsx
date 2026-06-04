@@ -101,7 +101,7 @@ export default async function VerificarPage({ searchParams }: { searchParams: Pr
             />
             <button
               type="submit"
-              className="rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900"
+              className="rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white"
             >
               Verificar
             </button>
@@ -208,7 +208,7 @@ export default async function VerificarPage({ searchParams }: { searchParams: Pr
               </div>
               <div className="flex gap-2">
                 <Link href="/certificaciones" className="rounded-lg border border-brand-300 bg-white px-4 py-2 text-sm font-semibold text-brand-800 hover:bg-brand-50">Ver certificaciones</Link>
-                <Link href="/registro?cert=sarlaft" className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-bold text-white hover:bg-brand-900">Certifícate ahora</Link>
+                <Link href="/registro?cert=sarlaft" className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white">Certifícate ahora</Link>
               </div>
             </div>
           </div>

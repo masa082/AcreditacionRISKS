@@ -22,7 +22,7 @@ export function ForgotForm() {
             </p>
             <Link
               href={`/restablecer/${state.resetToken}`}
-              className="inline-block rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900"
+              className="inline-block rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white"
             >
               Restablecer mi contraseña
             </Link>
@@ -63,7 +63,7 @@ export function ForgotForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900 disabled:opacity-60"
+        className="w-full rounded-lg btn-grad-navy px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
       >
         {pending ? "Enviando…" : "Enviar instrucciones"}
       </button>

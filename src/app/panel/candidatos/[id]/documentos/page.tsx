@@ -75,7 +75,7 @@ export default async function CandidateFolderPage({
         </Link>
         <a
           href={`/panel/candidatos/${candidate.id}/cv`}
-          className="rounded-md bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900"
+          className="rounded-md btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white"
         >
           📄 Descargar Hoja de Vida (PDF)
         </a>

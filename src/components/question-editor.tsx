@@ -336,7 +336,7 @@ export function QuestionEditor({
 
       <div className="flex justify-end gap-2 border-t border-slate-100 pt-4">
         <button type="button" onClick={() => router.push(`/panel/preguntas/${bankId}`)} className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">Cancelar</button>
-        <button type="button" onClick={submit} disabled={pending} className="rounded-lg bg-brand-800 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-900 disabled:opacity-60">
+        <button type="button" onClick={submit} disabled={pending} className="rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white disabled:opacity-60">
           {pending ? "Guardando…" : initial ? "Guardar cambios" : "Crear pregunta"}
         </button>
       </div>

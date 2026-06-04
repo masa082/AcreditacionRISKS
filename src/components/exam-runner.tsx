@@ -310,7 +310,7 @@ export function ExamRunner({
                 doSubmit();
               }
             }}
-            className="rounded-lg bg-brand-800 px-6 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900 disabled:opacity-60"
+            className="rounded-lg btn-grad-navy px-6 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
           >
             {submitting ? "Enviando…" : "Finalizar y enviar"}
           </button>

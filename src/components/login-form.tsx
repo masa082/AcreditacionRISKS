@@ -88,7 +88,7 @@ export function LoginForm({ showOrgField }: { showOrgField: boolean }) {
       <button
         type="submit"
         disabled={pending}
-        className="group relative w-full overflow-hidden rounded-xl bg-gradient-to-br from-brand-800 to-brand-950 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-brand-900/20 transition hover:shadow-xl hover:shadow-brand-900/30 disabled:cursor-not-allowed disabled:opacity-60"
+        className="btn-grad-navy group w-full rounded-xl px-4 py-3 text-sm font-bold"
       >
         <span className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 transition group-hover:opacity-100" aria-hidden />
         <span className="relative flex items-center justify-center gap-2">

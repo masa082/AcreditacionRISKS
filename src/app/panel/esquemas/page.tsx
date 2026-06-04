@@ -28,7 +28,7 @@ export default async function SchemesPage() {
           manage ? (
             <Link
               href="/panel/esquemas/nuevo"
-              className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900"
+              className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white"
             >
               + Nuevo esquema
             </Link>

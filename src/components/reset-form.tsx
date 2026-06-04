@@ -42,7 +42,7 @@ export function ResetForm({ token }: { token: string }) {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded-lg bg-brand-800 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-brand-900 disabled:opacity-60"
+        className="w-full rounded-lg btn-grad-navy px-4 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
       >
         {pending ? "Guardando…" : "Restablecer contraseña"}
       </button>

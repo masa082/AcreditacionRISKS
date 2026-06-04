@@ -294,7 +294,7 @@ export default async function PaymentsPage({
                             href={rapyd.redirectUrl}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-1 inline-block rounded bg-brand-800 px-1.5 py-0.5 text-[10px] font-semibold text-white hover:bg-brand-900"
+                            className="mt-1 inline-block rounded btn-grad-navy px-1.5 py-0.5 text-[10px] font-semibold text-white"
                           >
                             Abrir checkout ↗
                           </a>

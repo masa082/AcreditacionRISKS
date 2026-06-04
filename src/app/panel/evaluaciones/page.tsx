@@ -31,7 +31,7 @@ export default async function ExamsPage() {
         title="Evaluaciones"
         subtitle="Arme exámenes con secciones, reglas de calificación y publicación."
         actions={manage ? (
-          <Link href="/panel/evaluaciones/nuevo" className="rounded-lg bg-brand-800 px-4 py-2 text-sm font-semibold text-white hover:bg-brand-900">+ Nueva evaluación</Link>
+          <Link href="/panel/evaluaciones/nuevo" className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white">+ Nueva evaluación</Link>
         ) : null}
       />
 
