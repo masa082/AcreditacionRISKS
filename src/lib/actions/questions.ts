@@ -347,6 +347,76 @@ export async function setQuestionStatus(
   revalidatePath(`/panel/preguntas/${q.bankId}/pregunta/${id}`);
 }
 
+/// Duplica una pregunta dentro del mismo banco. La copia queda en estado
+/// DRAFT con código auto-generado y, si tiene opciones, también se clonan.
+export async function duplicateQuestion(id: string): Promise<void> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.QUESTION_CREATE);
+  const q = await prisma.question.findUnique({
+    where: { id },
+    include: { options: { orderBy: { order: "asc" } } },
+  });
+  if (!q || q.subscriberId !== subscriberId) return;
+
+  // Próximo código (incremental dentro del banco).
+  const last = await prisma.question.findFirst({
+    where: { bankId: q.bankId },
+    orderBy: { createdAt: "desc" },
+    select: { code: true },
+  });
+  const seq = parseInt((last?.code ?? "").replace(/[^\d]/g, "") || "0", 10) + 1;
+  const prefix = (last?.code ?? q.code).replace(/\d+$/, "").trim() || "P";
+  const code = `${prefix}${seq}`;
+
+  const copy = await prisma.question.create({
+    data: {
+      subscriberId: q.subscriberId,
+      bankId: q.bankId,
+      code,
+      type: q.type,
+      statement: `${q.statement} (copia)`,
+      mediaUrl: q.mediaUrl,
+      contextText: q.contextText,
+      points: q.points,
+      partialScoring: q.partialScoring,
+      difficulty: q.difficulty,
+      competencyId: q.competencyId,
+      topicId: q.topicId,
+      normReference: q.normReference,
+      tags: q.tags,
+      suggestedTimeSec: q.suggestedTimeSec,
+      isCritical: q.isCritical,
+      status: "DRAFT",
+      authorId: ctx.userId,
+      version: 1,
+      rubric: q.rubric ?? undefined,
+      scaleConfig: q.scaleConfig ?? undefined,
+      correctAnswer: q.correctAnswer ?? undefined,
+      options: q.options.length
+        ? {
+            create: q.options.map((o) => ({
+              text: o.text,
+              isCorrect: o.isCorrect,
+              feedback: o.feedback,
+              order: o.order,
+              matchLeft: o.matchLeft,
+              matchRight: o.matchRight,
+              mediaUrl: o.mediaUrl,
+            })),
+          }
+        : undefined,
+    },
+  });
+
+  await audit(ctx, {
+    action: "question.duplicate",
+    entity: "Question",
+    entityId: copy.id,
+    after: { from: q.id, code: copy.code },
+  });
+  revalidatePath(`/panel/preguntas/${q.bankId}`);
+  redirect(`/panel/preguntas/${q.bankId}/pregunta/${copy.id}`);
+}
+
 export async function deleteQuestion(id: string): Promise<void> {
   const { ctx, subscriberId } = await requireSubscriberAction(
     PERMISSIONS.QUESTION_EDIT,
