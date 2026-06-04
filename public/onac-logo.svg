@@ -9,9 +9,9 @@
     <!-- Pequeña sobreposición para el cruce visual -->
     <path d="M 135 28 a 78 78 0 0 1 26 6 l -10 18 a 58 58 0 0 0 -16 -4 z" fill="#2818f5"/>
   </g>
-  <!-- Wordmark ONAC -->
-  <text x="215" y="135" font-family="Inter, Arial, sans-serif" font-weight="900" font-size="120" letter-spacing="6" fill="#2818f5">ONAC</text>
-  <!-- Subtítulo institucional -->
-  <text x="215" y="180" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#2818f5">ORGANISMO NACIONAL DE</text>
-  <text x="215" y="208" font-family="Inter, Arial, sans-serif" font-weight="700" font-size="22" letter-spacing="2" fill="#2818f5">ACREDITACIÓN DE COLOMBIA</text>
+  <!-- Wordmark ONAC en Roboto Black -->
+  <text x="215" y="135" font-family="Roboto" font-weight="900" font-size="120" letter-spacing="4" fill="#2818f5">ONAC</text>
+  <!-- Subtítulo institucional en Roboto Bold -->
+  <text x="215" y="170" font-family="Roboto" font-weight="700" font-size="22" letter-spacing="1.5" fill="#2818f5">ORGANISMO NACIONAL DE</text>
+  <text x="215" y="200" font-family="Roboto" font-weight="700" font-size="22" letter-spacing="1.5" fill="#2818f5">ACREDITACIÓN DE COLOMBIA</text>
 </svg>
