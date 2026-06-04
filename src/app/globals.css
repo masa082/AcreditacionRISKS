@@ -59,6 +59,66 @@
 .border-gold-fine { border: 1px solid #c89a35; }
 .shadow-premium { box-shadow: 0 10px 40px -10px rgba(11,29,68,0.18), 0 2px 8px -2px rgba(11,29,68,0.08); }
 
+/* ─────────── Toques editoriales para humanizar la landing ─────────── */
+
+/* Serif para frases-destacadas (ruptura visual del sans corporativo). */
+.font-display {
+  font-family: "Charter", "Iowan Old Style", "Source Serif Pro", "Georgia", ui-serif, serif;
+  font-feature-settings: "kern", "liga", "onum";
+  letter-spacing: -0.012em;
+}
+
+/* Subrayado tipo marcador para resaltar una palabra dentro de un h1. */
+.hand-underline {
+  background-image: linear-gradient(180deg, transparent 60%, rgba(200, 154, 53, 0.32) 60%, rgba(200, 154, 53, 0.32) 92%, transparent 92%);
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  padding-inline: 0.05em;
+}
+
+/* Marca/anotación lateral (margen, como nota a mano). */
+.handwritten {
+  font-family: "Caveat", "Bradley Hand", "Snell Roundhand", "Lucida Handwriting", cursive;
+  letter-spacing: 0.01em;
+}
+
+/* Rule punteada (manuscrito/papel). */
+.dashed-rule {
+  border: 0;
+  height: 1px;
+  background-image: linear-gradient(90deg, rgba(11,29,68,0.22) 50%, transparent 50%);
+  background-size: 8px 1px;
+}
+
+/* "Sello" descentrado tipo tampón leve. */
+.stamp-tilt { transform: rotate(-3deg); }
+.stamp-tilt-r { transform: rotate(2.5deg); }
+
+/* Tarjeta "papel" sobria con un pliegue sutil arriba a la derecha. */
+.paper-fold {
+  position: relative;
+  background: #fffdf8;
+}
+.paper-fold::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 22px;
+  height: 22px;
+  background: linear-gradient(225deg, #f1e7cd 0%, #f1e7cd 50%, transparent 50%);
+}
+
+/* Cinta de papel / textura sutil para el bloque editorial. */
+.bg-paper {
+  background-color: #fbf8f1;
+  background-image:
+    radial-gradient(rgba(11,29,68,0.025) 1px, transparent 1px),
+    radial-gradient(rgba(200,154,53,0.04) 1px, transparent 1px);
+  background-size: 22px 22px, 38px 38px;
+  background-position: 0 0, 11px 19px;
+}
+
 html,
 body {
   height: 100%;
