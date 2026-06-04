@@ -17,6 +17,26 @@ import {
 
 const APP_NAME = "CIOC";
 const FROM = process.env.EMAIL_FROM ?? `${APP_NAME} <no-reply@okacreditado.com>`;
+const REPLY_TO = process.env.EMAIL_REPLY_TO ?? "calidad@risksint.com";
+
+/// Copia oculta obligatoria de TODOS los correos transaccionales. Por
+/// política operativa del organismo, gerencia y el área de formación deben
+/// quedarse con copia de cada notificación que enviamos a candidatos,
+/// suscriptores o visitantes para trazabilidad y respaldo del proceso.
+/// Se puede ampliar vía la variable EMAIL_BCC (lista separada por coma).
+const MANDATORY_BCC = ["gerencia@risksint.com", "formacion@risksint.com"];
+
+function resolveBccList(toAddress: string): string[] {
+  const extra = (process.env.EMAIL_BCC ?? "")
+    .split(/[,;]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+  const all = [...MANDATORY_BCC, ...extra];
+  // Evita enviar BCC a la misma dirección destinataria (Resend lo rechaza).
+  const set = new Set(all.map((a) => a.toLowerCase()));
+  set.delete(toAddress.toLowerCase());
+  return Array.from(set);
+}
 
 interface SendOpts {
   to: string;
@@ -42,11 +62,20 @@ async function logProvider(opts: SendOpts): Promise<SendResult> {
 async function resendProvider(opts: SendOpts): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, provider: "resend", error: "RESEND_API_KEY no configurada" };
+  const bcc = resolveBccList(opts.to);
   try {
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from: FROM, to: [opts.to], subject: opts.subject, html: opts.html, text: opts.text }),
+      body: JSON.stringify({
+        from: FROM,
+        to: [opts.to],
+        bcc: bcc.length > 0 ? bcc : undefined,
+        reply_to: REPLY_TO,
+        subject: opts.subject,
+        html: opts.html,
+        text: opts.text,
+      }),
     });
     const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
     if (!res.ok) return { ok: false, provider: "resend", error: data.message ?? `HTTP ${res.status}` };
@@ -67,7 +96,16 @@ async function smtpProvider(opts: SendOpts): Promise<SendResult> {
       secure: process.env.SMTP_SECURE === "true",
       auth: process.env.SMTP_USER ? { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS } : undefined,
     });
-    const info = await transport.sendMail({ from: FROM, to: opts.to, subject: opts.subject, html: opts.html, text: opts.text });
+    const bcc = resolveBccList(opts.to);
+    const info = await transport.sendMail({
+      from: FROM,
+      to: opts.to,
+      bcc: bcc.length > 0 ? bcc : undefined,
+      replyTo: REPLY_TO,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text,
+    });
     return { ok: true, provider: "smtp", id: info.messageId };
   } catch (e) {
     return { ok: false, provider: "smtp", error: e instanceof Error ? e.message : "error SMTP" };
@@ -91,7 +129,15 @@ export async function sendEmail(opts: SendOpts): Promise<SendResult> {
         subscriberId: opts.subscriberId ?? null,
         action: result.ok ? "email.sent" : "email.failed",
         entity: "Email",
-        after: { to: opts.to, subject: opts.subject, provider: result.provider, error: result.error ?? null },
+        after: {
+          to: opts.to,
+          bcc: resolveBccList(opts.to),
+          replyTo: REPLY_TO,
+          subject: opts.subject,
+          provider: result.provider,
+          messageId: result.id ?? null,
+          error: result.error ?? null,
+        },
       },
     })
     .catch(() => {});
