@@ -7,6 +7,7 @@ import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { DocumentReview } from "@/components/document-review";
 import { CandidateEditForm } from "@/components/candidate-edit-form";
+import { CandidateEmailsAdmin } from "@/components/candidate-emails-admin";
 import { money, dateOnly, dateTime } from "@/lib/format";
 
 export const metadata = { title: "Detalle de candidato" };
@@ -67,7 +68,7 @@ export default async function CandidateDetailPage({
         },
       },
       consents: { orderBy: { acceptedAt: "desc" }, take: 1 },
-      user: { select: { id: true, lastLoginAt: true, lastLoginIp: true, status: true } },
+      user: { select: { id: true, lastLoginAt: true, lastLoginIp: true, status: true, email: true, additionalEmails: true } },
     },
   });
   if (!candidate || candidate.subscriberId !== subscriberId) notFound();
@@ -131,20 +132,29 @@ export default async function CandidateDetailPage({
           </div>
 
           {can(ctx, PERMISSIONS.CANDIDATE_MANAGE) ? (
-            <CandidateEditForm
-              candidateId={candidate.id}
-              initial={{
-                firstName: candidate.firstName,
-                lastName: candidate.lastName,
-                email: candidate.email,
-                phone: candidate.phone,
-                documentType: candidate.documentType,
-                documentNumber: candidate.documentNumber,
-                country: candidate.country,
-                city: candidate.city,
-                address: candidate.address,
-              }}
-            />
+            <>
+              <CandidateEditForm
+                candidateId={candidate.id}
+                initial={{
+                  firstName: candidate.firstName,
+                  lastName: candidate.lastName,
+                  email: candidate.email,
+                  phone: candidate.phone,
+                  documentType: candidate.documentType,
+                  documentNumber: candidate.documentNumber,
+                  country: candidate.country,
+                  city: candidate.city,
+                  address: candidate.address,
+                }}
+              />
+              {candidate.user ? (
+                <CandidateEmailsAdmin
+                  candidateId={candidate.id}
+                  primaryEmail={candidate.user.email}
+                  alternateEmails={candidate.user.additionalEmails ?? []}
+                />
+              ) : null}
+            </>
           ) : null}
         </Card>
 

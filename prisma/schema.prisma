@@ -340,6 +340,12 @@ model User {
   subscriber     Subscriber? @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
   type           UserType
   email          String
+  /// Correos alternos verificados, agregados por el titular ("Mi perfil") o
+  /// por el administrador del suscriptor al editar el usuario. Login acepta
+  /// cualquiera de los correos (principal o alternos) dentro del mismo
+  /// suscriptor. Validación de unicidad cruzada se hace en la capa de
+  /// aplicación al agregar/cambiar correos (no a nivel de DB).
+  additionalEmails String[] @default([])
   passwordHash   String
   firstName      String
   lastName       String

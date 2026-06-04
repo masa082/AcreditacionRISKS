@@ -33,14 +33,27 @@ export function DashboardShell({
   return (
     <div className="flex min-h-screen bg-slate-50">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
-        <div className="flex h-16 flex-col justify-center border-b border-slate-200 px-5">
-          <Link href="/" className="text-lg font-bold text-brand-800 leading-none">
-            {APP_NAME}
-          </Link>
-          <span className="mt-0.5 text-[10px] uppercase tracking-wide text-slate-400" title={APP_LONG}>
-            {APP_LONG}
-          </span>
-        </div>
+        <Link
+          href="/"
+          className="flex h-20 items-center gap-3 border-b border-slate-200 px-4 hover:bg-slate-50"
+          title={subscriberName ?? APP_LONG}
+        >
+          {subscriberLogo ? (
+            <SubscriberLogoHeader src={subscriberLogo} name={subscriberName ?? APP_NAME} variant="sidebar" />
+          ) : (
+            <div className="grid h-10 w-10 place-items-center rounded-md bg-brand-50 text-base font-bold text-brand-800 ring-1 ring-brand-100">
+              {(subscriberName ?? APP_NAME).slice(0, 1).toUpperCase()}
+            </div>
+          )}
+          <div className="min-w-0 flex-1">
+            <div className="truncate text-sm font-bold leading-tight text-brand-900">
+              {subscriberName ?? APP_NAME}
+            </div>
+            <div className="truncate text-[10px] uppercase tracking-wide text-slate-400">
+              {APP_NAME} · {APP_LONG}
+            </div>
+          </div>
+        </Link>
         <div className="px-3 py-3 text-xs font-semibold uppercase tracking-wide text-slate-400">
           {area}
         </div>

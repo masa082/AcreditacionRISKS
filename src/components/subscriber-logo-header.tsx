@@ -9,22 +9,33 @@ import { useState } from "react";
 export function SubscriberLogoHeader({
   src,
   name,
+  variant = "header",
 }: {
   src: string;
   name: string;
+  /** "header" = avatar pequeño 40px (esquina superior derecha)
+   *  "sidebar" = bloque cuadrado 48px (esquina superior izquierda)
+   */
+  variant?: "header" | "sidebar";
 }) {
   const [failed, setFailed] = useState(false);
 
   if (failed) {
+    const size = variant === "sidebar" ? "h-12 w-12" : "h-10 w-10";
     return (
       <div
         title={`${name} (logo no disponible)`}
-        className="grid h-10 w-10 place-items-center rounded-full border border-slate-200 bg-slate-50 text-xs font-bold text-slate-500"
+        className={`grid ${size} place-items-center rounded-md border border-slate-200 bg-slate-50 text-xs font-bold text-slate-500`}
       >
         {name.slice(0, 1).toUpperCase()}
       </div>
     );
   }
+
+  const imgClass =
+    variant === "sidebar"
+      ? "h-12 w-12 rounded-md border border-slate-200 bg-white object-contain p-1"
+      : "h-10 w-auto rounded border border-slate-200 bg-white object-contain p-0.5";
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
@@ -33,7 +44,7 @@ export function SubscriberLogoHeader({
       alt={name}
       title={name}
       onError={() => setFailed(true)}
-      className="h-10 w-auto rounded border border-slate-200 bg-white object-contain p-0.5"
+      className={imgClass}
     />
   );
 }

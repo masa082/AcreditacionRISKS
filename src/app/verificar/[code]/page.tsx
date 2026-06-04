@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
+import { OnacBadge } from "@/components/onac-badge";
 
 export const metadata = { title: "Resultado de verificación" };
 
@@ -78,6 +79,46 @@ export default async function VerificationResult({
           </div>
         ) : (
           <div className="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-slate-200">
+            {/* Encabezado de identidad: logo del suscriptor (izquierda) +
+                logo ONAC con leyenda (derecha). Refuerza la confianza en el
+                acto de la verificación. */}
+            <div className="flex items-center justify-between gap-4 border-b border-slate-100 bg-white px-6 py-4">
+              <div className="flex items-center gap-3">
+                {cert.subscriber.logoUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cert.subscriber.logoUrl}
+                    alt={cert.subscriber.tradeName ?? cert.subscriber.legalName}
+                    className="h-12 w-auto object-contain"
+                  />
+                ) : (
+                  <div className="grid h-12 w-12 place-items-center rounded-md bg-brand-50 text-base font-bold text-brand-800 ring-1 ring-brand-100">
+                    {(cert.subscriber.tradeName ?? cert.subscriber.legalName).slice(0, 1)}
+                  </div>
+                )}
+                <div className="leading-tight">
+                  <div className="text-[10px] uppercase tracking-wide text-slate-400">
+                    Organismo certificador
+                  </div>
+                  <div className="text-sm font-bold text-brand-900">
+                    {cert.subscriber.tradeName ?? cert.subscriber.legalName}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/onac-logo.svg" alt="ONAC" className="h-9 w-auto" />
+                <div className="leading-tight">
+                  <div className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-amber-800">
+                    En proceso de
+                  </div>
+                  <div className="text-[9px] font-extrabold uppercase tracking-[0.15em] text-amber-800">
+                    Acreditación ONAC
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className={`flex items-center justify-between px-6 py-4 ring-1 ${info?.bg ?? ""}`}>
               <div>
                 <div className="text-xs uppercase tracking-wide text-slate-500">
@@ -118,6 +159,10 @@ export default async function VerificationResult({
             </div>
           </div>
         )}
+        {/* Badge ONAC visible al pie del resultado de la verificación */}
+        <div className="mt-6 flex justify-end">
+          <OnacBadge variant="default" />
+        </div>
       </div>
     </main>
   );

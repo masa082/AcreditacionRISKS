@@ -13,6 +13,18 @@ export interface RegisterState {
   /// En desarrollo (sin servidor de correo) se devuelve el enlace de activación
   /// para que el candidato pueda continuar el flujo.
   activationToken?: string;
+  /// Cuando la cuenta YA existe (mismo correo o mismo documento dentro de la
+  /// misma entidad), devolvemos un objeto rico para que la UI renderice
+  /// CTAs específicos: restablecer contraseña o contactar al administrador.
+  duplicate?: {
+    kind: "email" | "document";
+    subscriberName: string;
+    /// Email enmascarado del usuario existente (para confirmar a la persona
+    /// SIN exponer el correo completo). Solo se devuelve cuando lo conocemos.
+    hintedEmail?: string;
+    /// Correo de contacto del organismo certificador para escalar el caso.
+    subscriberContact?: string;
+  };
 }
 
 const registerSchema = z
@@ -69,25 +81,59 @@ export async function registerCandidate(
 
   const subscriber = await prisma.subscriber.findUnique({
     where: { slug: data.org },
-    select: { id: true, status: true, tradeName: true, legalName: true },
+    select: { id: true, status: true, tradeName: true, legalName: true, contactEmail: true },
   });
   if (!subscriber || subscriber.status === "CANCELLED" || subscriber.status === "SUSPENDED") {
     return { ok: false, error: "La entidad certificadora no está disponible para registro." };
   }
+  const subName = subscriber.tradeName ?? subscriber.legalName;
 
+  // Función auxiliar: enmascara un correo "juan.perez@example.com" → "j••••z@example.com".
+  const maskEmail = (e: string | null | undefined): string | undefined => {
+    if (!e) return undefined;
+    const [user, domain] = e.split("@");
+    if (!user || !domain) return undefined;
+    if (user.length <= 2) return `${user[0]}••@${domain}`;
+    return `${user[0]}${"•".repeat(Math.max(2, user.length - 2))}${user.slice(-1)}@${domain}`;
+  };
+
+  // Bloquea registro tanto si el correo es el principal de otra cuenta,
+  // como si está agregado como correo alterno de otra cuenta — para evitar
+  // colisión silenciosa con cuentas multi-correo.
   const dupEmail = await prisma.user.findFirst({
-    where: { email, subscriberId: subscriber.id },
-    select: { id: true },
+    where: {
+      subscriberId: subscriber.id,
+      OR: [{ email }, { additionalEmails: { has: email } }],
+    },
+    select: { id: true, email: true },
   });
   if (dupEmail) {
-    return { ok: false, error: "Ya existe una cuenta con ese correo en esta entidad. Inicie sesión." };
+    return {
+      ok: false,
+      error: `Ya existe una cuenta con ese correo en ${subName}. Puede iniciar sesión o restablecer su contraseña.`,
+      duplicate: {
+        kind: "email",
+        subscriberName: subName,
+        hintedEmail: maskEmail(dupEmail.email),
+        subscriberContact: subscriber.contactEmail ?? undefined,
+      },
+    };
   }
   const dupDoc = await prisma.candidate.findFirst({
     where: { subscriberId: subscriber.id, documentNumber: data.documentNumber },
-    select: { id: true },
+    select: { id: true, email: true },
   });
   if (dupDoc) {
-    return { ok: false, error: "Ya existe un candidato con ese número de documento en esta entidad." };
+    return {
+      ok: false,
+      error: `Ya existe una cuenta con ese número de documento en ${subName}.`,
+      duplicate: {
+        kind: "document",
+        subscriberName: subName,
+        hintedEmail: maskEmail(dupDoc.email),
+        subscriberContact: subscriber.contactEmail ?? undefined,
+      },
+    };
   }
 
   const candidateRole = await prisma.role.findFirst({

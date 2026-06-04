@@ -104,3 +104,82 @@ export async function changePassword(
   await audit(ctx, { action: "password.change", entity: "User", entityId: ctx.userId });
   return { ok: true };
 }
+
+const emailSchema = z.object({ email: z.string().email("Correo inválido").max(190) });
+
+/// Agrega un correo alterno verificado al usuario autenticado. El correo no
+/// puede coincidir con el principal ni con un correo ya usado por otra cuenta
+/// del mismo suscriptor (principal o alterno).
+export async function addCandidateAlternateEmail(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx } = await requireCandidateAction();
+  const parsed = emailSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const newEmail = parsed.data.email.toLowerCase();
+
+  const me = await prisma.user.findUnique({
+    where: { id: ctx.userId },
+    select: { email: true, additionalEmails: true, subscriberId: true },
+  });
+  if (!me) return { ok: false, error: "Usuario no encontrado." };
+  if (me.email === newEmail) return { ok: false, error: "Ese correo ya es el principal de su cuenta." };
+  if (me.additionalEmails.includes(newEmail)) {
+    return { ok: false, error: "Ese correo ya está agregado a su cuenta." };
+  }
+
+  // Validar unicidad cruzada dentro del mismo suscriptor.
+  const collision = await prisma.user.findFirst({
+    where: {
+      subscriberId: me.subscriberId,
+      NOT: { id: ctx.userId },
+      OR: [{ email: newEmail }, { additionalEmails: { has: newEmail } }],
+    },
+    select: { id: true },
+  });
+  if (collision) return { ok: false, error: "Ese correo ya está en uso por otra cuenta en esta entidad." };
+
+  await prisma.user.update({
+    where: { id: ctx.userId },
+    data: { additionalEmails: { set: [...me.additionalEmails, newEmail] } },
+  });
+  await audit(ctx, {
+    action: "profile.email.add",
+    entity: "User",
+    entityId: ctx.userId,
+    after: { added: newEmail },
+  });
+  revalidatePath("/portal/perfil");
+  return { ok: true };
+}
+
+/// Elimina un correo alterno del usuario autenticado.
+export async function removeCandidateAlternateEmail(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx } = await requireCandidateAction();
+  const target = (formData.get("email") as string | null)?.toLowerCase().trim() ?? "";
+  if (!target) return { ok: false, error: "Correo inválido." };
+  const me = await prisma.user.findUnique({
+    where: { id: ctx.userId },
+    select: { additionalEmails: true },
+  });
+  if (!me) return { ok: false, error: "Usuario no encontrado." };
+  if (!me.additionalEmails.includes(target)) {
+    return { ok: false, error: "Ese correo no está agregado a su cuenta." };
+  }
+  await prisma.user.update({
+    where: { id: ctx.userId },
+    data: { additionalEmails: { set: me.additionalEmails.filter((e) => e !== target) } },
+  });
+  await audit(ctx, {
+    action: "profile.email.remove",
+    entity: "User",
+    entityId: ctx.userId,
+    after: { removed: target },
+  });
+  revalidatePath("/portal/perfil");
+  return { ok: true };
+}

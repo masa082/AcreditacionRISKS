@@ -93,6 +93,100 @@ export async function updateCandidate(
   return { ok: true, message: "Datos del candidato actualizados." };
 }
 
+const altEmailSchema = z.object({ email: z.string().email("Correo inválido").max(190) });
+
+/// El admin del suscriptor agrega un correo alterno a la cuenta del candidato.
+/// Misma validación que el lado del titular: no duplicar el principal ni
+/// colisionar con otro usuario del mismo suscriptor.
+export async function addCandidateEmailByAdmin(
+  candidateId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.CANDIDATE_MANAGE);
+  const parsed = altEmailSchema.safeParse({ email: formData.get("email") });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const newEmail = parsed.data.email.toLowerCase();
+
+  const candidate = await prisma.candidate.findFirst({
+    where: { id: candidateId, subscriberId },
+    select: { userId: true },
+  });
+  if (!candidate?.userId) return { ok: false, error: "Candidato sin usuario asociado." };
+
+  const me = await prisma.user.findUnique({
+    where: { id: candidate.userId },
+    select: { email: true, additionalEmails: true },
+  });
+  if (!me) return { ok: false, error: "Usuario no encontrado." };
+  if (me.email === newEmail) return { ok: false, error: "Ya es el correo principal del candidato." };
+  if (me.additionalEmails.includes(newEmail)) return { ok: false, error: "Ese correo ya está agregado." };
+
+  const collision = await prisma.user.findFirst({
+    where: {
+      subscriberId,
+      NOT: { id: candidate.userId },
+      OR: [{ email: newEmail }, { additionalEmails: { has: newEmail } }],
+    },
+    select: { id: true },
+  });
+  if (collision) return { ok: false, error: "Ese correo ya está en uso por otra cuenta de esta entidad." };
+
+  await prisma.user.update({
+    where: { id: candidate.userId },
+    data: { additionalEmails: { set: [...me.additionalEmails, newEmail] } },
+  });
+  await audit(ctx, {
+    action: "candidate.email.add",
+    entity: "User",
+    entityId: candidate.userId,
+    subscriberId,
+    after: { added: newEmail },
+  });
+  revalidatePath(`/panel/candidatos/${candidateId}`);
+  return { ok: true, message: "Correo alterno agregado." };
+}
+
+/// El admin elimina un correo alterno del candidato.
+export async function removeCandidateEmailByAdmin(
+  candidateId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.CANDIDATE_MANAGE);
+  const target = (formData.get("email") as string | null)?.toLowerCase().trim() ?? "";
+  if (!target) return { ok: false, error: "Correo inválido." };
+
+  const candidate = await prisma.candidate.findFirst({
+    where: { id: candidateId, subscriberId },
+    select: { userId: true },
+  });
+  if (!candidate?.userId) return { ok: false, error: "Candidato sin usuario asociado." };
+
+  const me = await prisma.user.findUnique({
+    where: { id: candidate.userId },
+    select: { additionalEmails: true },
+  });
+  if (!me) return { ok: false, error: "Usuario no encontrado." };
+  if (!me.additionalEmails.includes(target)) {
+    return { ok: false, error: "Ese correo no está agregado al candidato." };
+  }
+
+  await prisma.user.update({
+    where: { id: candidate.userId },
+    data: { additionalEmails: { set: me.additionalEmails.filter((e) => e !== target) } },
+  });
+  await audit(ctx, {
+    action: "candidate.email.remove",
+    entity: "User",
+    entityId: candidate.userId,
+    subscriberId,
+    after: { removed: target },
+  });
+  revalidatePath(`/panel/candidatos/${candidateId}`);
+  return { ok: true, message: "Correo alterno eliminado." };
+}
+
 const bulkEmailSchema = z.object({
   subject: z.string().min(3, "Indique un asunto").max(160),
   body: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(8000),

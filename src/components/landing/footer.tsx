@@ -65,10 +65,18 @@ export async function LandingFooter() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-wrap items-center justify-between gap-6 border-t border-slate-800 pt-6 text-xs text-slate-500">
-          <p className="max-w-xl">© {year} {BRAND.legalName}. Todos los derechos reservados. {BRAND.shortName} es un organismo de certificación de personas que opera bajo los principios de la norma {BRAND.isoNorm}.</p>
-          <div className="flex flex-wrap items-center gap-6">
+        <div className="mt-10 grid gap-6 border-t border-slate-800 pt-6 text-xs text-slate-500 md:grid-cols-3 md:items-center">
+          {/* Izquierda: créditos legales */}
+          <p className="max-w-xl md:col-span-1">
+            © {year} {BRAND.legalName}. Todos los derechos reservados. {BRAND.shortName} es un organismo de
+            certificación de personas que opera bajo los principios de la norma {BRAND.isoNorm}.
+          </p>
+          {/* Centro: hora legal de Colombia */}
+          <div className="md:col-span-1 md:flex md:justify-center">
             <LegalTimeCO variant="dark" />
+          </div>
+          {/* Derecha: badge ONAC justificado a la derecha */}
+          <div className="md:col-span-1 md:flex md:justify-end">
             <OnacBadge variant="dark" />
           </div>
         </div>

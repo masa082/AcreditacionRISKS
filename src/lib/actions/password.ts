@@ -43,9 +43,13 @@ export async function requestPasswordReset(
     subscriberId = sub.id;
   }
 
+  // Acepta tanto el correo principal como cualquier correo alterno verificado.
   const users = await prisma.user.findMany({
-    where: { email, ...(subscriberId !== undefined ? { subscriberId } : {}) },
-    select: { id: true, subscriberId: true, status: true },
+    where: {
+      OR: [{ email }, { additionalEmails: { has: email } }],
+      ...(subscriberId !== undefined ? { subscriberId } : {}),
+    },
+    select: { id: true, subscriberId: true, status: true, email: true },
   });
 
   const generic = "Si existe una cuenta con ese correo, enviamos las instrucciones para restablecer la contraseña.";

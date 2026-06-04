@@ -44,9 +44,15 @@ export async function loginAction(
     subscriberId = sub.id;
   }
 
+  // Acepta tanto el correo principal como cualquiera de los correos alternos
+  // verificados que tenga el usuario (User.additionalEmails).
+  const emailLc = email.toLowerCase();
   const users = await prisma.user.findMany({
     where: {
-      email: email.toLowerCase(),
+      OR: [
+        { email: emailLc },
+        { additionalEmails: { has: emailLc } },
+      ],
       ...(subscriberId !== undefined ? { subscriberId } : {}),
     },
   });

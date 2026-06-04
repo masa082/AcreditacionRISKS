@@ -4,13 +4,17 @@ import { requireCandidatePage } from "@/lib/guards";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 
 const NAV: NavItem[] = [
-  { href: "/portal", label: "Mi proceso" },
-  { href: "/portal/evaluaciones", label: "Evaluaciones disponibles" },
-  { href: "/portal/pagos", label: "Mis pagos" },
-  { href: "/portal/agenda", label: "Mi agenda" },
-  { href: "/portal/certificados", label: "Mis certificados" },
-  { href: "/portal/apelaciones", label: "Apelaciones y solicitudes" },
-  { href: "/portal/perfil", label: "Mi perfil" },
+  { href: "/portal", label: "Mi proceso", icon: "■" },
+
+  // Inscripción y proceso de certificación
+  { href: "/portal/evaluaciones", label: "Evaluaciones disponibles", group: "Proceso", icon: "📝" },
+  { href: "/portal/agenda", label: "Mi agenda", group: "Proceso", icon: "📅" },
+  { href: "/portal/pagos", label: "Mis pagos", group: "Proceso", icon: "💳" },
+  { href: "/portal/certificados", label: "Mis certificados", group: "Proceso", icon: "🎓" },
+
+  // Soporte y gestión de la cuenta
+  { href: "/portal/apelaciones", label: "Apelaciones y solicitudes", group: "Soporte", icon: "📣" },
+  { href: "/portal/perfil", label: "Mi perfil", group: "Soporte", icon: "⚙" },
 ];
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {

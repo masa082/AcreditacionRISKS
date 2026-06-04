@@ -67,7 +67,64 @@ export function RegisterForm({
 
   return (
     <form action={action} className="space-y-5">
-      <FormError error={state.error} />
+      {state.duplicate ? (
+        <div className="rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
+          <div className="flex items-start gap-3">
+            <span aria-hidden className="text-2xl leading-none">⚠️</span>
+            <div className="space-y-2">
+              <p className="font-semibold">
+                {state.duplicate.kind === "document"
+                  ? "Esa identificación ya tiene una cuenta creada"
+                  : "Ese correo ya tiene una cuenta creada"} en {state.duplicate.subscriberName}.
+              </p>
+              {state.duplicate.hintedEmail ? (
+                <p>
+                  La cuenta existente está asociada al correo{" "}
+                  <strong className="font-mono">{state.duplicate.hintedEmail}</strong>.
+                </p>
+              ) : null}
+              <p>
+                Si esa cuenta le pertenece, puede{" "}
+                <strong>restablecer su contraseña</strong> e iniciar sesión. Si
+                ya no tiene acceso a ese correo, solicite al{" "}
+                <strong>administrador del organismo</strong> que actualice sus
+                datos de contacto.
+              </p>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <Link
+                  href="/forgot"
+                  className="inline-flex items-center gap-1 rounded-lg bg-brand-800 px-3 py-1.5 text-xs font-semibold text-white hover:bg-brand-900"
+                >
+                  Restablecer contraseña →
+                </Link>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-1 rounded-lg border border-brand-700 px-3 py-1.5 text-xs font-semibold text-brand-800 hover:bg-brand-50"
+                >
+                  Iniciar sesión
+                </Link>
+                {state.duplicate.subscriberContact ? (
+                  <a
+                    href={`mailto:${state.duplicate.subscriberContact}?subject=Actualización de datos de mi cuenta`}
+                    className="inline-flex items-center gap-1 rounded-lg border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+                  >
+                    Solicitar actualización al administrador
+                  </a>
+                ) : (
+                  <Link
+                    href="/contacto"
+                    className="inline-flex items-center gap-1 rounded-lg border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
+                  >
+                    Solicitar actualización al administrador
+                  </Link>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <FormError error={state.error} />
+      )}
 
       {lockedOrg ? (
         <input type="hidden" name="org" value={lockedOrg} />
