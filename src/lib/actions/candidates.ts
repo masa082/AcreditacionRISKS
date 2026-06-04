@@ -225,6 +225,7 @@ export async function sendBulkEmail(
 
   let sent = 0;
   let failed = 0;
+  const errors: string[] = [];
   for (const r of recipients) {
     // Personalización mínima: {nombre}
     const personalBody = parsed.data.body.replace(/{nombre}/gi, r.firstName);
@@ -234,15 +235,34 @@ export async function sendBulkEmail(
       subject: parsed.data.subject,
       text: personalBody,
       html: `<div style="font-family:Arial,sans-serif;white-space:pre-wrap;">${personalBody.replace(/</g, "&lt;").replace(/\n/g, "<br>")}<hr><small>Mensaje enviado por ${orgName}</small></div>`,
-    }).catch(() => ({ ok: false }));
-    if (result.ok) sent++; else failed++;
+    }).catch((e) => ({ ok: false, provider: "exception", error: e instanceof Error ? e.message : String(e) }));
+    if (result.ok) {
+      sent++;
+      // Si el provider devolvió un warning (auto-fallback a sandbox) lo
+      // anotamos sin marcar como falla.
+      if ("error" in result && result.error) errors.push(`${r.email}: ${result.error}`);
+    } else {
+      failed++;
+      errors.push(`${r.email}: ${"error" in result && result.error ? result.error : "fallo sin detalle"}`);
+    }
   }
 
   await audit(ctx, {
     action: "candidate.bulk_email",
     entity: "Candidate",
     subscriberId,
-    after: { subject: parsed.data.subject, recipients: recipients.length, sent, failed },
+    after: { subject: parsed.data.subject, recipients: recipients.length, sent, failed, errors: errors.slice(0, 5) },
   });
-  return { ok: true, message: `Correos enviados: ${sent}${failed ? ` · Fallaron: ${failed}` : ""}.` };
+
+  if (failed > 0) {
+    const firstError = errors[0] ?? "Motivo no disponible";
+    return {
+      ok: false,
+      error: `Correos enviados: ${sent} · Fallaron: ${failed}. Motivo: ${firstError}`,
+    };
+  }
+  return {
+    ok: true,
+    message: `Correos enviados: ${sent}${errors.length ? ` (con aviso: ${errors[0]})` : ""}.`,
+  };
 }

@@ -16,8 +16,28 @@ import {
 // ============================================================================
 
 const APP_NAME = "CIOC";
-const FROM = process.env.EMAIL_FROM ?? `${APP_NAME} <no-reply@okacreditado.com>`;
+/// FROM por defecto: usamos el dominio sandbox oficial de Resend
+/// (onboarding@resend.dev) hasta que okacreditado.com esté verificado.
+/// El sandbox SOLO entrega a la cuenta dueña de la API key (la del owner
+/// de Resend) — para enviar a cualquier dirección hay que verificar un
+/// dominio. Esto evita que el envío "falle silenciosamente" mientras se
+/// completa el DNS de okacreditado.com en Resend.
+const FALLBACK_FROM = "CIOC · RISKS <onboarding@resend.dev>";
+const FROM = process.env.EMAIL_FROM ?? FALLBACK_FROM;
 const REPLY_TO = process.env.EMAIL_REPLY_TO ?? "calidad@risksint.com";
+
+/// Patrones de error de Resend que indican que el dominio del FROM no
+/// está verificado en la cuenta. En esos casos reintentamos UNA vez con
+/// el sandbox oficial para no perder el envío y dejamos un registro
+/// claro en el AuditLog.
+const DOMAIN_NOT_VERIFIED_PATTERNS = [
+  /domain.*not.*verified/i,
+  /verify.*domain/i,
+  /from.*address.*not.*verified/i,
+  /sender.*not.*verified/i,
+  /403/,
+  /unauthorized/i,
+];
 
 /// Copia oculta obligatoria de TODOS los correos transaccionales. Por
 /// política operativa del organismo, gerencia y el área de formación deben
@@ -59,27 +79,64 @@ async function logProvider(opts: SendOpts): Promise<SendResult> {
   return { ok: true, provider: "log", id: "log" };
 }
 
+async function callResend(
+  key: string,
+  from: string,
+  opts: SendOpts,
+  bcc: string[],
+): Promise<{ status: number; data: { id?: string; message?: string; name?: string } }> {
+  const res = await fetch("https://api.resend.com/emails", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
+    body: JSON.stringify({
+      from,
+      to: [opts.to],
+      bcc: bcc.length > 0 ? bcc : undefined,
+      reply_to: REPLY_TO,
+      subject: opts.subject,
+      html: opts.html,
+      text: opts.text,
+    }),
+  });
+  const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string; name?: string };
+  return { status: res.status, data };
+}
+
 async function resendProvider(opts: SendOpts): Promise<SendResult> {
   const key = process.env.RESEND_API_KEY;
   if (!key) return { ok: false, provider: "resend", error: "RESEND_API_KEY no configurada" };
   const bcc = resolveBccList(opts.to);
   try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        from: FROM,
-        to: [opts.to],
-        bcc: bcc.length > 0 ? bcc : undefined,
-        reply_to: REPLY_TO,
-        subject: opts.subject,
-        html: opts.html,
-        text: opts.text,
-      }),
-    });
-    const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string };
-    if (!res.ok) return { ok: false, provider: "resend", error: data.message ?? `HTTP ${res.status}` };
-    return { ok: true, provider: "resend", id: data.id };
+    let r = await callResend(key, FROM, opts, bcc);
+    let errMsg = r.data.message ?? r.data.name ?? "";
+
+    // Si el FROM falla por dominio no verificado y NO estamos ya usando el
+    // sandbox, reintentamos automáticamente con onboarding@resend.dev.
+    const domainProblem =
+      r.status >= 400 &&
+      DOMAIN_NOT_VERIFIED_PATTERNS.some((p) => p.test(`${errMsg} ${r.status}`));
+    const isAlreadySandbox = /onboarding@resend\.dev/i.test(FROM);
+
+    if (domainProblem && !isAlreadySandbox) {
+      const original = errMsg;
+      r = await callResend(key, FALLBACK_FROM, opts, bcc);
+      errMsg = r.data.message ?? r.data.name ?? "";
+      if (r.status >= 200 && r.status < 300 && r.data.id) {
+        return {
+          ok: true, provider: "resend", id: r.data.id,
+          error: `[FROM "${FROM}" rechazado por Resend (${original}). Enviado con sandbox onboarding@resend.dev. Verifique el dominio en https://resend.com/domains.]`,
+        };
+      }
+    }
+
+    if (r.status >= 200 && r.status < 300 && r.data.id) {
+      return { ok: true, provider: "resend", id: r.data.id };
+    }
+    return {
+      ok: false,
+      provider: "resend",
+      error: `HTTP ${r.status} — ${errMsg || "respuesta sin detalle"}`,
+    };
   } catch (e) {
     return { ok: false, provider: "resend", error: e instanceof Error ? e.message : "error de red" };
   }

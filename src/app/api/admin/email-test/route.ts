@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getCurrentUser, can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
 import { sendEmail } from "@/lib/email";
+import { prisma } from "@/lib/prisma";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -51,6 +52,14 @@ export async function GET(req: NextRequest) {
 
   const result = await sendEmail({ to, subject, html, text });
 
+  // Trae los últimos 5 envíos para depurar (sent + failed) con su motivo
+  const recent = await prisma.auditLog.findMany({
+    where: { action: { in: ["email.sent", "email.failed"] } },
+    orderBy: { createdAt: "desc" },
+    take: 5,
+    select: { action: true, createdAt: true, after: true },
+  });
+
   return new Response(
     JSON.stringify({
       sent: result.ok,
@@ -60,11 +69,13 @@ export async function GET(req: NextRequest) {
       diagnostics: {
         EMAIL_PROVIDER: provider,
         hasResendKey: hasKey,
-        EMAIL_FROM: process.env.EMAIL_FROM ?? "(default no-reply@okacreditado.com)",
+        keyPrefix: hasKey ? `${process.env.RESEND_API_KEY!.slice(0, 6)}…` : null,
+        EMAIL_FROM: process.env.EMAIL_FROM ?? "(default — CIOC <onboarding@resend.dev>)",
         EMAIL_REPLY_TO: process.env.EMAIL_REPLY_TO ?? "(default calidad@risksint.com)",
         EMAIL_BCC: process.env.EMAIL_BCC ?? "(no configurado — usa solo BCC obligatorio)",
         mandatoryBcc: ["gerencia@risksint.com", "formacion@risksint.com"],
       },
+      recentDelivery: recent,
     }, null, 2),
     { status: result.ok ? 200 : 502, headers: { "content-type": "application/json" } },
   );
