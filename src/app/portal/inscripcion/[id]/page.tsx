@@ -117,6 +117,9 @@ export default async function EnrollmentProcessPage({
   const submissionByDoc = new Map(submissions.map((s) => [s.requiredDocumentId, s]));
   const fees = await computeEnrollmentFees(subscriberId, enrollment.schemeId);
 
+  const { getMarketingConfig } = await import("@/lib/marketing-config");
+  const marketing = await getMarketingConfig();
+
   // ¿Tiene un descuento de referido activo en esta inscripción?
   const activeReferral = await prisma.referral.findFirst({
     where: { enrollmentId: enrollment.id, status: { in: ["PENDING", "CONFIRMED"] } },
@@ -265,10 +268,16 @@ export default async function EnrollmentProcessPage({
               <div className="space-y-2 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm">
                 <p className="font-semibold text-amber-900">⏳ Pago en revisión</p>
                 <p className="text-amber-800">
-                  Recibimos su intento de pago por <strong>{money(payment.amount, payment.currency)}</strong>. Realice la transferencia o consignación a la cuenta del organismo certificador y envíe el comprobante a <a className="underline" href="mailto:calidad@risksint.com">calidad@risksint.com</a> con su número de inscripción <strong>{enrollment.code}</strong>.
+                  Recibimos su intento de pago por <strong>{money(payment.amount, payment.currency)}</strong>. Realice la transferencia o consignación a la cuenta del organismo certificador y envíe el comprobante con su número de inscripción <strong>{enrollment.code}</strong>.
                 </p>
+                {marketing.bankingInfo ? (
+                  <div className="rounded-lg border border-amber-300 bg-white p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-amber-700">Datos para transferencia</div>
+                    <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-xs text-slate-800">{marketing.bankingInfo}</pre>
+                  </div>
+                ) : null}
                 <p className="text-xs text-amber-700">
-                  Su pago será verificado y aprobado por el equipo de RISKS INTERNATIONAL. Recibirá una notificación en cuanto se confirme y podrá continuar con su evaluación.
+                  Su pago será verificado y aprobado por el equipo del organismo. Recibirá una notificación en cuanto se confirme.
                 </p>
                 <p className="text-xs text-slate-500">Referencia interna: {payment.providerRef}</p>
               </div>
@@ -328,10 +337,16 @@ export default async function EnrollmentProcessPage({
                   <div className="space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
                     <p className="font-semibold text-slate-800">Cómo pagar</p>
                     <p>
-                      Al confirmar, generamos su solicitud de pago. Realice la transferencia o consignación a la cuenta del organismo certificador y envíe el comprobante a <a className="underline text-brand-800" href="mailto:calidad@risksint.com">calidad@risksint.com</a> indicando su folio <strong>{enrollment.code}</strong>.
+                      Al confirmar, generamos su solicitud de pago. Realice la transferencia o consignación y envíe el comprobante con su folio <strong>{enrollment.code}</strong>.
                     </p>
+                    {marketing.bankingInfo ? (
+                      <div className="rounded-lg border border-slate-300 bg-white p-2">
+                        <div className="text-[10px] uppercase tracking-wider text-slate-500">Datos de la cuenta</div>
+                        <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[11px] text-slate-800">{marketing.bankingInfo}</pre>
+                      </div>
+                    ) : null}
                     <p className="text-slate-500">
-                      Su pago será verificado y aprobado por el equipo del organismo. Recibirá una notificación en cuanto se confirme. (La pasarela automática Wompi/PayU se conectará próximamente.)
+                      Su pago será verificado y aprobado por el equipo del organismo. La pasarela automática (Rapyd) se conectará próximamente.
                     </p>
                   </div>
                 ) : null}

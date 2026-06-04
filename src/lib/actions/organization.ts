@@ -65,6 +65,107 @@ export async function updateOrganization(
   return { ok: true };
 }
 
+// ----------------------------------------------------------------------------
+//  Configuración de marketing editable: WhatsApp, social proof, banner
+//  de urgencia, garantías, slogan, datos bancarios para pago manual.
+// ----------------------------------------------------------------------------
+const marketingSchema = z.object({
+  slogan: z.string().max(160).optional().nullable(),
+  whatsappNumber: z.string().max(20).optional().nullable(),
+  whatsappMessage: z.string().max(500).optional().nullable(),
+  spProfessionals: z.string().max(40).optional().nullable(),
+  spCompanies: z.string().max(40).optional().nullable(),
+  spAvgScore: z.string().max(40).optional().nullable(),
+  spDaysToIssue: z.string().max(40).optional().nullable(),
+  urgencyEnabled: z.string().optional().nullable(),
+  urgencyText: z.string().max(200).optional().nullable(),
+  urgencyCtaLabel: z.string().max(40).optional().nullable(),
+  urgencyCtaHref: z.string().max(200).optional().nullable(),
+  bankingInfo: z.string().max(2000).optional().nullable(),
+  guarantees: z.string().max(4000).optional().nullable(), // JSON serializado
+});
+
+/// Actualiza Subscriber.marketingConfig. Permisos: ORG_MANAGE.
+export async function updateMarketingConfig(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.ORG_MANAGE);
+  const parsed = marketingSchema.safeParse({
+    slogan: clean(formData.get("slogan")),
+    whatsappNumber: clean(formData.get("whatsappNumber")),
+    whatsappMessage: clean(formData.get("whatsappMessage")),
+    spProfessionals: clean(formData.get("spProfessionals")),
+    spCompanies: clean(formData.get("spCompanies")),
+    spAvgScore: clean(formData.get("spAvgScore")),
+    spDaysToIssue: clean(formData.get("spDaysToIssue")),
+    urgencyEnabled: clean(formData.get("urgencyEnabled")),
+    urgencyText: clean(formData.get("urgencyText")),
+    urgencyCtaLabel: clean(formData.get("urgencyCtaLabel")),
+    urgencyCtaHref: clean(formData.get("urgencyCtaHref")),
+    bankingInfo: clean(formData.get("bankingInfo")),
+    guarantees: clean(formData.get("guarantees")),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+
+  let guaranteesParsed: Array<{ icon: string; title: string; desc: string }> | undefined;
+  if (parsed.data.guarantees) {
+    try {
+      const arr = JSON.parse(parsed.data.guarantees);
+      if (Array.isArray(arr)) {
+        guaranteesParsed = arr
+          .filter((g: unknown): g is { icon?: string; title?: string; desc?: string } =>
+            typeof g === "object" && g !== null,
+          )
+          .map((g) => ({
+            icon: String((g as { icon?: string }).icon ?? "✓").slice(0, 4),
+            title: String((g as { title?: string }).title ?? "").slice(0, 80),
+            desc: String((g as { desc?: string }).desc ?? "").slice(0, 240),
+          }))
+          .filter((g) => g.title.length > 0 && g.desc.length > 0);
+      }
+    } catch {
+      return { ok: false, error: "JSON de garantías inválido." };
+    }
+  }
+
+  const marketingConfig = {
+    slogan: parsed.data.slogan ?? null,
+    whatsapp: {
+      number: parsed.data.whatsappNumber ?? "",
+      message: parsed.data.whatsappMessage ?? "",
+    },
+    socialProof: {
+      professionalsCertified: parsed.data.spProfessionals ?? "",
+      companiesTrust: parsed.data.spCompanies ?? "",
+      avgScore: parsed.data.spAvgScore ?? "",
+      daysToIssue: parsed.data.spDaysToIssue ?? "",
+    },
+    urgency: {
+      enabled: parsed.data.urgencyEnabled === "on",
+      text: parsed.data.urgencyText ?? "",
+      ctaLabel: parsed.data.urgencyCtaLabel ?? "",
+      ctaHref: parsed.data.urgencyCtaHref ?? "",
+    },
+    bankingInfo: parsed.data.bankingInfo ?? "",
+    ...(guaranteesParsed ? { guarantees: guaranteesParsed } : {}),
+  };
+
+  await prisma.subscriber.update({
+    where: { id: subscriberId },
+    data: { marketingConfig },
+  });
+  await audit(ctx, {
+    action: "org.marketing.update",
+    entity: "Subscriber",
+    entityId: subscriberId,
+    subscriberId,
+  });
+  revalidatePath("/");
+  revalidatePath("/panel/organizacion");
+  return { ok: true, message: "Configuración de marketing actualizada." };
+}
+
 /// Sube directamente el logo o la firma autorizada del suscriptor (imagen) y la
 /// publica en /api/brand para que aparezca en certificados y diplomas.
 export async function uploadOrgAsset(

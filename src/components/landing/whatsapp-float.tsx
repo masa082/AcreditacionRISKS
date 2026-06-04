@@ -1,11 +1,13 @@
-import { BRAND } from "@/lib/brand";
+import { getMarketingConfig } from "@/lib/marketing-config";
 
-/** Botón flotante de WhatsApp en la esquina inferior derecha. Visible en todas
- *  las páginas. Si BRAND.whatsapp.number es vacío, no se renderiza. */
-export function WhatsAppFloat() {
-  const w = BRAND.whatsapp;
-  if (!w?.number) return null;
-  const href = `https://wa.me/${w.number.replace(/\D/g, "")}?text=${encodeURIComponent(w.message ?? "")}`;
+/** Botón flotante de WhatsApp en la esquina inferior derecha. Visible en
+ *  todas las páginas. Si el número está vacío, no se renderiza.
+ *  Editable desde /panel/organizacion → sección Marketing. */
+export async function WhatsAppFloat() {
+  const m = await getMarketingConfig();
+  const num = m.whatsapp.number.replace(/\D/g, "");
+  if (!num) return null;
+  const href = `https://wa.me/${num}?text=${encodeURIComponent(m.whatsapp.message ?? "")}`;
   return (
     <a
       href={href}

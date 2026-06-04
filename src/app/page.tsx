@@ -13,6 +13,7 @@ import { ExamPreview } from "@/components/landing/exam-preview";
 import { WhatsAppFloat } from "@/components/landing/whatsapp-float";
 import { MobileStickyCTA } from "@/components/landing/mobile-sticky-cta";
 import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
+import { getMarketingConfig } from "@/lib/marketing-config";
 import { getBrandAssets } from "@/lib/brand-assets";
 
 export const metadata: Metadata = {
@@ -32,12 +33,14 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-const TRUST_METRICS = [
-  { value: BRAND.socialProof.professionalsCertified, label: "profesionales certificados" },
-  { value: BRAND.socialProof.companiesTrust, label: "empresas confían en RISKS" },
-  { value: BRAND.socialProof.avgScore, label: "puntaje promedio de aprobación" },
-  { value: BRAND.socialProof.daysToIssue, label: "días hábiles para emitir el certificado" },
-];
+function trustMetrics(m: Awaited<ReturnType<typeof getMarketingConfig>>) {
+  return [
+    { value: m.socialProof.professionalsCertified, label: "profesionales certificados" },
+    { value: m.socialProof.companiesTrust, label: "empresas confían en RISKS" },
+    { value: m.socialProof.avgScore, label: "puntaje promedio de aprobación" },
+    { value: m.socialProof.daysToIssue, label: "días hábiles para emitir el certificado" },
+  ];
+}
 
 const BENEFITS = [
   { icon: "🎓", title: "Acredita tu conocimiento", desc: "Demuestra formalmente lo que sabes con un certificado verificable y reconocido por empleadores." },
@@ -73,6 +76,8 @@ const HOME_FAQ = [
 
 export default async function HomePage() {
   const { logoUrl } = await getBrandAssets();
+  const marketing = await getMarketingConfig();
+  const TRUST_METRICS = trustMetrics(marketing);
   return (
     <main className="min-h-screen bg-white text-slate-900">
       <UrgencyBanner />
@@ -90,7 +95,7 @@ export default async function HomePage() {
               Certifica tus competencias profesionales con{" "}
               <span className="block text-brand-800">RISKS INTERNATIONAL</span>
             </h1>
-            <p className="mt-3 italic text-slate-500">&ldquo;{BRAND.slogan}&rdquo;</p>
+            <p className="mt-3 italic text-slate-500">&ldquo;{marketing.slogan}&rdquo;</p>
             <p className="mt-6 max-w-xl text-base text-slate-600">
               Presenta evaluaciones digitales, acredita tus conocimientos y obtén certificados verificables que fortalecen tu perfil profesional en cumplimiento, riesgos, debida diligencia y prevención LA/FT.
             </p>
@@ -427,7 +432,7 @@ export default async function HomePage() {
       <section className="bg-hero-grad text-white">
         <div className="mx-auto max-w-4xl px-6 py-20 text-center">
           <p className="mb-3 inline-block rounded-full border border-white/20 bg-white/5 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-gold-400">
-            {BRAND.slogan}
+            {marketing.slogan}
           </p>
           <h2 className="text-3xl font-bold sm:text-4xl">Da el siguiente paso en tu crecimiento profesional</h2>
           <p className="mx-auto mt-4 max-w-2xl text-slate-200">
@@ -460,7 +465,7 @@ export default async function HomePage() {
           address: BRAND.address,
           sameAs: [BRAND.social.linkedin].filter(Boolean),
           description: BRAND.description,
-          slogan: BRAND.slogan,
+          slogan: marketing.slogan,
         }}
       />
     </main>

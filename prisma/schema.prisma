@@ -278,6 +278,10 @@ model Subscriber {
   // Config flexible (módulos activos, preferencias)
   settings    Json     @default("{}")
   modules     String[] @default([])
+  // Configuración de marketing editable desde /panel/organizacion:
+  // whatsapp, social proof, banner de urgencia, garantías, slogan y
+  // datos bancarios visibles al candidato durante el flujo de pago manual.
+  marketingConfig Json  @default("{}")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

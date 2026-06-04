@@ -1,9 +1,9 @@
-import { BRAND } from "@/lib/brand";
+import { getMarketingConfig } from "@/lib/marketing-config";
 
-/** Sección de garantías / reaseguros. Reduce la fricción al pagar mostrando
- *  política de reintento, soporte humano y seguridad del pago. */
-export function GuaranteesSection() {
-  const items = BRAND.guarantees;
+/** Sección de garantías / reaseguros. Editable desde /panel/organizacion. */
+export async function GuaranteesSection() {
+  const m = await getMarketingConfig();
+  const items = m.guarantees;
   if (!items?.length) return null;
   return (
     <section className="bg-white">
