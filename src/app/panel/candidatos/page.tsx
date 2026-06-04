@@ -1,11 +1,11 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { requireSubscriberPage } from "@/lib/guards";
 import { can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Card, EmptyState, Badge } from "@/components/ui";
-import { dateOnly } from "@/lib/format";
+import { PageHeader, Card } from "@/components/ui";
+import { CandidatesTable, type CandidateRow } from "@/components/candidates-table";
+import { money, dateOnly, dateTime } from "@/lib/format";
 
 export const metadata = { title: "Candidatos" };
 
@@ -26,95 +26,139 @@ const ENROLL_STATUS_ES: Record<string, string> = {
   CANCELLED: "Cancelado",
 };
 
-export default async function CandidatesListPage() {
+interface SearchParams {
+  q?: string;
+  status?: string;
+  payment?: string;
+  consent?: string;
+  from?: string;
+  to?: string;
+}
+
+function buildWhere(args: { subscriberId: string } & SearchParams) {
+  const { subscriberId, q, status, payment, consent, from, to } = args;
+  const where: Record<string, unknown> = { subscriberId };
+  if (q?.trim()) {
+    where.OR = [
+      { firstName: { contains: q.trim(), mode: "insensitive" } },
+      { lastName: { contains: q.trim(), mode: "insensitive" } },
+      { email: { contains: q.trim(), mode: "insensitive" } },
+      { documentNumber: { contains: q.trim(), mode: "insensitive" } },
+    ];
+  }
+  const dateFrom = from ? new Date(from) : null;
+  const dateTo = to ? new Date(to) : null;
+  if (dateFrom || dateTo) {
+    where.createdAt = {
+      ...(dateFrom ? { gte: dateFrom } : {}),
+      ...(dateTo ? { lte: dateTo } : {}),
+    };
+  }
+  // status / payment se combinan en enrollments.some
+  const enrSome: Record<string, unknown> = {};
+  if (status) enrSome.status = status;
+  if (payment === "approved") enrSome.payments = { some: { status: "APPROVED" } };
+  else if (payment === "pending") enrSome.payments = { some: { status: "PENDING" } };
+  else if (payment === "none") enrSome.payments = { none: {} };
+  if (Object.keys(enrSome).length > 0) where.enrollments = { some: enrSome };
+
+  if (consent === "yes") where.consents = { some: {} };
+  else if (consent === "no") where.consents = { none: {} };
+
+  return where;
+}
+
+export default async function CandidatesListPage({
+  searchParams,
+}: {
+  searchParams: Promise<SearchParams>;
+}) {
   const { ctx, subscriberId } = await requireSubscriberPage();
   if (!can(ctx, PERMISSIONS.CANDIDATE_MANAGE) && !can(ctx, PERMISSIONS.ENROLLMENT_MANAGE)) {
     redirect("/panel");
   }
+  const sp = await searchParams;
+  const where = buildWhere({ subscriberId, ...sp });
 
-  const candidates = await prisma.candidate.findMany({
-    where: { subscriberId },
-    orderBy: { createdAt: "desc" },
-    include: {
-      enrollments: {
-        orderBy: { createdAt: "desc" },
-        select: {
-          id: true,
-          status: true,
-          createdAt: true,
-          _count: { select: { documents: { where: { status: "SUBMITTED" } } } },
+  const [candidates, totalCount] = await Promise.all([
+    prisma.candidate.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      take: 500,
+      include: {
+        user: { select: { id: true, lastLoginAt: true, lastLoginIp: true } },
+        consents: { take: 1, orderBy: { createdAt: "desc" }, select: { id: true } },
+        enrollments: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            payments: {
+              orderBy: [{ status: "asc" }, { paidAt: "desc" }],
+              select: { status: true, amount: true, currency: true },
+            },
+            documents: { select: { status: true } },
+          },
         },
       },
-    },
+    }),
+    prisma.candidate.count({ where: { subscriberId } }),
+  ]);
+
+  // Para conteo de logins agregamos AuditLog por actorId.
+  const userIds = candidates.map((c) => c.user?.id).filter(Boolean) as string[];
+  const loginAgg = userIds.length
+    ? await prisma.auditLog.groupBy({
+        by: ["actorId"],
+        where: { actorId: { in: userIds }, action: "auth.login" },
+        _count: { _all: true },
+      })
+    : [];
+  const loginsByUser = new Map<string, number>(loginAgg.map((r) => [r.actorId as string, r._count._all]));
+
+  const rows: CandidateRow[] = candidates.map((c) => {
+    const last = c.enrollments[0];
+    const lastPayment = last?.payments[0];
+    const docs = last?.documents ?? [];
+    const docsApproved = docs.filter((d) => d.status === "APPROVED").length;
+    const docsPending = docs.filter((d) => d.status === "SUBMITTED").length;
+    const docsRejected = docs.filter((d) => d.status === "REJECTED").length;
+    const paymentLabel: CandidateRow["paymentLabel"] = lastPayment?.status === "APPROVED" ? "approved"
+      : lastPayment?.status === "PENDING" ? "pending"
+      : lastPayment?.status === "REJECTED" ? "rejected"
+      : "none";
+    return {
+      id: c.id,
+      fullName: `${c.firstName} ${c.lastName}`,
+      email: c.email,
+      documentLabel: c.documentType ? `${c.documentType} ${c.documentNumber ?? ""}`.trim() : (c.documentNumber ?? "—"),
+      enrollments: c.enrollments.length,
+      lastStatus: last?.status ?? "",
+      lastStatusLabel: last ? (ENROLL_STATUS_ES[last.status] ?? last.status) : "Sin inscripciones",
+      lastCreatedAt: last ? dateOnly(last.createdAt) : null,
+      paymentLabel,
+      paymentAmount: lastPayment && Number(lastPayment.amount.toString()) > 0
+        ? money(lastPayment.amount, lastPayment.currency)
+        : null,
+      consentGiven: c.consents.length > 0,
+      docsApproved,
+      docsPending,
+      docsRejected,
+      lastLoginLabel: c.user?.lastLoginAt ? dateTime(c.user.lastLoginAt) : null,
+      lastLoginIp: c.user?.lastLoginIp ?? null,
+      loginCount: c.user?.id ? loginsByUser.get(c.user.id) ?? 0 : 0,
+    };
   });
 
-  const totalPendingDocs = candidates.reduce(
-    (sum, c) => sum + c.enrollments.reduce((s, e) => s + e._count.documents, 0),
-    0,
-  );
+  const totalPendingDocs = rows.reduce((s, r) => s + r.docsPending, 0);
 
   return (
     <>
       <PageHeader
         title="Candidatos"
-        subtitle={`${candidates.length} candidato(s) · ${totalPendingDocs} documento(s) por revisar`}
+        subtitle={`${rows.length} de ${totalCount} mostrados · ${totalPendingDocs} documento(s) por revisar`}
       />
-
       <Card>
         <div className="p-5">
-          {candidates.length === 0 ? (
-            <EmptyState>
-              Aún no hay candidatos registrados. Comparta el enlace público de
-              registro para recibir inscripciones.
-            </EmptyState>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                    <th className="py-2 pr-4 font-medium">Candidato</th>
-                    <th className="py-2 pr-4 font-medium">Documento</th>
-                    <th className="py-2 pr-4 font-medium">Inscripciones</th>
-                    <th className="py-2 pr-4 font-medium">Último estado</th>
-                    <th className="py-2 font-medium">Por revisar</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {candidates.map((c) => {
-                    const last = c.enrollments[0];
-                    const pending = c.enrollments.reduce((s, e) => s + e._count.documents, 0);
-                    return (
-                      <tr key={c.id} className="hover:bg-slate-50">
-                        <td className="py-3 pr-4">
-                          <Link href={`/panel/candidatos/${c.id}`} className="font-medium text-slate-800 hover:text-brand-800 hover:underline">
-                            {c.firstName} {c.lastName}
-                          </Link>
-                          <div className="text-xs text-slate-400">{c.email}</div>
-                        </td>
-                        <td className="py-3 pr-4 text-slate-600">
-                          {c.documentType ? `${c.documentType} ` : ""}{c.documentNumber ?? "—"}
-                        </td>
-                        <td className="py-3 pr-4 text-slate-600">{c.enrollments.length}</td>
-                        <td className="py-3 pr-4">
-                          {last ? (
-                            <span className="text-slate-600">
-                              {ENROLL_STATUS_ES[last.status] ?? last.status}
-                              <span className="ml-1 text-xs text-slate-400">· {dateOnly(last.createdAt)}</span>
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">Sin inscripciones</span>
-                          )}
-                        </td>
-                        <td className="py-3">
-                          {pending > 0 ? <Badge tone="amber">{pending}</Badge> : <span className="text-slate-300">—</span>}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
+          <CandidatesTable rows={rows} />
         </div>
       </Card>
     </>

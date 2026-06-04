@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { DocumentReview } from "@/components/document-review";
+import { CandidateEditForm } from "@/components/candidate-edit-form";
 import { money, dateOnly, dateTime } from "@/lib/format";
 
 export const metadata = { title: "Detalle de candidato" };
@@ -66,11 +67,25 @@ export default async function CandidateDetailPage({
         },
       },
       consents: { orderBy: { acceptedAt: "desc" }, take: 1 },
+      user: { select: { id: true, lastLoginAt: true, lastLoginIp: true, status: true } },
     },
   });
   if (!candidate || candidate.subscriberId !== subscriberId) notFound();
 
   const lastConsent = candidate.consents[0];
+
+  // Logs de auditoría e ingresos para el candidato.
+  const [recentLogs, loginCount] = candidate.user
+    ? await Promise.all([
+        prisma.auditLog.findMany({
+          where: { actorId: candidate.user.id },
+          orderBy: { createdAt: "desc" },
+          take: 25,
+          select: { id: true, action: true, ip: true, userAgent: true, createdAt: true, entity: true },
+        }),
+        prisma.auditLog.count({ where: { actorId: candidate.user.id, action: "auth.login" } }),
+      ])
+    : [[], 0];
 
   return (
     <>
@@ -104,6 +119,33 @@ export default async function CandidateDetailPage({
               <p className="mt-1"><Badge tone="slate">Sin registro</Badge></p>
             )}
           </div>
+
+          <div className="mt-4 border-t border-slate-100 pt-3 text-sm">
+            <div className="text-slate-400">Accesos a la plataforma</div>
+            <dl className="mt-1 space-y-1 text-xs">
+              <div className="flex justify-between"><dt className="text-slate-500">Estado cuenta</dt><dd className="text-slate-700">{candidate.user?.status ?? "—"}</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-500">Total logins</dt><dd className="font-semibold text-slate-800">{loginCount}</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-500">Último ingreso</dt><dd className="text-slate-700">{candidate.user?.lastLoginAt ? dateTime(candidate.user.lastLoginAt) : "Nunca"}</dd></div>
+              <div className="flex justify-between"><dt className="text-slate-500">IP último ingreso</dt><dd className="font-mono text-slate-700">{candidate.user?.lastLoginIp ?? "—"}</dd></div>
+            </dl>
+          </div>
+
+          {can(ctx, PERMISSIONS.CANDIDATE_MANAGE) ? (
+            <CandidateEditForm
+              candidateId={candidate.id}
+              initial={{
+                firstName: candidate.firstName,
+                lastName: candidate.lastName,
+                email: candidate.email,
+                phone: candidate.phone,
+                documentType: candidate.documentType,
+                documentNumber: candidate.documentNumber,
+                country: candidate.country,
+                city: candidate.city,
+                address: candidate.address,
+              }}
+            />
+          ) : null}
         </Card>
 
         <div className="space-y-5 lg:col-span-2">
@@ -219,6 +261,28 @@ export default async function CandidateDetailPage({
           )}
         </div>
       </div>
+
+      <Card className="mt-6">
+        <div className="border-b border-slate-200 px-5 py-3">
+          <h2 className="text-sm font-semibold text-slate-900">Trazabilidad (últimos 25 eventos)</h2>
+        </div>
+        <div className="p-5">
+          {recentLogs.length === 0 ? (
+            <p className="text-sm text-slate-400">Sin eventos registrados.</p>
+          ) : (
+            <ul className="divide-y divide-slate-100 text-xs">
+              {recentLogs.map((l) => (
+                <li key={l.id} className="grid grid-cols-[160px_140px_1fr_180px] gap-3 py-2">
+                  <span className="text-slate-500">{dateTime(l.createdAt)}</span>
+                  <span className="font-mono text-slate-700">{l.action}</span>
+                  <span className="truncate text-slate-500" title={l.userAgent ?? ""}>{l.userAgent ?? ""}</span>
+                  <span className="font-mono text-slate-700">{l.ip ?? "—"}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </Card>
     </>
   );
 }

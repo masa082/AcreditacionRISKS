@@ -43,6 +43,20 @@ export async function createUserSession(userId: string): Promise<void> {
     data: { lastLoginAt: new Date(), lastLoginIp: ip },
   });
 
+  // Registra el login en AuditLog para contabilizar accesos en el panel.
+  await prisma.auditLog.create({
+    data: {
+      subscriberId: user.subscriberId,
+      actorId: user.id,
+      actorType: user.type,
+      action: "auth.login",
+      entity: "User",
+      entityId: user.id,
+      ip,
+      userAgent,
+    },
+  }).catch(() => {/* nunca debe bloquear el login */});
+
   const token = await signSession({
     sub: user.id,
     jti,
