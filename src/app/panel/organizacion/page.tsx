@@ -7,6 +7,7 @@ import { PageHeader, Card } from "@/components/ui";
 import { OrganizationForm } from "@/components/organization-form";
 import { MarketingConfigForm } from "@/components/marketing-config-form";
 import { RapydConfigForm } from "@/components/rapyd-config-form";
+import { ThemeConfigForm } from "@/components/theme-config-form";
 import { getMarketingConfig } from "@/lib/marketing-config";
 
 export const metadata = { title: "Organización" };
@@ -53,6 +54,12 @@ export default async function OrganizationPage() {
               rapydSecretKey: s.rapydSecretKey,
               rapydMerchantNote: s.rapydMerchantNote,
             }}
+          />
+        </div>
+
+        <div className="max-w-5xl">
+          <ThemeConfigForm
+            initial={(s.themeConfig ?? {}) as Record<string, string>}
           />
         </div>
 

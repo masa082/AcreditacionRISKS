@@ -293,6 +293,13 @@ model Subscriber {
   rapydAccessKey  String?
   rapydSecretKey  String?
   rapydMerchantNote String?
+  // ─── Paleta de marca para reportes (Hoja de Vida) y diplomas ────────────
+  // Permite al SUSCRIPTOR configurar los colores del Informe del candidato
+  // y del Diploma (títulos, líneas, fondos de sección, dorado de acento).
+  // Si está vacío, los generadores caen al tema institucional por defecto.
+  // Forma esperada: { primary, accent, headerBg, sectionBg, sectionText, rule }
+  // Todos en formato "#rrggbb".
+  themeConfig    Json     @default("{}")
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

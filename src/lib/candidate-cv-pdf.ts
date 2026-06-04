@@ -7,6 +7,7 @@ import QRCode from "qrcode";
 import { prisma } from "@/lib/prisma";
 import { readFileByKey, extFromName } from "@/lib/storage";
 import { appBaseUrl } from "@/lib/app-url";
+import { resolveTheme, hexToRgb01 } from "@/lib/theme";
 
 /// Zona horaria fija para todo el informe: hora legal colombiana.
 /// La plataforma puede ser visitada desde cualquier país, pero el informe
@@ -35,14 +36,16 @@ const PAGE_W = 595.28; // A4
 const PAGE_H = 841.89;
 const MARGIN = 50;
 
-const COLOR_NAVY = rgb(0.043, 0.114, 0.267);  // #0b1d44 — solo para texto
-const COLOR_GOLD = rgb(0.784, 0.604, 0.208);  // #c89a35
-const COLOR_GREY = rgb(0.40, 0.45, 0.52);
-const COLOR_DARK = rgb(0.06, 0.09, 0.16);
-const COLOR_LIGHT_BG = rgb(0.95, 0.97, 1);
-const COLOR_RULE = rgb(0.85, 0.88, 0.94);
-const COLOR_HEADER_BG = rgb(0.992, 0.984, 0.957); // #fdfbf4 crema MUY claro
-const COLOR_HEADER_LINE = rgb(0.784, 0.604, 0.208); // dorada
+// Paleta institucional FALLBACK. Se sobreescribe dinámicamente con la
+// paleta del suscriptor (Subscriber.themeConfig) en buildCandidateCV.
+let COLOR_NAVY = rgb(0.043, 0.114, 0.267);  // primary (títulos)
+let COLOR_GOLD = rgb(0.784, 0.604, 0.208);  // accent (líneas/dorado)
+let COLOR_GREY = rgb(0.40, 0.45, 0.52);     // muted (etiquetas)
+let COLOR_DARK = rgb(0.06, 0.09, 0.16);     // body (texto principal)
+let COLOR_LIGHT_BG = rgb(0.95, 0.97, 1);    // sectionBg
+let COLOR_RULE = rgb(0.85, 0.88, 0.94);     // rule
+let COLOR_HEADER_BG = rgb(0.992, 0.984, 0.957); // headerBg
+let COLOR_HEADER_LINE = rgb(0.784, 0.604, 0.208); // accent (igual a GOLD)
 
 interface Cursor { page: PDFPage; y: number }
 
@@ -397,9 +400,31 @@ export async function buildCandidateCV(
 
   const subscriber = await prisma.subscriber.findUnique({
     where: { id: subscriberId },
-    select: { tradeName: true, legalName: true, logoUrl: true, contactEmail: true, contactPhone: true, address: true, taxId: true },
+    select: {
+      tradeName: true, legalName: true, logoUrl: true,
+      contactEmail: true, contactPhone: true, address: true, taxId: true,
+      themeConfig: true,
+    },
   });
   const orgName = subscriber?.tradeName ?? subscriber?.legalName ?? "Organismo Certificador";
+
+  // Aplica la paleta del suscriptor (o default si no está configurada).
+  // Se reasignan las constantes globales del módulo para que todas las
+  // funciones de dibujo internas usen estos colores sin propagar el theme
+  // como parámetro. Es seguro porque buildCandidateCV se ejecuta de forma
+  // secuencial por request.
+  {
+    const t = resolveTheme(subscriber?.themeConfig);
+    const toRgb = (h: string) => { const c = hexToRgb01(h); return rgb(c.r, c.g, c.b); };
+    COLOR_NAVY        = toRgb(t.primary);
+    COLOR_GOLD        = toRgb(t.accent);
+    COLOR_HEADER_LINE = toRgb(t.accent);
+    COLOR_HEADER_BG   = toRgb(t.headerBg);
+    COLOR_LIGHT_BG    = toRgb(t.sectionBg);
+    COLOR_DARK        = toRgb(t.body);
+    COLOR_GREY        = toRgb(t.muted);
+    COLOR_RULE        = toRgb(t.rule);
+  }
 
   // Foto: tomamos el primer documento que sea "fotografía/foto/photo" y sea
   // imagen. (El modelo Candidate no tiene un campo de foto dedicado.)

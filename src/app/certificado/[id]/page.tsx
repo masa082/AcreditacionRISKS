@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { qrDataUrl } from "@/lib/certificate";
 import { Diploma } from "@/components/diploma";
 import { PrintButton } from "@/components/print-button";
+import { resolveTheme } from "@/lib/theme";
 
 export const metadata = { title: "Certificado" };
 
@@ -21,7 +22,7 @@ export default async function CertificatePage({
   const cert = await prisma.certificate.findUnique({
     where: { id },
     include: {
-      subscriber: { select: { tradeName: true, legalName: true, authorizedSigner: true, logoUrl: true, signatureImageUrl: true } },
+      subscriber: { select: { tradeName: true, legalName: true, authorizedSigner: true, logoUrl: true, signatureImageUrl: true, themeConfig: true } },
       scheme: { select: { normReference: true } },
       candidate: { select: { userId: true } },
     },
@@ -36,6 +37,7 @@ export default async function CertificatePage({
 
   const qr = await qrDataUrl(cert.code);
   const back = ctx.type === "CANDIDATE" ? "/portal/certificados" : "/panel/certificados";
+  const theme = resolveTheme(cert.subscriber.themeConfig);
 
   return (
     <main className="min-h-screen bg-slate-100 p-6 print:bg-white print:p-0">
@@ -64,6 +66,7 @@ export default async function CertificatePage({
             signatureImageUrl: cert.subscriber.signatureImageUrl,
             normReference: cert.scheme?.normReference ?? null,
           },
+          theme: { primary: theme.primary, accent: theme.accent },
           qr,
         }}
       />

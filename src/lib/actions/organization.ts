@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { requireSubscriberAction } from "@/lib/guards";
 import { PERMISSIONS } from "@/lib/permissions";
@@ -283,4 +284,64 @@ export async function updateRapydConfig(
   revalidatePath("/panel/organizacion");
   revalidatePath(`/admin/suscriptores/${subscriberId}`);
   return { ok: true, message: parsed.data.rapydEnabled ? "Rapyd activado." : "Configuración Rapyd guardada." };
+}
+
+// ─── Paleta de colores del reporte y diploma ─────────────────────────────
+const HEX = z.string().regex(/^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/, "Use formato #rrggbb").optional().nullable();
+const themeSchema = z.object({
+  primary:     HEX,
+  accent:      HEX,
+  headerBg:    HEX,
+  sectionBg:   HEX,
+  sectionText: HEX,
+  rule:        HEX,
+  body:        HEX,
+  muted:       HEX,
+});
+
+export async function updateThemeConfig(
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.ORG_MANAGE);
+  const obj: Record<string, string | null> = {};
+  for (const k of ["primary","accent","headerBg","sectionBg","sectionText","rule","body","muted"]) {
+    const v = clean(formData.get(k));
+    if (v) obj[k] = v;
+  }
+  const parsed = themeSchema.safeParse(obj);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+
+  await prisma.subscriber.update({
+    where: { id: subscriberId },
+    data: {
+      themeConfig: parsed.data as Prisma.InputJsonValue,
+    },
+  });
+  await audit(ctx, {
+    action: "org.theme.update",
+    entity: "Subscriber",
+    entityId: subscriberId,
+    subscriberId,
+    after: parsed.data,
+  });
+  revalidatePath("/panel/organizacion");
+  return { ok: true, message: "Paleta de colores actualizada." };
+}
+
+/// Restablece la paleta a los valores institucionales por defecto.
+export async function resetThemeConfig(): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.ORG_MANAGE);
+  await prisma.subscriber.update({
+    where: { id: subscriberId },
+    data: { themeConfig: {} as Prisma.InputJsonValue },
+  });
+  await audit(ctx, {
+    action: "org.theme.reset",
+    entity: "Subscriber",
+    entityId: subscriberId,
+    subscriberId,
+  });
+  revalidatePath("/panel/organizacion");
+  return { ok: true, message: "Paleta restablecida a los valores por defecto." };
 }

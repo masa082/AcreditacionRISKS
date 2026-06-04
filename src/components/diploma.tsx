@@ -18,6 +18,11 @@ export interface DiplomaData {
     signatureImageUrl: string | null;
     normReference: string | null;
   };
+  /** Paleta personalizada del suscriptor; si está vacía usa el default. */
+  theme?: {
+    primary?: string;  // navy / títulos
+    accent?: string;   // dorado / líneas
+  };
   qr: string; // data URL
 }
 
@@ -45,14 +50,23 @@ export function Diploma({ data }: { data: DiplomaData }) {
   const isPresentation = data.type === "EXAM_PRESENTATION";
   // Texto repetido para microtexto perimetral (antifalsificación visual).
   const micro = `${data.org.legalName} · ${data.code} · ISO/IEC 17024 · `.repeat(30);
+  // Paleta del suscriptor con fallback institucional. Usamos CSS variables
+  // para que TODO el árbol del diploma respete los colores configurados
+  // sin pasar props a cada subcomponente.
+  const accent  = data.theme?.accent  ?? "#c89a35";
+  const primary = data.theme?.primary ?? "#0b1d44";
+  const styleVars = { "--diploma-accent": accent, "--diploma-primary": primary } as React.CSSProperties;
 
   return (
-    <div className="diploma mx-auto bg-white text-slate-900 shadow-lg ring-1 ring-slate-200 print:shadow-none print:ring-0">
+    <div
+      className="diploma mx-auto bg-white text-slate-900 shadow-lg ring-1 ring-slate-200 print:shadow-none print:ring-0"
+      style={styleVars}
+    >
       <div className="relative">
-        {/* Marco doble dorado + brand */}
-        <div className="absolute inset-0 border-[6px] border-double border-[#c89a35]" />
-        <div className="absolute inset-3 border border-[#c89a35]/70" />
-        <div className="absolute inset-4 border-2 border-brand-800" />
+        {/* Marco doble dorado + brand — usan las CSS vars de la paleta */}
+        <div className="absolute inset-0 border-[6px] border-double" style={{ borderColor: accent }} />
+        <div className="absolute inset-3 border" style={{ borderColor: `${accent}b3` }} />
+        <div className="absolute inset-4 border-2" style={{ borderColor: primary }} />
 
         {/* Listones / esquineros ornamentales en las 4 esquinas */}
         <CornerOrnament className="absolute left-2 top-2" />
@@ -100,9 +114,9 @@ export function Diploma({ data }: { data: DiplomaData }) {
 
             {/* Línea decorativa central */}
             <div className="mt-6 flex items-center justify-center gap-3">
-              <span className="h-px w-24 bg-gradient-to-r from-transparent via-[#c89a35] to-[#c89a35]" />
-              <span className="text-2xl text-[#c89a35]">❖</span>
-              <span className="h-px w-24 bg-gradient-to-l from-transparent via-[#c89a35] to-[#c89a35]" />
+              <span className="h-px w-24 bg-gradient-to-r from-transparent via-[var(--diploma-accent,#c89a35)] to-[var(--diploma-accent,#c89a35)]" />
+              <span className="text-2xl text-[var(--diploma-accent,#c89a35)]">❖</span>
+              <span className="h-px w-24 bg-gradient-to-l from-transparent via-[var(--diploma-accent,#c89a35)] to-[var(--diploma-accent,#c89a35)]" />
             </div>
 
             <h1 className="mt-4 font-serif text-[2.6rem] font-bold leading-tight text-brand-900">
@@ -145,11 +159,11 @@ export function Diploma({ data }: { data: DiplomaData }) {
             <div className="relative text-center">
               {/* Sello circular dorado detrás de la firma */}
               <div className="pointer-events-none absolute -top-2 left-1/2 -translate-x-1/2">
-                <div className="relative grid h-32 w-32 place-items-center rounded-full border-[3px] border-double border-[#c89a35] bg-white/40">
-                  <div className="grid h-24 w-24 place-items-center rounded-full border border-[#c89a35]/70">
+                <div className="relative grid h-32 w-32 place-items-center rounded-full border-[3px] border-double border-[var(--diploma-accent,#c89a35)] bg-white/40">
+                  <div className="grid h-24 w-24 place-items-center rounded-full border border-[var(--diploma-accent,#c89a35)]/70">
                     <div className="text-center">
-                      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#c89a35]">Sello</div>
-                      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[#c89a35]">Oficial</div>
+                      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--diploma-accent,#c89a35)]">Sello</div>
+                      <div className="text-[8px] font-bold uppercase tracking-[0.2em] text-[var(--diploma-accent,#c89a35)]">Oficial</div>
                       <div className="mt-1 text-[7px] font-bold text-brand-800">{data.org.name.split(" ")[0]}</div>
                     </div>
                   </div>
@@ -187,7 +201,7 @@ export function Diploma({ data }: { data: DiplomaData }) {
           </div>
 
           {/* Footer: acreditación ONAC */}
-          <div className="mt-8 flex items-center justify-between gap-6 border-t border-[#c89a35]/40 pt-4">
+          <div className="mt-8 flex items-center justify-between gap-6 border-t border-[var(--diploma-accent,#c89a35)]/40 pt-4">
             <div className="text-[9px] uppercase tracking-[0.25em] text-slate-500">
               Documento con valor probatorio
             </div>

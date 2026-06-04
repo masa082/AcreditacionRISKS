@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { qrDataUrl } from "@/lib/certificate";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { readFileByKey, extFromName } from "@/lib/storage";
+import { resolveTheme, hexToRgb01 } from "@/lib/theme";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -34,7 +35,7 @@ export async function GET(
     where: { verifyToken: token },
     include: {
       subscriber: {
-        select: { tradeName: true, legalName: true, authorizedSigner: true, logoUrl: true, signatureImageUrl: true, taxId: true },
+        select: { tradeName: true, legalName: true, authorizedSigner: true, logoUrl: true, signatureImageUrl: true, taxId: true, themeConfig: true },
       },
       scheme: { select: { name: true, code: true, normReference: true, scope: true } },
     },
@@ -58,11 +59,14 @@ export async function GET(
   const W = 841.89, H = 595.28; // A4 landscape
   const page = pdf.addPage([W, H]);
 
-  const NAVY = rgb(0.043, 0.114, 0.267);
-  const GOLD = rgb(0.784, 0.604, 0.208);
-  const DARK = rgb(0.06, 0.09, 0.16);
-  const GREY = rgb(0.40, 0.45, 0.52);
-  const LIGHT = rgb(0.95, 0.97, 1);
+  // Paleta del suscriptor (con fallback institucional).
+  const theme = resolveTheme(cert.subscriber.themeConfig);
+  const toRgb = (h: string) => { const c = hexToRgb01(h); return rgb(c.r, c.g, c.b); };
+  const NAVY = toRgb(theme.primary);
+  const GOLD = toRgb(theme.accent);
+  const DARK = toRgb(theme.body);
+  const GREY = toRgb(theme.muted);
+  const LIGHT = toRgb(theme.sectionBg);
   const STATUS_COLOR = effectiveStatus === "VALID" ? rgb(0.04, 0.55, 0.34) : effectiveStatus === "EXPIRED" ? rgb(0.73, 0.43, 0.05) : rgb(0.73, 0.13, 0.20);
 
   // Marco doble dorado
