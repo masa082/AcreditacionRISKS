@@ -352,19 +352,67 @@ function ChoiceEditor({
   onAdd: () => void; onRemove: (i: number) => void;
   partialScoring: boolean; setPartialScoring?: (v: boolean) => void;
 }) {
+  const hasCorrect = options.some((o) => o.isCorrect);
   return (
     <div>
       <label className="block text-sm font-medium text-slate-700">
         Opciones {multi ? "(marque todas las correctas)" : "(marque la correcta)"}
       </label>
+      {/* Aviso al SUSCRIPTOR — esta sección NUNCA se renderiza al candidato
+          durante el examen: el componente de presentación usa otro
+          componente sin estos colores y aleatoriza el orden. */}
+      <div className="mt-2 flex items-start gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+        <span aria-hidden className="text-base leading-none">🟢</span>
+        <span>
+          <strong>Vista de administración del suscriptor.</strong>{" "}
+          La opción resaltada en <strong className="text-emerald-700">verde</strong> es la
+          <strong> respuesta correcta</strong> de esta pregunta.{" "}
+          {multi ? "Puede marcar varias correctas." : "Solo una opción puede ser la correcta."}{" "}
+          {hasCorrect ? null : <em className="text-amber-700">Aún no ha marcado la opción correcta.</em>}
+        </span>
+      </div>
       <div className="mt-2 space-y-2">
-        {options.map((o, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <input type={multi ? "checkbox" : "radio"} checked={o.isCorrect} onChange={() => onToggle(i)} className="h-4 w-4" />
-            <input value={o.text} onChange={(e) => onText(i, e.target.value)} className={inputCls} placeholder={`Opción ${i + 1}`} />
-            <button type="button" onClick={() => onRemove(i)} className="rounded px-2 py-1 text-sm text-rose-600 hover:bg-rose-50">✕</button>
-          </div>
-        ))}
+        {options.map((o, i) => {
+          const ok = o.isCorrect;
+          return (
+            <div
+              key={i}
+              className={`flex items-center gap-2 rounded-lg border px-3 py-2 transition ${
+                ok
+                  ? "border-emerald-400 bg-emerald-50 ring-2 ring-emerald-200"
+                  : "border-transparent hover:bg-slate-50"
+              }`}
+              title={ok ? "Respuesta correcta" : "Pulse el círculo para marcarla como correcta"}
+            >
+              <input
+                type={multi ? "checkbox" : "radio"}
+                checked={o.isCorrect}
+                onChange={() => onToggle(i)}
+                className={`h-4 w-4 ${ok ? "accent-emerald-600" : ""}`}
+                aria-label={ok ? "Marcada como correcta" : "Marcar como correcta"}
+              />
+              <input
+                value={o.text}
+                onChange={(e) => onText(i, e.target.value)}
+                className={`${inputCls} ${ok ? "border-emerald-400 bg-white font-semibold text-emerald-900 focus:border-emerald-600 focus:ring-emerald-100" : ""}`}
+                placeholder={`Opción ${i + 1}`}
+              />
+              {ok ? (
+                <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-white">
+                  ✓ Correcta
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={() => onRemove(i)}
+                className="rounded px-2 py-1 text-sm text-rose-600 hover:bg-rose-50"
+                title="Eliminar opción"
+              >
+                ✕
+              </button>
+            </div>
+          );
+        })}
       </div>
       <button type="button" onClick={onAdd} className="mt-2 text-sm font-medium text-brand-700 hover:underline">+ Agregar opción</button>
       {setPartialScoring ? (
