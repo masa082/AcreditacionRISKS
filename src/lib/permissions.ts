@@ -140,17 +140,23 @@ export const SYSTEM_ROLES: SystemRoleDef[] = [
   },
   {
     key: "QUESTION_AUTHOR",
-    name: "Creador de preguntas",
-    description: "Crea y edita preguntas del banco.",
+    name: "Creador de preguntas (deshabilitado)",
+    description:
+      "DEPRECADO por política: la gestión del banco de preguntas es exclusiva " +
+      "del SUPERADMINISTRADOR y del Administrador del Suscriptor. Este rol " +
+      "conserva solo visualización por compatibilidad con usuarios existentes.",
     scope: "SUBSCRIBER",
-    permissions: [P.QUESTION_CREATE, P.QUESTION_EDIT, P.QUESTION_VIEW, P.EXAM_VIEW],
+    permissions: [P.QUESTION_VIEW, P.EXAM_VIEW],
   },
   {
     key: "QUESTION_REVIEWER",
-    name: "Revisor de preguntas",
-    description: "Revisa y aprueba/rechaza preguntas.",
+    name: "Revisor de preguntas (deshabilitado)",
+    description:
+      "DEPRECADO por política: la gestión del banco de preguntas es exclusiva " +
+      "del SUPERADMINISTRADOR y del Administrador del Suscriptor. Este rol " +
+      "conserva solo visualización por compatibilidad con usuarios existentes.",
     scope: "SUBSCRIBER",
-    permissions: [P.QUESTION_REVIEW, P.QUESTION_APPROVE, P.QUESTION_VIEW],
+    permissions: [P.QUESTION_VIEW],
   },
   {
     key: "EVALUATOR",
