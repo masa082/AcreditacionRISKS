@@ -732,6 +732,11 @@ model Exam {
   totalPoints    Decimal  @default(100) @db.Decimal(8, 2)
   passingScore   Decimal  @default(70) @db.Decimal(8, 2) // umbral aprobatorio
   numQuestions   Int      @default(0) // 0 => suma de secciones
+  /// Máximo de preguntas que verá el candidato por intento. Si la suma
+  /// de las secciones es mayor, se hace un sampling aleatorio sin repetir
+  /// hasta `maxQuestions`. Si es menor, se sirven todas las disponibles.
+  /// 0 = sin tope (servir todo lo que las secciones produzcan).
+  maxQuestions   Int      @default(50)
   attemptsAllowed Int     @default(1)
   randomizeQuestions Boolean @default(true)
   randomizeOptions   Boolean @default(true)

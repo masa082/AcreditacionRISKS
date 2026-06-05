@@ -61,7 +61,17 @@ export default async function ExamsPage() {
                     </td>
                     <td className="px-5 py-3 text-slate-600">{EXAM_TYPE_LABELS[e.type]}</td>
                     <td className="px-5 py-3 text-slate-600">{EXAM_MODALITY_LABELS[e.modality]}</td>
-                    <td className="px-5 py-3 text-slate-600">{e.numQuestions} <span className="text-xs text-slate-400">({e._count.sections} secc.)</span></td>
+                    <td className="px-5 py-3 text-slate-600">
+                      <div>
+                        <b className="text-brand-800">
+                          {e.maxQuestions > 0 ? Math.min(e.maxQuestions, e.numQuestions) : e.numQuestions}
+                        </b>{" "}
+                        <span className="text-xs text-slate-400">por intento</span>
+                      </div>
+                      <div className="text-xs text-slate-400">
+                        banco: {e.numQuestions} · {e._count.sections} secc.
+                      </div>
+                    </td>
                     <td className="px-5 py-3 text-slate-600">{Number(e.passingScore)}%</td>
                     <td className="px-5 py-3"><Badge tone={STATUS_TONE[e.status]}>{EXAM_STATUS_LABELS[e.status]}</Badge></td>
                     <td className="px-5 py-3 text-right">

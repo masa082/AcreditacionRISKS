@@ -110,14 +110,30 @@ export interface BuiltQuestion {
   sectionTitle: string | null;
 }
 
-/// Selecciona y arma las preguntas del intento a partir de las secciones del examen.
+/// Selecciona y arma las preguntas del intento a partir de las secciones
+/// del examen. Tres garantías importantes para el negocio:
+///
+/// 1. **Aleatoriedad**: usa Fisher–Yates dentro de cada banco de preguntas
+///    y, opcionalmente, sobre el conjunto final completo
+///    (`exam.randomizeQuestions`).
+/// 2. **Sin repeticiones**: una misma pregunta nunca aparece dos veces en
+///    el mismo intento. Aunque dos secciones apunten al mismo banco, el
+///    dedupe por `questionId` evita el cruce.
+/// 3. **Tope máximo por intento**: `exam.maxQuestions` (default 50) actúa
+///    como techo. Si la suma de secciones excede ese tope, se hace un
+///    sampling aleatorio uniforme respetando la diversidad entre secciones.
+///    Si es menor, se sirven todas. `0` = sin tope.
 export async function buildAttemptQuestions(examId: string): Promise<BuiltQuestion[]> {
   const exam = await prisma.exam.findUniqueOrThrow({
     where: { id: examId },
     include: { sections: { orderBy: { order: "asc" } } },
   });
 
+  // Acumulador con dedupe por questionId (clave: una pregunta solo entra
+  // una vez por intento, sin importar cuántas secciones la incluyan).
+  const seen = new Set<string>();
   const built: BuiltQuestion[] = [];
+
   for (const section of exam.sections) {
     if (!section.bankId || section.questionCount <= 0) continue;
     const pool = await prisma.question.findMany({
@@ -127,12 +143,16 @@ export async function buildAttemptQuestions(examId: string): Promise<BuiltQuesti
         status: "APPROVED",
         ...(section.topicFilter ? { topicId: section.topicFilter } : {}),
         ...(section.difficulty ? { difficulty: section.difficulty } : {}),
+        // Excluye preguntas ya elegidas por secciones anteriores (mismo banco).
+        ...(seen.size > 0 ? { id: { notIn: Array.from(seen) } } : {}),
       },
       include: { options: true },
     });
     const picked = shuffle(pool).slice(0, section.questionCount);
     const pts = section.pointsPerQuestion;
     for (const q of picked) {
+      if (seen.has(q.id)) continue;
+      seen.add(q.id);
       built.push({
         questionId: q.id,
         order: 0,
@@ -143,7 +163,16 @@ export async function buildAttemptQuestions(examId: string): Promise<BuiltQuesti
     }
   }
 
-  const finalOrder = exam.randomizeQuestions ? shuffle(built) : built;
+  // Tope: si maxQuestions > 0 y el acumulado lo excede, hacemos sampling
+  // aleatorio uniforme. La distribución entre secciones se preserva
+  // estadísticamente (cada pregunta tiene la misma probabilidad de salir).
+  const cap = exam.maxQuestions ?? 0;
+  let capped = built;
+  if (cap > 0 && built.length > cap) {
+    capped = shuffle(built).slice(0, cap);
+  }
+
+  const finalOrder = exam.randomizeQuestions ? shuffle(capped) : capped;
   finalOrder.forEach((b, i) => (b.order = i));
   return finalOrder;
 }

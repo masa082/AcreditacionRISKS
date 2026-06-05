@@ -17,6 +17,7 @@ export interface ExamInitial {
   durationMin?: number;
   passingScore?: number;
   attemptsAllowed?: number;
+  maxQuestions?: number;
   instructions?: string | null;
   availableFrom?: string | null;
   availableTo?: string | null;
@@ -92,6 +93,23 @@ export function ExamForm({
         <Field label="Duración (min)" required><Input name="durationMin" type="number" min={1} max={1440} required defaultValue={initial?.durationMin ?? 60} /></Field>
         <Field label="Puntaje mínimo (%)" required hint="Umbral aprobatorio."><Input name="passingScore" type="number" min={0} max={100} step="0.1" required defaultValue={initial?.passingScore ?? 70} /></Field>
         <Field label="Intentos permitidos" required><Input name="attemptsAllowed" type="number" min={1} max={20} required defaultValue={initial?.attemptsAllowed ?? 1} /></Field>
+      </div>
+
+      <div className="grid gap-5 sm:grid-cols-3">
+        <Field
+          label="Máximo de preguntas por intento"
+          required
+          hint="Cantidad máxima que verá el candidato. Se eligen al azar, sin repetir. Use 0 para servir todas las preguntas de las secciones sin tope."
+        >
+          <Input
+            name="maxQuestions"
+            type="number"
+            min={0}
+            max={500}
+            required
+            defaultValue={initial?.maxQuestions ?? 50}
+          />
+        </Field>
       </div>
 
       <div className="grid gap-5 sm:grid-cols-2">

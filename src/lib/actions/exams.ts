@@ -34,6 +34,10 @@ const examSchema = z.object({
   durationMin: z.coerce.number().int().min(1).max(1440),
   passingScore: z.coerce.number().min(0).max(100),
   attemptsAllowed: z.coerce.number().int().min(1).max(20),
+  /// Tope máximo de preguntas por intento. 0 = sin tope (servir todas las
+  /// que las secciones produzcan). Default 50 — la fila viene marcada con
+  /// ese valor desde la migración para los exámenes existentes.
+  maxQuestions: z.coerce.number().int().min(0).max(500),
   instructions: z.string().max(4000).optional().nullable(),
 });
 
@@ -48,6 +52,7 @@ function parseExamForm(formData: FormData) {
     durationMin: formData.get("durationMin"),
     passingScore: formData.get("passingScore"),
     attemptsAllowed: formData.get("attemptsAllowed"),
+    maxQuestions: formData.get("maxQuestions"),
     instructions: clean(formData.get("instructions")),
   });
 }

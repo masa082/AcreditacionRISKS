@@ -50,7 +50,8 @@ export default async function ExamDetailPage({
     code: exam.code, name: exam.name, description: exam.description,
     schemeId: exam.schemeId, type: exam.type, modality: exam.modality,
     durationMin: exam.durationMin, passingScore: Number(exam.passingScore),
-    attemptsAllowed: exam.attemptsAllowed, instructions: exam.instructions,
+    attemptsAllowed: exam.attemptsAllowed, maxQuestions: exam.maxQuestions,
+    instructions: exam.instructions,
     availableFrom: dtLocal(exam.availableFrom), availableTo: dtLocal(exam.availableTo),
     randomizeQuestions: exam.randomizeQuestions, randomizeOptions: exam.randomizeOptions,
     requirePayment: exam.requirePayment, requireSchedule: exam.requireSchedule,
@@ -65,7 +66,7 @@ export default async function ExamDetailPage({
     <>
       <PageHeader
         title={exam.name}
-        subtitle={`${exam.code} · ${exam.numQuestions} preguntas · ${exam.durationMin} min`}
+        subtitle={`${exam.code} · ${exam.numQuestions} preguntas en bancos · máx ${exam.maxQuestions > 0 ? exam.maxQuestions : "sin tope"} por intento · ${exam.durationMin} min`}
         actions={
           <div className="flex items-center gap-2">
             <Badge tone={STATUS_TONE[exam.status]}>{EXAM_STATUS_LABELS[exam.status]}</Badge>
@@ -122,8 +123,17 @@ export default async function ExamDetailPage({
                 ))}
               </ul>
             )}
-            <div className="mt-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-              Total: <b>{exam.numQuestions}</b> preguntas · <b>{Number(exam.totalPoints)}</b> puntos
+            <div className="mt-3 space-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
+              <div>Total disponible en bancos: <b>{exam.numQuestions}</b> preguntas · <b>{Number(exam.totalPoints)}</b> puntos</div>
+              <div>
+                Por intento el candidato verá:{" "}
+                <b className="text-brand-800">
+                  {exam.maxQuestions > 0
+                    ? `${Math.min(exam.maxQuestions, exam.numQuestions)} preguntas`
+                    : `${exam.numQuestions} preguntas (sin tope)`}
+                </b>
+                {" "}al azar, sin repetir.
+              </div>
             </div>
           </Card>
 
