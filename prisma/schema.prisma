@@ -1244,12 +1244,51 @@ model Lead {
   notes           String?
   contactedAt     DateTime?
   contactedById   String?
+  // Tracking de actividad en el sitio: cada vez que el mismo correo
+  // vuelve a enviar un formulario (otra solicitud, cotización, etc.)
+  // o vuelve a la landing autenticado, se actualiza esta huella.
+  lastSiteVisitAt DateTime?
+  siteVisitCount  Int      @default(1)
+  // Bandera para considerar al lead "en línea": cuando lastSiteVisitAt
+  // < 5 minutos. Se computa en el render (no se persiste).
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  activities      LeadActivity[]
 
   @@index([subscriberId, status])
   @@index([email])
   @@index([createdAt])
+}
+
+/// Bitácora de seguimiento de un lead. Cada acción del operador queda
+/// como un registro inmutable con autor, tipo, comentario y fecha — esto
+/// es la "historia comercial" del prospecto, separada del campo `notes`
+/// (que es solo el último comentario).
+model LeadActivity {
+  id          String   @id @default(cuid())
+  leadId      String
+  lead        Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  actorId     String?  // usuario del staff que registró la acción
+  type        LeadActivityType
+  comment     String?  @db.Text
+  // Metadata opcional: subject del correo, mensaje del WhatsApp, datos
+  // de cotización, etc. Se guarda en JSON para no inflar el schema.
+  metadata    Json     @default("{}")
+  createdAt   DateTime @default(now())
+
+  @@index([leadId, createdAt])
+}
+
+enum LeadActivityType {
+  NOTE            // Anotación libre del operador
+  STATUS_CHANGE   // Cambio de estado (NEW → CONTACTED, etc.)
+  EMAIL_SENT      // Correo enviado al lead
+  QUOTE_SENT      // Cotización enviada
+  WHATSAPP_OPEN   // Se abrió WhatsApp al lead (registro de intento)
+  CALL            // Llamada telefónica
+  MEETING         // Reunión / asesoría agendada
+  VISIT_TRACK     // Nueva visita al sitio detectada
 }
 
 enum LeadKind {

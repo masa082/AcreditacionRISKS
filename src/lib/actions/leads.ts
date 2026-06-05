@@ -94,28 +94,72 @@ export async function createLead(
     return { ok: true };
   }
 
-  const lead = await prisma.lead.create({
-    data: {
-      subscriberId,
-      kind,
-      fullName: parsed.data.fullName,
-      email: parsed.data.email.toLowerCase(),
-      phone: parsed.data.phone,
-      country: parsed.data.country,
-      company: parsed.data.company,
-      jobTitle: parsed.data.jobTitle,
-      certificationOfInterest: parsed.data.certificationOfInterest,
-      message: parsed.data.message,
-      suggestedDate: parsed.data.suggestedDate ? new Date(parsed.data.suggestedDate) : null,
-      source: parsed.data.source,
-      utmSource: parsed.data.utmSource,
-      utmMedium: parsed.data.utmMedium,
-      utmCampaign: parsed.data.utmCampaign,
-      ip: m.ip,
-      userAgent: m.userAgent,
-      consentAccepted: true,
+  const emailLower = parsed.data.email.toLowerCase();
+  // Dedupe + tracking de visitas: si ya existe un lead con el mismo
+  // correo y la misma intención (kind) en los últimos 60 días, sumamos
+  // visita y refrescamos la huella en vez de duplicar la fila. Eso
+  // permite al operador ver "este prospecto ya pidió info 3 veces".
+  const existing = await prisma.lead.findFirst({
+    where: {
+      email: emailLower,
+      OR: [{ subscriberId }, { subscriberId: null }],
     },
+    orderBy: { createdAt: "desc" },
   });
+  const dedupeWindow = 60 * 24 * 60 * 60 * 1000;
+  const reusable = existing && Date.now() - existing.createdAt.getTime() < dedupeWindow;
+
+  const lead = reusable
+    ? await prisma.lead.update({
+        where: { id: existing.id },
+        data: {
+          // Refresca la huella + suma visita; conserva status y notas.
+          lastSiteVisitAt: new Date(),
+          siteVisitCount: { increment: 1 },
+          // Permite actualizar campos comerciales si vienen nuevos datos.
+          phone: parsed.data.phone ?? existing.phone,
+          country: parsed.data.country ?? existing.country,
+          company: parsed.data.company ?? existing.company,
+          jobTitle: parsed.data.jobTitle ?? existing.jobTitle,
+          certificationOfInterest: parsed.data.certificationOfInterest ?? existing.certificationOfInterest,
+          message: parsed.data.message ?? existing.message,
+          ip: m.ip,
+          userAgent: m.userAgent,
+          activities: {
+            create: {
+              type: "VISIT_TRACK",
+              metadata: {
+                kind, source: parsed.data.source ?? null, ip: m.ip ?? null,
+                visitNumber: existing.siteVisitCount + 1,
+              },
+            },
+          },
+        },
+      })
+    : await prisma.lead.create({
+        data: {
+          subscriberId,
+          kind,
+          fullName: parsed.data.fullName,
+          email: emailLower,
+          phone: parsed.data.phone,
+          country: parsed.data.country,
+          company: parsed.data.company,
+          jobTitle: parsed.data.jobTitle,
+          certificationOfInterest: parsed.data.certificationOfInterest,
+          message: parsed.data.message,
+          suggestedDate: parsed.data.suggestedDate ? new Date(parsed.data.suggestedDate) : null,
+          source: parsed.data.source,
+          utmSource: parsed.data.utmSource,
+          utmMedium: parsed.data.utmMedium,
+          utmCampaign: parsed.data.utmCampaign,
+          ip: m.ip,
+          userAgent: m.userAgent,
+          consentAccepted: true,
+          lastSiteVisitAt: new Date(),
+          siteVisitCount: 1,
+        },
+      });
 
   // Notificación in-app a todo el staff con LEAD_VIEW.
   if (subscriberId) {
@@ -198,6 +242,7 @@ export async function updateLead(
   if (!lead) return { ok: false, error: "Lead no encontrado." };
 
   const now = parsed.data.status !== "NEW" && lead.status === "NEW" ? new Date() : null;
+  const statusChanged = parsed.data.status !== lead.status;
   await prisma.lead.update({
     where: { id: leadId },
     data: {
@@ -207,6 +252,16 @@ export async function updateLead(
       subscriberId: lead.subscriberId ?? subscriberId,
       contactedAt: now ?? undefined,
       contactedById: now ? ctx.userId : undefined,
+      activities: statusChanged
+        ? {
+            create: {
+              actorId: ctx.userId,
+              type: "STATUS_CHANGE",
+              comment: parsed.data.notes,
+              metadata: { from: lead.status, to: parsed.data.status },
+            },
+          }
+        : undefined,
     },
   });
   await audit(ctx, {
@@ -218,4 +273,218 @@ export async function updateLead(
   });
   revalidatePath("/panel/leads");
   return { ok: true, message: `Estado actualizado: ${LEAD_STATUS_LABELS[parsed.data.status]}` };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Edición de datos comerciales (sin tocar status).
+// ────────────────────────────────────────────────────────────────────
+const detailSchema = z.object({
+  fullName: z.string().min(2).max(160),
+  phone: z.string().max(40).optional().nullable(),
+  country: z.string().max(80).optional().nullable(),
+  company: z.string().max(160).optional().nullable(),
+  jobTitle: z.string().max(120).optional().nullable(),
+  certificationOfInterest: z.string().max(160).optional().nullable(),
+});
+
+export async function updateLeadDetails(
+  leadId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+  const parsed = detailSchema.safeParse({
+    fullName: formData.get("fullName"),
+    phone: clean(formData.get("phone")),
+    country: clean(formData.get("country")),
+    company: clean(formData.get("company")),
+    jobTitle: clean(formData.get("jobTitle")),
+    certificationOfInterest: clean(formData.get("certificationOfInterest")),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, OR: [{ subscriberId }, { subscriberId: null }] },
+    select: { id: true, subscriberId: true, fullName: true, phone: true, country: true, company: true, jobTitle: true, certificationOfInterest: true },
+  });
+  if (!lead) return { ok: false, error: "Lead no encontrado." };
+
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      ...parsed.data,
+      subscriberId: lead.subscriberId ?? subscriberId,
+    },
+  });
+  await audit(ctx, {
+    action: "lead.detail.update", entity: "Lead", entityId: leadId, subscriberId,
+    before: lead, after: parsed.data,
+  });
+  revalidatePath("/panel/leads");
+  return { ok: true, message: "Datos actualizados." };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Seguimiento: anotación libre del operador.
+// ────────────────────────────────────────────────────────────────────
+const followSchema = z.object({
+  type: z.enum(["NOTE", "CALL", "MEETING"]),
+  comment: z.string().min(2, "Escriba el detalle del seguimiento.").max(2000),
+});
+
+export async function addLeadFollowUp(
+  leadId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+  const parsed = followSchema.safeParse({
+    type: formData.get("type"),
+    comment: formData.get("comment"),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, OR: [{ subscriberId }, { subscriberId: null }] },
+    select: { id: true },
+  });
+  if (!lead) return { ok: false, error: "Lead no encontrado." };
+
+  await prisma.leadActivity.create({
+    data: { leadId, actorId: ctx.userId, type: parsed.data.type, comment: parsed.data.comment },
+  });
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: { notes: parsed.data.comment },
+  });
+  await audit(ctx, {
+    action: "lead.followup", entity: "Lead", entityId: leadId, subscriberId,
+    after: { type: parsed.data.type, comment: parsed.data.comment.slice(0, 80) },
+  });
+  revalidatePath("/panel/leads");
+  return { ok: true, message: "Seguimiento registrado." };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Enviar correo personalizado al lead.
+// ────────────────────────────────────────────────────────────────────
+const emailSchema = z.object({
+  subject: z.string().min(3).max(200),
+  body: z.string().min(3).max(8000),
+});
+
+export async function sendLeadEmail(
+  leadId: string,
+  _prev: ActionResult,
+  formData: FormData,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+  const parsed = emailSchema.safeParse({
+    subject: formData.get("subject"),
+    body: formData.get("body"),
+  });
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, OR: [{ subscriberId }, { subscriberId: null }] },
+    select: { id: true, email: true, fullName: true },
+  });
+  if (!lead) return { ok: false, error: "Lead no encontrado." };
+
+  const body = parsed.data.body.replace(/{nombre}/gi, lead.fullName);
+  const html = `<div style="font-family:Arial,sans-serif;white-space:pre-wrap;">${body
+    .replace(/</g, "&lt;")
+    .replace(/\n/g, "<br>")}</div>`;
+
+  const result = await sendEmail({
+    subscriberId, to: lead.email, subject: parsed.data.subject, html, text: body,
+  });
+  await prisma.leadActivity.create({
+    data: {
+      leadId, actorId: ctx.userId, type: "EMAIL_SENT",
+      comment: parsed.data.subject,
+      metadata: { provider: result.provider, messageId: result.id ?? null, ok: result.ok, error: result.error ?? null },
+    },
+  });
+  await audit(ctx, {
+    action: "lead.email.send", entity: "Lead", entityId: leadId, subscriberId,
+    after: { subject: parsed.data.subject, ok: result.ok, messageId: result.id ?? null },
+  });
+  revalidatePath("/panel/leads");
+  return result.ok
+    ? { ok: true, message: "Correo enviado." }
+    : { ok: false, error: `Falló el envío: ${result.error ?? "sin detalle"}` };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Cotización automática: arma un correo formal con el precio + el
+//  proceso de la certificación de interés del lead, lo manda y deja
+//  rastro en la bitácora.
+// ────────────────────────────────────────────────────────────────────
+export async function sendLeadQuote(leadId: string): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+  const lead = await prisma.lead.findFirst({
+    where: { id: leadId, OR: [{ subscriberId }, { subscriberId: null }] },
+    select: { id: true, email: true, fullName: true, certificationOfInterest: true, company: true, jobTitle: true },
+  });
+  if (!lead) return { ok: false, error: "Lead no encontrado." };
+
+  const { buildQuoteEmail } = await import("@/lib/lead-quote");
+  const rendered = buildQuoteEmail({
+    fullName: lead.fullName,
+    company: lead.company,
+    jobTitle: lead.jobTitle,
+    interest: lead.certificationOfInterest,
+  });
+
+  const result = await sendEmail({
+    subscriberId, to: lead.email,
+    subject: rendered.subject, html: rendered.html, text: rendered.text,
+  });
+  await prisma.leadActivity.create({
+    data: {
+      leadId, actorId: ctx.userId, type: "QUOTE_SENT",
+      comment: rendered.subject,
+      metadata: {
+        certification: lead.certificationOfInterest ?? null,
+        provider: result.provider, messageId: result.id ?? null,
+        ok: result.ok, error: result.error ?? null,
+      },
+    },
+  });
+  await prisma.lead.update({
+    where: { id: leadId },
+    data: {
+      status: "CONTACTED",
+      contactedAt: new Date(),
+      contactedById: ctx.userId,
+    },
+  });
+  await audit(ctx, {
+    action: "lead.quote.send", entity: "Lead", entityId: leadId, subscriberId,
+    after: { interest: lead.certificationOfInterest, ok: result.ok, messageId: result.id ?? null },
+  });
+  revalidatePath("/panel/leads");
+  return result.ok
+    ? { ok: true, message: "Cotización enviada al correo del lead." }
+    : { ok: false, error: `Falló la cotización: ${result.error ?? "sin detalle"}` };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Log de "apertura de WhatsApp": al hacer clic en el botón WhatsApp
+//  registramos la intención. El cliente abre wa.me directamente.
+// ────────────────────────────────────────────────────────────────────
+export async function logLeadWhatsApp(leadId: string): Promise<{ ok: boolean }> {
+  try {
+    const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+    const lead = await prisma.lead.findFirst({
+      where: { id: leadId, OR: [{ subscriberId }, { subscriberId: null }] },
+      select: { id: true, phone: true },
+    });
+    if (!lead) return { ok: false };
+    await prisma.leadActivity.create({
+      data: { leadId, actorId: ctx.userId, type: "WHATSAPP_OPEN", metadata: { phone: lead.phone ?? null } },
+    });
+    await audit(ctx, { action: "lead.whatsapp.open", entity: "Lead", entityId: leadId, subscriberId });
+    return { ok: true };
+  } catch {
+    return { ok: false };
+  }
 }
