@@ -18,6 +18,7 @@ export interface ExamInitial {
   passingScore?: number;
   attemptsAllowed?: number;
   maxQuestions?: number;
+  questionSwapsAllowed?: number;
   instructions?: string | null;
   availableFrom?: string | null;
   availableTo?: string | null;
@@ -95,7 +96,7 @@ export function ExamForm({
         <Field label="Intentos permitidos" required><Input name="attemptsAllowed" type="number" min={1} max={20} required defaultValue={initial?.attemptsAllowed ?? 1} /></Field>
       </div>
 
-      <div className="grid gap-5 sm:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2">
         <Field
           label="Máximo de preguntas por intento"
           required
@@ -108,6 +109,20 @@ export function ExamForm({
             max={500}
             required
             defaultValue={initial?.maxQuestions ?? 50}
+          />
+        </Field>
+        <Field
+          label="Cambios de pregunta permitidos"
+          required
+          hint="Veces que el candidato puede pedir cambiar una pregunta durante la prueba. Cada cambio trae otra pregunta del mismo banco, sin repetir. Use 0 para desactivar."
+        >
+          <Input
+            name="questionSwapsAllowed"
+            type="number"
+            min={0}
+            max={50}
+            required
+            defaultValue={initial?.questionSwapsAllowed ?? 5}
           />
         </Field>
       </div>

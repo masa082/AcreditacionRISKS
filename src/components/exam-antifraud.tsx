@@ -1,52 +1,72 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { recordAttemptEvent } from "@/lib/actions/attempt";
+import { useEffect, useRef, useState, useTransition } from "react";
+import { recordAttemptEvent, acceptExamConsent } from "@/lib/actions/attempt";
 
-/// Diálogo modal de honestidad académica que aparece UNA VEZ al inicio
-/// del intento (persistencia local por attemptId). El candidato debe
-/// marcar 3 declaraciones para iniciar la prueba: no recibir ayudas
-/// externas, presentar a conciencia y aceptar el monitoreo.
+/// Diálogo de consentimiento previo al examen.
+///
+/// El candidato DEBE marcar las 5 declaraciones y firmar (Aceptar) antes de
+/// poder iniciar la prueba. La aceptación se registra server-side en
+/// ExamAttempt.consentAcceptedAt + AuditLog (no solo sessionStorage), para
+/// que quede trazabilidad ISO/IEC 17024.
+///
+/// La 5ª declaración cubre la solicitud expresa del organismo: el candidato
+/// puede reportar novedades durante la prueba (botón "Reportar novedad").
 export function HonestyGate({
   attemptId,
   candidateCode,
+  alreadyAccepted = false,
 }: {
   attemptId: string;
   candidateCode: string;
+  /** Si el server ya tiene consentAcceptedAt no abre el gate. */
+  alreadyAccepted?: boolean;
 }) {
-  const storageKey = `exam-honesty:${attemptId}`;
   const [open, setOpen] = useState(false);
   const [a, setA] = useState(false);
   const [b, setB] = useState(false);
   const [c, setC] = useState(false);
+  const [d, setD] = useState(false);
+  const [e, setE] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [busy, startTx] = useTransition();
 
   useEffect(() => {
-    try {
-      const accepted = sessionStorage.getItem(storageKey);
-      if (!accepted) setOpen(true);
-    } catch { setOpen(true); }
-  }, [storageKey]);
+    if (!alreadyAccepted) setOpen(true);
+  }, [alreadyAccepted]);
 
   if (!open) return null;
-  const canStart = a && b && c;
+  const canStart = a && b && c && d && e;
+
+  function accept() {
+    setErr(null);
+    startTx(async () => {
+      const res = await acceptExamConsent(attemptId);
+      if (!res.ok) {
+        setErr(res.error ?? "No se pudo registrar el consentimiento. Intente de nuevo.");
+        return;
+      }
+      setOpen(false);
+    });
+  }
 
   return (
     <div role="dialog" aria-modal className="fixed inset-0 z-50 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
-      <div className="w-full max-w-2xl overflow-hidden rounded-2xl bg-white shadow-2xl">
+      <div className="flex max-h-[92vh] w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
         <div className="border-b border-slate-200 bg-amber-50 px-6 py-4">
           <div className="flex items-start gap-3">
             <span aria-hidden className="text-3xl leading-none">🛡️</span>
             <div>
-              <h1 className="text-lg font-bold text-amber-900">Compromiso de honestidad académica</h1>
+              <h1 className="text-lg font-bold text-amber-900">Reglas y consentimiento de la evaluación</h1>
               <p className="text-xs text-amber-800">
-                Esta prueba es individual, sin ayudas externas y bajo monitoreo. Lea con atención
-                antes de continuar.
+                Antes de iniciar, lea las 5 declaraciones y márquelas todas. Su aceptación queda
+                firmada con fecha y hora en el expediente del intento.
               </p>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4 px-6 py-5 text-sm text-slate-700">
+        <div className="space-y-4 overflow-y-auto px-6 py-5 text-sm text-slate-700">
           <p className="rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-200">
             <strong>Su código de candidato</strong> ·{" "}
             <code className="rounded bg-slate-200 px-1.5 py-0.5 font-mono text-[11px] text-slate-800">{candidateCode}</code>
@@ -56,36 +76,59 @@ export function HonestyGate({
           <ul className="space-y-3">
             <li>
               <label className="flex cursor-pointer items-start gap-2.5">
-                <input type="checkbox" checked={a} onChange={(e) => setA(e.target.checked)}
+                <input type="checkbox" checked={a} onChange={(ev) => setA(ev.target.checked)}
                   className="mt-0.5 h-4 w-4 accent-amber-600" />
                 <span>
-                  Declaro que esta evaluación la presento <strong>a conciencia y por mis propios medios</strong>,
-                  sin uso de ayudas externas, materiales no autorizados, ni la asistencia de terceros.
-                  El uso de cualquier ayuda externa se considerará <strong>fraude</strong> y será causal de
-                  anulación del intento.
+                  <strong>1. Acepto ser evaluado.</strong> Presento esta evaluación{" "}
+                  <strong>a conciencia y por mis propios medios</strong>, sin uso de ayudas externas,
+                  materiales no autorizados ni asistencia de terceros. Cualquier ayuda externa será
+                  considerada fraude y causal de anulación del intento.
                 </span>
               </label>
             </li>
             <li>
               <label className="flex cursor-pointer items-start gap-2.5">
-                <input type="checkbox" checked={b} onChange={(e) => setB(e.target.checked)}
+                <input type="checkbox" checked={b} onChange={(ev) => setB(ev.target.checked)}
                   className="mt-0.5 h-4 w-4 accent-amber-600" />
                 <span>
-                  Acepto que el sistema <strong>registre eventos de monitoreo</strong>: salida de pantalla,
-                  cambio de pestaña, intentos de copia, pulsación de la tecla de captura y tiempo en
-                  cada pregunta. Esta información queda asociada a mi intento para auditoría.
+                  <strong>2. Acepto los resultados.</strong> Reconozco que el sistema calculará mi
+                  puntaje de forma automática y acepto el resultado obtenido al cierre de la
+                  evaluación.
                 </span>
               </label>
             </li>
             <li>
               <label className="flex cursor-pointer items-start gap-2.5">
-                <input type="checkbox" checked={c} onChange={(e) => setC(e.target.checked)}
+                <input type="checkbox" checked={c} onChange={(ev) => setC(ev.target.checked)}
                   className="mt-0.5 h-4 w-4 accent-amber-600" />
                 <span>
-                  Entiendo que las preguntas y respuestas son <strong>confidenciales</strong> y que la
-                  reproducción total o parcial (copias, fotos, capturas, divulgación) está
-                  estrictamente prohibida y podrá ser sancionada conforme a las políticas del
-                  organismo certificador.
+                  <strong>3. Entiendo que mi resultado depende de mis respuestas.</strong> El
+                  puntaje refleja exclusivamente lo que yo conteste durante esta presentación; no
+                  habrá modificación de la calificación por causas ajenas a la prueba.
+                </span>
+              </label>
+            </li>
+            <li>
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input type="checkbox" checked={d} onChange={(ev) => setD(ev.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-amber-600" />
+                <span>
+                  <strong>4. Acepto el monitoreo y la confidencialidad.</strong> El sistema registra
+                  salidas de pantalla, cambios de pestaña, intentos de copia, captura y el tiempo en
+                  cada pregunta. Las preguntas y respuestas son confidenciales y su reproducción
+                  total o parcial está prohibida.
+                </span>
+              </label>
+            </li>
+            <li>
+              <label className="flex cursor-pointer items-start gap-2.5">
+                <input type="checkbox" checked={e} onChange={(ev) => setE(ev.target.checked)}
+                  className="mt-0.5 h-4 w-4 accent-amber-600" />
+                <span>
+                  <strong>5. Puedo reportar novedades durante la prueba.</strong> Si ocurre algún
+                  inconveniente (corte de luz, problema técnico, duda), usaré el botón{" "}
+                  <em>&ldquo;Reportar novedad&rdquo;</em>. Cada reporte queda registrado con fecha y
+                  hora para revisión del organismo.
                 </span>
               </label>
             </li>
@@ -93,17 +136,16 @@ export function HonestyGate({
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-slate-200 bg-slate-50 px-6 py-3">
-          <span className="text-[10px] text-slate-500">Pulse Aceptar para iniciar.</span>
+          <span className="text-[10px] text-slate-500">
+            {err ? <span className="text-rose-700">{err}</span> : "Su aceptación queda firmada server-side."}
+          </span>
           <button
             type="button"
-            disabled={!canStart}
-            onClick={() => {
-              try { sessionStorage.setItem(storageKey, new Date().toISOString()); } catch { /* ignore */ }
-              setOpen(false);
-            }}
+            disabled={!canStart || busy}
+            onClick={accept}
             className="rounded-lg bg-amber-700 px-4 py-2 text-sm font-bold text-white shadow hover:bg-amber-800 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
-            Aceptar y comenzar
+            {busy ? "Firmando…" : "Acepto y comienzo la evaluación"}
           </button>
         </div>
       </div>

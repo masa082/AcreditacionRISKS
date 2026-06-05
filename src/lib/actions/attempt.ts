@@ -10,6 +10,8 @@ import { requireCandidateAction } from "@/lib/guards";
 import { audit } from "@/lib/audit";
 import {
   buildAttemptQuestions,
+  buildSnapshot,
+  publicSnapshot,
   gradeAnswer,
   type QuestionSnapshot,
 } from "@/lib/exam-attempt";
@@ -208,6 +210,9 @@ export async function recordAttemptEvent(
     "focus_lost", "blur", "resume", "fullscreen_exit", "paste",
     "print_screen", "copy", "cut", "context_menu", "dev_tools",
     "question_time", "question_change",
+    // Reporte de novedad del candidato durante la presentación
+    // (corte de luz, internet inestable, dudas, etc.). Texto en `details`.
+    "incident_report",
   ];
   if (!allowed.includes(type)) return { ok: false };
   const attempt = await loadOwnedAttempt(candidateId, attemptId);
@@ -227,6 +232,209 @@ export async function recordAttemptEvent(
 }
 
 // ----------------------------------------------------------------------------
+//  Consentimiento previo del candidato (server-side, con audit log).
+// ----------------------------------------------------------------------------
+/// Texto canónico del consentimiento que debe firmar el candidato antes de
+/// iniciar la prueba. Cualquier cambio aquí queda inmortalizado en cada
+/// intento (consentText es un snapshot), así si el operador del organismo
+/// cambia las reglas, los intentos previos no se ven afectados.
+export const EXAM_CONSENT_TEXT = `\
+1) Acepto que esta evaluación se realiza bajo mi responsabilidad personal y
+   que respondo a conciencia, sin uso de ayudas externas, materiales no
+   autorizados ni asistencia de terceros.
+
+2) Acepto los resultados que arroje el sistema y entiendo que éstos
+   dependen exclusivamente de las respuestas que yo registre durante la
+   presentación. No habrá modificación de la calificación por causas
+   ajenas a la prueba misma.
+
+3) Entiendo que la prueba está bajo monitoreo: se registran salidas de
+   pantalla, cambios de pestaña, intentos de copia, captura y el tiempo
+   en cada pregunta. Esta información queda asociada al intento para
+   auditoría.
+
+4) Entiendo que las preguntas y respuestas son confidenciales y que su
+   reproducción total o parcial (capturas, fotos, divulgación) está
+   estrictamente prohibida.
+
+5) Conozco que puedo reportar cualquier novedad durante la prueba
+   (corte de luz, problema técnico, duda) usando el botón "Reportar
+   novedad", y que cada reporte queda registrado para revisión del
+   organismo.`;
+
+/// Registra el consentimiento del candidato para iniciar la prueba.
+/// Marca consentAcceptedAt + snapshot del texto + audit log. Sin
+/// consentimiento el runner del examen NO debe permitir interacción
+/// (ver gate cliente y validación servidor en saveAnswer).
+export async function acceptExamConsent(
+  attemptId: string,
+): Promise<{ ok: boolean; error?: string }> {
+  const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+  const attempt = await loadOwnedAttempt(candidateId, attemptId);
+  if (attempt.status !== "IN_PROGRESS") {
+    return { ok: false, error: "El intento no está en curso." };
+  }
+  if (attempt.consentAcceptedAt) {
+    // Idempotente: si ya lo aceptó, no auditamos de nuevo.
+    return { ok: true };
+  }
+  await prisma.examAttempt.update({
+    where: { id: attemptId },
+    data: { consentAcceptedAt: new Date(), consentText: EXAM_CONSENT_TEXT },
+  });
+  const meta = await reqMeta();
+  await prisma.attemptEvent.create({
+    data: { attemptId, type: "consent_accepted", ip: meta.ip },
+  });
+  await audit(ctx, {
+    action: "attempt.consent.accept",
+    entity: "ExamAttempt",
+    entityId: attemptId,
+    subscriberId,
+    after: { acceptedAt: new Date().toISOString() },
+  });
+  return { ok: true };
+}
+
+// ----------------------------------------------------------------------------
+//  Cambiar una pregunta del intento por otra del mismo banco.
+//
+//  El candidato tiene un cupo (exam.questionSwapsAllowed, default 5) para
+//  pedir reemplazo de pregunta durante la presentación. Cada cambio:
+//   - Trae OTRA pregunta APPROVED del MISMO banco/sección, excluyendo TODAS
+//     las que ya hayan aparecido en este intento (las sirvió inicialmente o
+//     las trajo un swap previo) — sin repeticiones.
+//   - Reemplaza el AttemptQuestion en sitio (mismo `order`), regenera el
+//     snapshot público.
+//   - Borra cualquier AttemptAnswer previa para esa pregunta (empieza limpio).
+//   - Incrementa swapsUsed + audita la acción.
+//   - Marca evento `question_change` con metadata para trazabilidad.
+// ----------------------------------------------------------------------------
+export async function swapAttemptQuestion(
+  attemptId: string,
+  attemptQuestionId: string,
+): Promise<{ ok: boolean; error?: string; newQuestion?: { statement: string; options: { key: string; text: string }[]; multiple: boolean; manual: boolean; contextText: string | null } }> {
+  const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+  const attempt = await prisma.examAttempt.findUnique({
+    where: { id: attemptId },
+    include: {
+      exam: { select: { questionSwapsAllowed: true, randomizeOptions: true } },
+      questions: { select: { id: true, questionId: true, sectionTitle: true, order: true, points: true } },
+    },
+  });
+  if (!attempt || attempt.candidateId !== candidateId) return { ok: false, error: "Intento no encontrado." };
+  if (attempt.status !== "IN_PROGRESS") return { ok: false, error: "El intento no está en curso." };
+
+  if (!attempt.consentAcceptedAt) {
+    return { ok: false, error: "Debe aceptar el consentimiento antes de pedir un cambio." };
+  }
+
+  const allowed = attempt.exam.questionSwapsAllowed ?? 0;
+  if (allowed <= 0) return { ok: false, error: "Este examen no permite cambio de preguntas." };
+  if (attempt.swapsUsed >= allowed) {
+    return { ok: false, error: `Ya usó sus ${allowed} cambios disponibles.` };
+  }
+
+  const aq = attempt.questions.find((q) => q.id === attemptQuestionId);
+  if (!aq) return { ok: false, error: "Pregunta no encontrada en el intento." };
+
+  // Cargamos la pregunta original para saber a qué banco/sección pertenecía.
+  const originalQuestion = await prisma.question.findUnique({
+    where: { id: aq.questionId },
+    select: { bankId: true, difficulty: true, topicId: true },
+  });
+  if (!originalQuestion) return { ok: false, error: "No se pudo determinar el banco origen." };
+
+  // Excluir TODAS las preguntas ya servidas en este intento.
+  const usedQuestionIds = attempt.questions.map((q) => q.questionId);
+
+  // Buscar un reemplazo del MISMO banco (y misma dificultad/topic si aplica)
+  // que NO esté en la lista de usadas.
+  const pool = await prisma.question.findMany({
+    where: {
+      subscriberId,
+      bankId: originalQuestion.bankId ?? undefined,
+      status: "APPROVED",
+      id: { notIn: usedQuestionIds },
+      ...(originalQuestion.difficulty ? { difficulty: originalQuestion.difficulty } : {}),
+      ...(originalQuestion.topicId ? { topicId: originalQuestion.topicId } : {}),
+    },
+    include: { options: true },
+  });
+
+  if (pool.length === 0) {
+    return {
+      ok: false,
+      error: "No hay más preguntas disponibles en el banco que cumplan el filtro. No se descuenta el cupo.",
+    };
+  }
+
+  // Selección aleatoria simple sobre el pool.
+  const newQ = pool[Math.floor(Math.random() * pool.length)];
+
+  // Construimos el snapshot completo (mismo helper que usa startAttempt para
+  // mantener consistencia: tipos, opciones, claves correctas).
+  const snapshot = buildSnapshot(newQ, attempt.exam.randomizeOptions);
+
+  // Reemplazo atómico + bump del contador + limpiar respuesta previa.
+  await prisma.$transaction([
+    prisma.attemptAnswer.deleteMany({ where: { attemptQuestionId } }),
+    prisma.attemptQuestion.update({
+      where: { id: attemptQuestionId },
+      data: {
+        questionId: newQ.id,
+        points: aq.points,
+        snapshot: snapshot as unknown as Prisma.InputJsonValue,
+      },
+    }),
+    prisma.examAttempt.update({
+      where: { id: attemptId },
+      data: { swapsUsed: { increment: 1 } },
+    }),
+    prisma.attemptEvent.create({
+      data: {
+        attemptId,
+        type: "question_change",
+        data: {
+          attemptQuestionId,
+          oldQuestionId: aq.questionId,
+          newQuestionId: newQ.id,
+          remaining: allowed - (attempt.swapsUsed + 1),
+        } as Prisma.InputJsonValue,
+      },
+    }),
+  ]);
+
+  await audit(ctx, {
+    action: "attempt.question.swap",
+    entity: "ExamAttempt",
+    entityId: attemptId,
+    subscriberId,
+    after: {
+      attemptQuestionId,
+      oldQuestionId: aq.questionId,
+      newQuestionId: newQ.id,
+      swapsUsed: attempt.swapsUsed + 1,
+      swapsAllowed: allowed,
+    },
+  });
+
+  // Snapshot PÚBLICO (sin la respuesta correcta) para refrescar la pregunta
+  // en el cliente sin recargar la página.
+  const pub = publicSnapshot(snapshot);
+  return {
+    ok: true,
+    newQuestion: {
+      statement: pub.statement,
+      options: pub.options,
+      multiple: pub.multiple,
+      manual: pub.manual,
+      contextText: pub.contextText,
+    },
+  };
+}
+
+// ----------------------------------------------------------------------------
 //  Enviar y calificar automáticamente el intento.
 // ----------------------------------------------------------------------------
 export async function submitAttempt(attemptId: string): Promise<void> {
@@ -238,6 +446,13 @@ export async function submitAttempt(attemptId: string): Promise<void> {
   if (!attempt || attempt.candidateId !== candidateId) throw new Error("NOT_FOUND");
   if (attempt.status !== "IN_PROGRESS") {
     redirect(`/portal/examen/${attemptId}/resultado`);
+  }
+  // Defensa en profundidad: el modal cliente impide interactuar sin firmar,
+  // pero igualmente verificamos aquí que el consentimiento esté registrado
+  // antes de calificar y cerrar el intento. Sin firma → error (no se debe
+  // calificar ni notificar a un candidato que no aceptó las reglas).
+  if (!attempt.consentAcceptedAt) {
+    throw new Error("CONSENT_REQUIRED");
   }
 
   const passingScore = Number(attempt.exam.passingScore.toString());

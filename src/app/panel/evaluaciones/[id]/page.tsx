@@ -51,6 +51,7 @@ export default async function ExamDetailPage({
     schemeId: exam.schemeId, type: exam.type, modality: exam.modality,
     durationMin: exam.durationMin, passingScore: Number(exam.passingScore),
     attemptsAllowed: exam.attemptsAllowed, maxQuestions: exam.maxQuestions,
+    questionSwapsAllowed: exam.questionSwapsAllowed,
     instructions: exam.instructions,
     availableFrom: dtLocal(exam.availableFrom), availableTo: dtLocal(exam.availableTo),
     randomizeQuestions: exam.randomizeQuestions, randomizeOptions: exam.randomizeOptions,

@@ -17,7 +17,12 @@ export default async function ExamPage({
   const attempt = await prisma.examAttempt.findUnique({
     where: { id: attemptId },
     include: {
-      exam: { select: { name: true, durationMin: true, instructions: true } },
+      exam: {
+        select: {
+          name: true, durationMin: true, instructions: true,
+          questionSwapsAllowed: true,
+        },
+      },
       questions: { orderBy: { order: "asc" }, include: { answers: true } },
       candidate: { select: { documentNumber: true, firstName: true, lastName: true } },
     },
@@ -60,6 +65,9 @@ export default async function ExamPage({
         dueAt={(attempt.dueAt ?? new Date()).toISOString()}
         questions={questions}
         candidateCode={candidateCode}
+        consentAccepted={!!attempt.consentAcceptedAt}
+        swapsAllowed={attempt.exam.questionSwapsAllowed ?? 0}
+        swapsUsedInitial={attempt.swapsUsed ?? 0}
       />
     </div>
   );

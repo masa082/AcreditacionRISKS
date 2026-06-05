@@ -737,6 +737,10 @@ model Exam {
   /// hasta `maxQuestions`. Si es menor, se sirven todas las disponibles.
   /// 0 = sin tope (servir todo lo que las secciones produzcan).
   maxQuestions   Int      @default(50)
+  /// Cantidad de veces que el candidato puede pedir "cambiar esta pregunta"
+  /// durante la presentación. Cada cambio trae OTRA pregunta del mismo
+  /// banco que no haya aparecido en el intento. 0 = no permitir cambios.
+  questionSwapsAllowed Int @default(5)
   attemptsAllowed Int     @default(1)
   randomizeQuestions Boolean @default(true)
   randomizeOptions   Boolean @default(true)
@@ -994,6 +998,14 @@ model ExamAttempt {
   ip           String?
   userAgent    String?
   lastSavedAt  DateTime?
+  // Consentimiento server-side: snapshot del texto aceptado + cuándo lo aceptó.
+  // Imprescindible para auditoría: el candidato no puede iniciar sin firmarlo
+  // y queda registrado en AuditLog (acción `attempt.consent.accept`).
+  consentAcceptedAt DateTime?
+  consentText       String?  @db.Text
+  // Cambio de pregunta: cuántos cambios ha pedido el candidato durante esta
+  // presentación. Tope: Exam.questionSwapsAllowed (default 5).
+  swapsUsed         Int      @default(0)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 

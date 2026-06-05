@@ -32,6 +32,8 @@ const AUDIT_LABELS: Record<string, { label: string; tone: "slate" | "green" | "r
   "committee.decide": { label: "Decisión final emitida", tone: "green" },
   "attempt.submit": { label: "Candidato envió la evaluación", tone: "slate" },
   "attempt.grade.finalize": { label: "Calificación finalizada", tone: "slate" },
+  "attempt.consent.accept": { label: "Candidato firmó consentimiento", tone: "slate" },
+  "attempt.question.swap": { label: "Candidato cambió una pregunta", tone: "amber" },
 };
 
 export default async function CommitteeReviewPage({

@@ -1,7 +1,14 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { saveAnswer, saveTextAnswer, uploadAnswerFile, submitAttempt, recordAttemptEvent } from "@/lib/actions/attempt";
+import {
+  saveAnswer,
+  saveTextAnswer,
+  uploadAnswerFile,
+  submitAttempt,
+  recordAttemptEvent,
+  swapAttemptQuestion,
+} from "@/lib/actions/attempt";
 import type { ActionResult } from "@/lib/actions/schemes";
 import { ExamWatermark } from "@/components/exam-watermark";
 import {
@@ -27,6 +34,89 @@ function fmt(sec: number): string {
   const m = Math.floor(s / 60);
   const r = s % 60;
   return `${String(m).padStart(2, "0")}:${String(r).padStart(2, "0")}`;
+}
+
+/// Mini-formulario inline para que el candidato reporte una novedad
+/// durante la prueba (corte de luz, internet inestable, duda, etc.).
+/// Cada envío registra un AttemptEvent type=`incident_report` con el
+/// texto en `details` — queda visible para el comité evaluador y el
+/// equipo del organismo en la traza del intento.
+function IncidentReporter({ attemptId }: { attemptId: string }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, startTx] = useTransition();
+
+  function send() {
+    const detail = text.trim();
+    if (!detail) return;
+    startTx(async () => {
+      await recordAttemptEvent(attemptId, "incident_report", { details: detail.slice(0, 600) });
+      setSent(true);
+      setText("");
+      setTimeout(() => { setSent(false); setOpen(false); }, 1800);
+    });
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className="rounded-md border border-amber-300 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-900 transition hover:bg-amber-100"
+        title="Reporte una novedad durante la prueba (corte de luz, internet, duda, etc.)"
+      >
+        🚩 Reportar novedad
+      </button>
+      {open ? (
+        <div role="dialog" aria-modal className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            <div className="border-b border-slate-200 bg-amber-50 px-5 py-3">
+              <h2 className="text-sm font-bold text-amber-900">🚩 Reportar novedad</h2>
+              <p className="text-[11px] text-amber-800">Su reporte queda registrado con fecha y hora en el expediente del intento.</p>
+            </div>
+            <div className="p-5">
+              {sent ? (
+                <p className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">
+                  ✓ Novedad registrada. Puede continuar con la prueba.
+                </p>
+              ) : (
+                <>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                    Describa la novedad
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={text}
+                    onChange={(e) => setText(e.target.value)}
+                    placeholder="Ej. Se cortó el internet por 30 segundos. Tuve que recargar la página."
+                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-100"
+                    maxLength={600}
+                  />
+                  <p className="mt-1 text-[10px] text-slate-400">Máximo 600 caracteres.</p>
+                </>
+              )}
+            </div>
+            {!sent ? (
+              <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+                <button type="button" onClick={() => setOpen(false)} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={busy || text.trim().length === 0}
+                  onClick={send}
+                  className="rounded-md bg-amber-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-800 disabled:opacity-50"
+                >
+                  {busy ? "Enviando…" : "Enviar reporte"}
+                </button>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+    </>
+  );
 }
 
 function ManualAnswer({
@@ -90,15 +180,30 @@ function ManualAnswer({
 export function ExamRunner({
   attemptId,
   dueAt,
-  questions,
+  questions: initialQuestions,
   candidateCode,
+  consentAccepted,
+  swapsAllowed,
+  swapsUsedInitial,
 }: {
   attemptId: string;
   dueAt: string; // ISO
   questions: RunnerQuestion[];
   /** Código identificador del candidato para marca de agua/auditoría. */
   candidateCode?: string;
+  /** Si el server YA tiene firma de consentimiento, no abre el modal. */
+  consentAccepted?: boolean;
+  /** Tope de cambios permitidos (Exam.questionSwapsAllowed). */
+  swapsAllowed?: number;
+  /** Cambios ya usados al cargar la página. */
+  swapsUsedInitial?: number;
 }) {
+  // El runner mantiene en estado las preguntas para poder reemplazar una
+  // pregunta in-place sin recargar la página tras un swap server-side.
+  const [questions, setQuestions] = useState<RunnerQuestion[]>(initialQuestions);
+  const [swapsUsed, setSwapsUsed] = useState(swapsUsedInitial ?? 0);
+  const swapsCap = swapsAllowed ?? 0;
+  const swapsRemaining = Math.max(0, swapsCap - swapsUsed);
   const wmToken = candidateCode || attemptId.slice(-12).toUpperCase();
   // ID de la pregunta visible — para medir tiempo por pregunta.
   // El runner mostraba todas las preguntas en una sola página; calculamos
@@ -109,14 +214,56 @@ export function ExamRunner({
   const [now, setNow] = useState<number>(() => Date.now());
   const [answers, setAnswers] = useState<Record<string, string[]>>(() => {
     const init: Record<string, string[]> = {};
-    for (const q of questions) init[q.id] = q.saved.keys ?? (q.saved.key ? [q.saved.key] : []);
+    for (const q of initialQuestions) init[q.id] = q.saved.keys ?? (q.saved.key ? [q.saved.key] : []);
     return init;
   });
   const [manualFilled, setManualFilled] = useState<Record<string, boolean>>(() => {
     const init: Record<string, boolean> = {};
-    for (const q of questions) if (q.manual) init[q.id] = !!(q.saved.text?.trim() || q.saved.fileName);
+    for (const q of initialQuestions) if (q.manual) init[q.id] = !!(q.saved.text?.trim() || q.saved.fileName);
     return init;
   });
+  const [swapBusy, setSwapBusy] = useState<string | null>(null);
+  const [swapError, setSwapError] = useState<string | null>(null);
+
+  /// Pide al server que reemplace la pregunta por otra del mismo banco
+  /// (excluyendo las ya servidas). Si responde con la nueva pregunta, la
+  /// inserta en sitio en el estado local — no recarga la página.
+  const swap = useCallback(async (attemptQuestionId: string) => {
+    if (swapsRemaining <= 0) return;
+    if (!window.confirm(`¿Cambiar esta pregunta por otra del banco? Le quedarán ${swapsRemaining - 1} cambios.`)) return;
+    setSwapBusy(attemptQuestionId);
+    setSwapError(null);
+    try {
+      const res = await swapAttemptQuestion(attemptId, attemptQuestionId);
+      if (!res.ok || !res.newQuestion) {
+        setSwapError(res.error ?? "No se pudo cambiar la pregunta.");
+        return;
+      }
+      const newQ = res.newQuestion;
+      setQuestions((qs) =>
+        qs.map((q) =>
+          q.id === attemptQuestionId
+            ? {
+                ...q,
+                statement: newQ.statement,
+                options: newQ.options,
+                multiple: newQ.multiple,
+                manual: newQ.manual,
+                contextText: newQ.contextText,
+                saved: {},
+              }
+            : q,
+        ),
+      );
+      setAnswers((a) => ({ ...a, [attemptQuestionId]: [] }));
+      setManualFilled((m) => ({ ...m, [attemptQuestionId]: false }));
+      setSwapsUsed((n) => n + 1);
+    } catch (e) {
+      setSwapError(e instanceof Error ? e.message : "Error inesperado al cambiar la pregunta.");
+    } finally {
+      setSwapBusy(null);
+    }
+  }, [attemptId, swapsRemaining]);
   const [saving, setSaving] = useState(false);
   const [submitting, startSubmit] = useTransition();
   const submittedRef = useRef(false);
@@ -227,7 +374,7 @@ export function ExamRunner({
   return (
     <div className="relative mx-auto max-w-3xl pb-24">
       <ExamWatermark token={wmToken} />
-      <HonestyGate attemptId={attemptId} candidateCode={wmToken} />
+      <HonestyGate attemptId={attemptId} candidateCode={wmToken} alreadyAccepted={consentAccepted} />
       <AntifraudHooks
         attemptId={attemptId}
         onIncident={() => {
@@ -237,7 +384,7 @@ export function ExamRunner({
         }}
       />
       <MonitoringBanner candidateCode={wmToken} />
-      <div className="sticky top-0 z-10 -mx-6 mb-6 flex items-center justify-between gap-4 border-b border-slate-200 bg-white/95 px-6 py-3 backdrop-blur">
+      <div className="sticky top-0 z-10 -mx-6 mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white/95 px-6 py-3 backdrop-blur">
         <div className="text-sm text-slate-600">
           Respondidas <strong>{answered}</strong> / {questions.length}
           <span className="ml-3 text-xs text-slate-400">{saving ? "Guardando…" : "Guardado ✓"}</span>
@@ -247,26 +394,62 @@ export function ExamRunner({
             </span>
           ) : null}
         </div>
-        <div className={`rounded-lg px-3 py-1.5 font-mono text-sm font-semibold ${lowTime ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-700"}`}>
-          ⏱ {fmt(secondsLeft)}
+        <div className="flex items-center gap-2">
+          {swapsCap > 0 ? (
+            <span
+              className={`rounded-full px-2.5 py-1 text-[11px] font-semibold ring-1 ${
+                swapsRemaining === 0
+                  ? "bg-slate-100 text-slate-500 ring-slate-200"
+                  : "bg-brand-50 text-brand-800 ring-brand-200"
+              }`}
+              title="Cambios de pregunta restantes"
+            >
+              🔄 Cambios: {swapsRemaining} / {swapsCap}
+            </span>
+          ) : null}
+          <IncidentReporter attemptId={attemptId} />
+          <div className={`rounded-lg px-3 py-1.5 font-mono text-sm font-semibold ${lowTime ? "bg-rose-100 text-rose-700" : "bg-slate-100 text-slate-700"}`}>
+            ⏱ {fmt(secondsLeft)}
+          </div>
         </div>
       </div>
+
+      {swapError ? (
+        <div className="mb-4 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-800 ring-1 ring-rose-200">
+          {swapError}
+        </div>
+      ) : null}
 
       <ol className="space-y-5">
         {questions.map((q, i) => {
           const sel = answers[q.id] ?? [];
           return (
             <li key={q.id} data-qid={q.id} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-              {q.sectionTitle ? (
-                <div className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-700">{q.sectionTitle}</div>
-              ) : null}
-              {q.contextText ? (
-                <p className="mb-2 whitespace-pre-line rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{q.contextText}</p>
-              ) : null}
-              <p className="font-medium text-slate-900">
-                <span className="mr-2 text-slate-400">{i + 1}.</span>
-                {q.statement}
-              </p>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  {q.sectionTitle ? (
+                    <div className="mb-1 text-xs font-medium uppercase tracking-wide text-brand-700">{q.sectionTitle}</div>
+                  ) : null}
+                  {q.contextText ? (
+                    <p className="mb-2 whitespace-pre-line rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{q.contextText}</p>
+                  ) : null}
+                  <p className="font-medium text-slate-900">
+                    <span className="mr-2 text-slate-400">{i + 1}.</span>
+                    {q.statement}
+                  </p>
+                </div>
+                {swapsCap > 0 ? (
+                  <button
+                    type="button"
+                    onClick={() => swap(q.id)}
+                    disabled={swapsRemaining <= 0 || swapBusy !== null}
+                    title={swapsRemaining > 0 ? `Cambiar esta pregunta por otra del banco (le quedan ${swapsRemaining})` : "Sin cambios disponibles"}
+                    className="shrink-0 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-semibold text-brand-800 transition hover:border-brand-300 hover:bg-brand-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {swapBusy === q.id ? "Cambiando…" : `🔄 Cambiar (${swapsRemaining})`}
+                  </button>
+                ) : null}
+              </div>
 
               {q.manual ? (
                 <ManualAnswer attemptId={attemptId} q={q} onFilled={onFilled} />

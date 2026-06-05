@@ -53,7 +53,7 @@ function shuffle<T>(arr: T[]): T[] {
 type QuestionWithOptions = Prisma.QuestionGetPayload<{ include: { options: true } }>;
 
 /// Construye el snapshot congelado de una pregunta para el intento.
-function buildSnapshot(q: QuestionWithOptions, randomizeOptions: boolean): QuestionSnapshot {
+export function buildSnapshot(q: QuestionWithOptions, randomizeOptions: boolean): QuestionSnapshot {
   const base = {
     type: q.type as string,
     statement: q.statement,

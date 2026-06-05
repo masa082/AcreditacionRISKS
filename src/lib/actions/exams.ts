@@ -38,6 +38,9 @@ const examSchema = z.object({
   /// que las secciones produzcan). Default 50 — la fila viene marcada con
   /// ese valor desde la migración para los exámenes existentes.
   maxQuestions: z.coerce.number().int().min(0).max(500),
+  /// Cantidad de cambios de pregunta que puede pedir el candidato durante
+  /// la prueba. 0 desactiva la función. Default 5.
+  questionSwapsAllowed: z.coerce.number().int().min(0).max(50),
   instructions: z.string().max(4000).optional().nullable(),
 });
 
@@ -53,6 +56,7 @@ function parseExamForm(formData: FormData) {
     passingScore: formData.get("passingScore"),
     attemptsAllowed: formData.get("attemptsAllowed"),
     maxQuestions: formData.get("maxQuestions"),
+    questionSwapsAllowed: formData.get("questionSwapsAllowed"),
     instructions: clean(formData.get("instructions")),
   });
 }
