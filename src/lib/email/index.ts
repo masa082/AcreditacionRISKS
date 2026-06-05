@@ -17,18 +17,27 @@ import {
 
 const APP_NAME = "CIOC";
 
-/// FROM por defecto: usamos el dominio sandbox oficial de Resend
-/// (onboarding@resend.dev) hasta que okacreditado.com esté verificado.
-/// El sandbox SOLO entrega a la cuenta dueña de la API key — para enviar
-/// a cualquier dirección hay que verificar el dominio.
+/// FROM por defecto: usamos el dominio de marca (okacreditado.com).
+/// Para que Resend acepte enviar desde este dominio hay que verificarlo
+/// una sola vez en https://resend.com/domains (agregar los registros DNS
+/// que Resend pide: SPF, DKIM, return-path). Mientras NO esté verificado,
+/// Resend devuelve HTTP 403 "domain not verified" y el envío falla con
+/// un mensaje accionable (ver SANDBOX_TESTING_PATTERNS más abajo).
 ///
 /// IMPORTANTE: el display name NO puede contener caracteres fuera del
 /// rango "atom" de RFC 5322 sin estar entrecomillado, o Resend devuelve
 /// HTTP 422 "Invalid `from` field". `sanitizeFromAddress` se encarga de
 /// limpiar y entrecomillar cuando hace falta.
-const FALLBACK_FROM = `"CIOC RISKS INTERNATIONAL" <onboarding@resend.dev>`;
+const FALLBACK_FROM = `"CIOC RISKS INTERNATIONAL" <notificaciones@okacreditado.com>`;
 const FROM = sanitizeFromAddress(process.env.EMAIL_FROM ?? FALLBACK_FROM);
 const REPLY_TO = process.env.EMAIL_REPLY_TO ?? "calidad@risksint.com";
+
+/// Sandbox de último recurso de Resend. SOLO entrega correos a la cuenta
+/// dueña de la API key (ese es el comportamiento de "testing mode" que
+/// devuelve HTTP 403 para cualquier otro destinatario). Lo usamos UNA
+/// SOLA VEZ como reintento cuando el FROM principal falla por dominio
+/// no verificado — si vuelve a fallar, ya devolvemos error accionable.
+const RESEND_SANDBOX_FROM = `"CIOC RISKS INTERNATIONAL" <onboarding@resend.dev>`;
 
 /// Validación simple de email. No es un parser RFC completo — solo detecta
 /// los casos obvios de basura (espacios, comillas internas, sin @, sin TLD).
@@ -79,17 +88,37 @@ export function sanitizeFromAddress(raw: string): string {
 }
 
 /// Patrones de error de Resend que indican que el dominio del FROM no
-/// está verificado en la cuenta. En esos casos reintentamos UNA vez con
-/// el sandbox oficial para no perder el envío y dejamos un registro
-/// claro en el AuditLog.
+/// está verificado en la cuenta. Reintentamos UNA vez con sandbox para
+/// rescatar el envío y dejamos aviso en el AuditLog.
 const DOMAIN_NOT_VERIFIED_PATTERNS = [
   /domain.*not.*verified/i,
   /verify.*domain/i,
   /from.*address.*not.*verified/i,
   /sender.*not.*verified/i,
-  /403/,
-  /unauthorized/i,
 ];
+
+/// Patrones que indican que el envío llegó al SANDBOX de Resend y este
+/// rechazó por "testing mode" — solo entrega a la cuenta dueña de la
+/// API key. Si esto sale, ya NO sirve reintentar: hay que verificar el
+/// dominio. Devolvemos un mensaje accionable.
+const SANDBOX_TESTING_PATTERNS = [
+  /testing emails to your own email/i,
+  /verify a domain at resend/i,
+  /you can only send testing/i,
+];
+
+function isDomainNotVerified(status: number, msg: string): boolean {
+  if (status < 400) return false;
+  if (DOMAIN_NOT_VERIFIED_PATTERNS.some((p) => p.test(msg))) return true;
+  // Resend a veces devuelve 403 sin mensaje claro cuando el dominio del
+  // FROM no es propio — usamos 403 como señal solo si el FROM tampoco es
+  // sandbox. La detección final del callsite usa esto + isAlreadySandbox.
+  return status === 403 && !SANDBOX_TESTING_PATTERNS.some((p) => p.test(msg));
+}
+
+function isSandboxTestingMode(msg: string): boolean {
+  return SANDBOX_TESTING_PATTERNS.some((p) => p.test(msg));
+}
 
 /// Copia oculta obligatoria de TODOS los correos transaccionales. Por
 /// política operativa del organismo, gerencia y el área de formación deben
@@ -159,31 +188,72 @@ async function resendProvider(opts: SendOpts): Promise<SendResult> {
   if (!key) return { ok: false, provider: "resend", error: "RESEND_API_KEY no configurada" };
   const bcc = resolveBccList(opts.to);
   try {
+    // 1. Intento principal con el FROM configurado (dominio de marca).
     let r = await callResend(key, FROM, opts, bcc);
     let errMsg = r.data.message ?? r.data.name ?? "";
-
-    // Si el FROM falla por dominio no verificado y NO estamos ya usando el
-    // sandbox, reintentamos automáticamente con onboarding@resend.dev.
-    const domainProblem =
-      r.status >= 400 &&
-      DOMAIN_NOT_VERIFIED_PATTERNS.some((p) => p.test(`${errMsg} ${r.status}`));
-    const isAlreadySandbox = /onboarding@resend\.dev/i.test(FROM);
-
-    if (domainProblem && !isAlreadySandbox) {
-      const original = errMsg;
-      r = await callResend(key, FALLBACK_FROM, opts, bcc);
-      errMsg = r.data.message ?? r.data.name ?? "";
-      if (r.status >= 200 && r.status < 300 && r.data.id) {
-        return {
-          ok: true, provider: "resend", id: r.data.id,
-          error: `[FROM "${FROM}" rechazado por Resend (${original}). Enviado con sandbox onboarding@resend.dev. Verifique el dominio en https://resend.com/domains.]`,
-        };
-      }
-    }
 
     if (r.status >= 200 && r.status < 300 && r.data.id) {
       return { ok: true, provider: "resend", id: r.data.id };
     }
+
+    const isAlreadySandbox = /onboarding@resend\.dev/i.test(FROM);
+    const domainProblem = isDomainNotVerified(r.status, errMsg);
+
+    // 2. Reintento UNA sola vez con el sandbox de Resend si el dominio
+    //    del FROM principal no está verificado. Solo entrega al dueño de
+    //    la API key — útil mientras se verifica el dominio en Resend.
+    if (domainProblem && !isAlreadySandbox) {
+      const originalFrom = FROM;
+      const originalMsg = errMsg;
+      r = await callResend(key, RESEND_SANDBOX_FROM, opts, bcc);
+      errMsg = r.data.message ?? r.data.name ?? "";
+
+      if (r.status >= 200 && r.status < 300 && r.data.id) {
+        // Entregado con sandbox: ÉXITO con aviso para que verifiquen el dominio.
+        return {
+          ok: true,
+          provider: "resend",
+          id: r.data.id,
+          error:
+            `Enviado en modo prueba (sandbox onboarding@resend.dev). ` +
+            `Su FROM "${originalFrom}" fue rechazado: ${originalMsg}. ` +
+            `Para enviar desde su dominio, verifíquelo en https://resend.com/domains.`,
+        };
+      }
+
+      // El sandbox también rechazó. Lo más típico es el "testing mode":
+      // solo entrega al dueño de la API key.
+      if (isSandboxTestingMode(errMsg) || r.status === 403) {
+        return {
+          ok: false,
+          provider: "resend",
+          error:
+            `DOMINIO NO VERIFICADO en Resend. ` +
+            `Su FROM "${originalFrom}" no es de un dominio verificado y el sandbox ` +
+            `(onboarding@resend.dev) solo entrega al correo dueño de la API key. ` +
+            `SOLUCIÓN: vaya a https://resend.com/domains, agregue okacreditado.com ` +
+            `y copie los registros DNS que le pida (SPF, DKIM, return-path) a su ` +
+            `proveedor de DNS. Cuando aparezca "verified" en Resend, los envíos ` +
+            `funcionan sin tocar nada más.`,
+        };
+      }
+    }
+
+    // 3. Caso "ya estábamos en sandbox y rechazó por testing mode"
+    //    — pasa cuando EMAIL_FROM en Vercel apunta directamente al sandbox.
+    if (isAlreadySandbox && isSandboxTestingMode(errMsg)) {
+      return {
+        ok: false,
+        provider: "resend",
+        error:
+          `El FROM actual apunta a onboarding@resend.dev (sandbox), que solo ` +
+          `entrega a la cuenta dueña de la API key. Cambie EMAIL_FROM en Vercel a ` +
+          `un dominio verificado (por ejemplo "notificaciones@okacreditado.com" tras ` +
+          `verificar el dominio en https://resend.com/domains).`,
+      };
+    }
+
+    // 4. Otros errores: lo devolvemos crudo con contexto del FROM usado.
     return {
       ok: false,
       provider: "resend",
