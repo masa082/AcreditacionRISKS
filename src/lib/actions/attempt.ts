@@ -19,6 +19,7 @@ import { saveUpload, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
 import { issuePresentationCertificate } from "@/lib/certificate";
 import { sendExamScoreEmail } from "@/lib/email";
 import { BRAND } from "@/lib/brand";
+import { EXAM_CONSENT_TEXT } from "@/lib/exam-consent";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const FINISHED = ["SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED", "PASSED", "FAILED", "PENDING_COMMITTEE", "VOID"];
@@ -234,33 +235,9 @@ export async function recordAttemptEvent(
 // ----------------------------------------------------------------------------
 //  Consentimiento previo del candidato (server-side, con audit log).
 // ----------------------------------------------------------------------------
-/// Texto canónico del consentimiento que debe firmar el candidato antes de
-/// iniciar la prueba. Cualquier cambio aquí queda inmortalizado en cada
-/// intento (consentText es un snapshot), así si el operador del organismo
-/// cambia las reglas, los intentos previos no se ven afectados.
-export const EXAM_CONSENT_TEXT = `\
-1) Acepto que esta evaluación se realiza bajo mi responsabilidad personal y
-   que respondo a conciencia, sin uso de ayudas externas, materiales no
-   autorizados ni asistencia de terceros.
-
-2) Acepto los resultados que arroje el sistema y entiendo que éstos
-   dependen exclusivamente de las respuestas que yo registre durante la
-   presentación. No habrá modificación de la calificación por causas
-   ajenas a la prueba misma.
-
-3) Entiendo que la prueba está bajo monitoreo: se registran salidas de
-   pantalla, cambios de pestaña, intentos de copia, captura y el tiempo
-   en cada pregunta. Esta información queda asociada al intento para
-   auditoría.
-
-4) Entiendo que las preguntas y respuestas son confidenciales y que su
-   reproducción total o parcial (capturas, fotos, divulgación) está
-   estrictamente prohibida.
-
-5) Conozco que puedo reportar cualquier novedad durante la prueba
-   (corte de luz, problema técnico, duda) usando el botón "Reportar
-   novedad", y que cada reporte queda registrado para revisión del
-   organismo.`;
+// El texto canónico del consentimiento vive en src/lib/exam-consent.ts (no en
+// este archivo "use server", donde Next.js no permite exportar strings).
+// Se importa al inicio del archivo y se snapshotea en cada intento.
 
 /// Registra el consentimiento del candidato para iniciar la prueba.
 /// Marca consentAcceptedAt + snapshot del texto + audit log. Sin
