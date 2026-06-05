@@ -471,6 +471,200 @@ export async function sendLeadQuote(leadId: string): Promise<ActionResult> {
 //  Log de "apertura de WhatsApp": al hacer clic en el botón WhatsApp
 //  registramos la intención. El cliente abre wa.me directamente.
 // ────────────────────────────────────────────────────────────────────
+// ────────────────────────────────────────────────────────────────────
+//  Importación masiva de leads (Excel pegado o CSV).
+//  Cada fila se valida con el mismo zod schema base y se dedupea por
+//  correo. Devuelve un resumen con created/updated/skipped y errores.
+// ────────────────────────────────────────────────────────────────────
+const importRowSchema = z.object({
+  fullName: z.string().min(2, "nombre vacío").max(160),
+  email: z.string().email("correo inválido").max(160),
+  phone: z.string().max(40).optional().nullable(),
+  country: z.string().max(80).optional().nullable(),
+  company: z.string().max(160).optional().nullable(),
+  jobTitle: z.string().max(120).optional().nullable(),
+  certificationOfInterest: z.string().max(160).optional().nullable(),
+  message: z.string().max(2000).optional().nullable(),
+});
+
+export async function importLeadsBulk(
+  rawRows: unknown,
+): Promise<{
+  ok: boolean;
+  summary?: { received: number; created: number; updated: number; skipped: number; errors: string[] };
+  error?: string;
+}> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+  if (!Array.isArray(rawRows)) return { ok: false, error: "Esperaba un arreglo de filas." };
+  if (rawRows.length > 1000) return { ok: false, error: "Máximo 1000 filas por importación." };
+
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+  const errors: string[] = [];
+
+  for (let i = 0; i < rawRows.length; i++) {
+    const parsed = importRowSchema.safeParse(rawRows[i]);
+    if (!parsed.success) {
+      skipped++;
+      if (errors.length < 10) errors.push(`fila ${i + 1}: ${parsed.error.issues[0]?.message ?? "inválida"}`);
+      continue;
+    }
+    const d = parsed.data;
+    const emailLower = d.email.toLowerCase();
+    try {
+      const existing = await prisma.lead.findFirst({
+        where: { email: emailLower, OR: [{ subscriberId }, { subscriberId: null }] },
+        orderBy: { createdAt: "desc" },
+      });
+      const dedupeWindow = 60 * 24 * 60 * 60 * 1000;
+      const reusable = existing && Date.now() - existing.createdAt.getTime() < dedupeWindow;
+
+      if (reusable) {
+        await prisma.lead.update({
+          where: { id: existing.id },
+          data: {
+            fullName: d.fullName,
+            phone: d.phone ?? existing.phone,
+            country: d.country ?? existing.country,
+            company: d.company ?? existing.company,
+            jobTitle: d.jobTitle ?? existing.jobTitle,
+            certificationOfInterest: d.certificationOfInterest ?? existing.certificationOfInterest,
+            message: d.message ?? existing.message,
+            subscriberId: existing.subscriberId ?? subscriberId,
+            activities: {
+              create: {
+                actorId: ctx.userId,
+                type: "NOTE",
+                comment: "Lead actualizado desde importación masiva.",
+                metadata: { source: "import" },
+              },
+            },
+          },
+        });
+        updated++;
+      } else {
+        await prisma.lead.create({
+          data: {
+            subscriberId,
+            kind: "INFORMATION",
+            fullName: d.fullName,
+            email: emailLower,
+            phone: d.phone,
+            country: d.country,
+            company: d.company,
+            jobTitle: d.jobTitle,
+            certificationOfInterest: d.certificationOfInterest,
+            message: d.message,
+            source: "bulk-import",
+            consentAccepted: false,
+            siteVisitCount: 0,
+            activities: {
+              create: {
+                actorId: ctx.userId,
+                type: "NOTE",
+                comment: "Lead creado por importación masiva.",
+                metadata: { source: "import" },
+              },
+            },
+          },
+        });
+        created++;
+      }
+    } catch (e) {
+      skipped++;
+      if (errors.length < 10) errors.push(`fila ${i + 1}: ${e instanceof Error ? e.message : "error"}`);
+    }
+  }
+
+  await audit(ctx, {
+    action: "lead.import", entity: "Lead", subscriberId,
+    after: { received: rawRows.length, created, updated, skipped },
+  });
+  revalidatePath("/panel/leads");
+  return { ok: true, summary: { received: rawRows.length, created, updated, skipped, errors } };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Envío masivo de correo a leads seleccionados.
+// ────────────────────────────────────────────────────────────────────
+const bulkEmailSchema = z.object({
+  leadIds: z.array(z.string()).min(1, "Seleccione al menos un lead.").max(200, "Máximo 200 destinatarios."),
+  subject: z.string().min(3).max(200),
+  body: z.string().min(3).max(8000),
+});
+
+export async function sendBulkLeadEmail(args: {
+  leadIds: string[];
+  subject: string;
+  body: string;
+}): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+  const parsed = bulkEmailSchema.safeParse(args);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+
+  const leads = await prisma.lead.findMany({
+    where: { id: { in: parsed.data.leadIds }, OR: [{ subscriberId }, { subscriberId: null }] },
+    select: { id: true, email: true, fullName: true },
+  });
+  if (leads.length === 0) return { ok: false, error: "No se encontraron destinatarios válidos." };
+
+  let sent = 0;
+  let failed = 0;
+  const errors: string[] = [];
+
+  for (const l of leads) {
+    const body = parsed.data.body.replace(/{nombre}/gi, l.fullName);
+    const html = `<div style="font-family:Arial,sans-serif;white-space:pre-wrap;">${body
+      .replace(/</g, "&lt;")
+      .replace(/\n/g, "<br>")}</div>`;
+    const result = await sendEmail({
+      subscriberId, to: l.email, subject: parsed.data.subject, html, text: body,
+    }).catch((e) => ({ ok: false, provider: "exception", error: e instanceof Error ? e.message : String(e) }));
+    if (result.ok) sent++; else { failed++; if (errors.length < 5) errors.push(`${l.email}: ${"error" in result ? result.error : "sin detalle"}`); }
+    await prisma.leadActivity.create({
+      data: {
+        leadId: l.id, actorId: ctx.userId, type: "EMAIL_SENT",
+        comment: parsed.data.subject,
+        metadata: { bulk: true, ok: result.ok, messageId: "id" in result ? result.id ?? null : null },
+      },
+    });
+  }
+  await audit(ctx, {
+    action: "lead.bulk_email", entity: "Lead", subscriberId,
+    after: { count: leads.length, sent, failed, subject: parsed.data.subject },
+  });
+  revalidatePath("/panel/leads");
+  if (failed > 0) {
+    return { ok: false, error: `Enviados: ${sent} · Fallaron: ${failed}. ${errors[0] ?? ""}` };
+  }
+  return { ok: true, message: `Correos enviados: ${sent}.` };
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Log de WhatsApp masivo: cuando el operador procesa una lista, cada
+//  enlace abierto se cuenta. El cliente abre los wa.me uno por uno.
+// ────────────────────────────────────────────────────────────────────
+export async function logBulkWhatsApp(leadIds: string[]): Promise<{ ok: boolean; count: number }> {
+  try {
+    const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);
+    const leads = await prisma.lead.findMany({
+      where: { id: { in: leadIds }, OR: [{ subscriberId }, { subscriberId: null }], phone: { not: null } },
+      select: { id: true, phone: true },
+    });
+    await prisma.leadActivity.createMany({
+      data: leads.map((l) => ({
+        leadId: l.id, actorId: ctx.userId, type: "WHATSAPP_OPEN" as const,
+        metadata: { bulk: true, phone: l.phone ?? null },
+      })),
+    });
+    await audit(ctx, { action: "lead.bulk_whatsapp", entity: "Lead", subscriberId, after: { count: leads.length } });
+    return { ok: true, count: leads.length };
+  } catch {
+    return { ok: false, count: 0 };
+  }
+}
+
 export async function logLeadWhatsApp(leadId: string): Promise<{ ok: boolean }> {
   try {
     const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.LEAD_MANAGE);

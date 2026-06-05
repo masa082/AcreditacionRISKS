@@ -9,7 +9,10 @@ import {
   sendLeadEmail,
   sendLeadQuote,
   logLeadWhatsApp,
+  sendBulkLeadEmail,
+  logBulkWhatsApp,
 } from "@/lib/actions/leads";
+import { LeadsImport } from "@/components/leads-import";
 import { LEAD_KIND_LABELS, LEAD_STATUS_LABELS } from "@/lib/leads";
 import type { ActionResult } from "@/lib/actions/schemes";
 
@@ -64,6 +67,22 @@ export function LeadsTable({
   const [statusFilter, setStatusFilter] = useState<"" | LeadRow["status"]>("");
   const [onlineOnly, setOnlineOnly] = useState(false);
   const [activeLead, setActiveLead] = useState<{ row: LeadRow; tab: "email" | "quote" | "edit" | "follow" } | null>(null);
+  const [showImport, setShowImport] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkMode, setBulkMode] = useState<null | "email" | "whatsapp">(null);
+
+  function toggleSel(id: string) {
+    setSelected((s) => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  }
+  function toggleAll(ids: string[]) {
+    setSelected((s) => {
+      const all = ids.every((id) => s.has(id));
+      const n = new Set(s);
+      if (all) ids.forEach((id) => n.delete(id));
+      else ids.forEach((id) => n.add(id));
+      return n;
+    });
+  }
 
   const now = Date.now();
   const filtered = useMemo(() => {
@@ -100,6 +119,11 @@ export function LeadsTable({
   } as const;
   const { sorted, sort, setSort } = useSortableRows(filtered, accessors, { key: "createdAt", dir: "asc" });
 
+  const visibleIds = sorted.map((r) => r.id);
+  const allChecked = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const someChecked = visibleIds.some((id) => selected.has(id));
+  const selectedRows = rows.filter((r) => selected.has(r.id));
+
   return (
     <>
       {/* Toolbar de filtros */}
@@ -134,15 +158,57 @@ export function LeadsTable({
             Solo en línea (5 min)
           </span>
         </label>
+        <button
+          type="button"
+          onClick={() => setShowImport(true)}
+          className="rounded-lg border border-brand-200 bg-brand-50 px-3 py-2 text-xs font-bold text-brand-800 transition hover:bg-brand-100"
+        >
+          ⬆ Importar leads
+        </button>
         <div className="ml-auto text-xs text-slate-500">
           {sorted.length} de {rows.length} lead{sorted.length === 1 ? "" : "s"}
         </div>
       </div>
 
+      {/* Barra de acción masiva: aparece cuando hay selección */}
+      {selected.size > 0 ? (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-brand-200 bg-brand-50/60 px-4 py-3">
+          <div className="text-sm font-semibold text-brand-900">
+            {selected.size} lead(s) seleccionado(s)
+            <button onClick={() => setSelected(new Set())} className="ml-3 text-xs font-medium text-brand-700 underline">
+              Limpiar selección
+            </button>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setBulkMode("email")}
+              className="rounded-md btn-grad-navy px-3 py-1.5 text-xs font-bold"
+            >
+              📧 Enviar correo masivo
+            </button>
+            <button
+              onClick={() => setBulkMode("whatsapp")}
+              className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100"
+            >
+              💬 WhatsApp masivo
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-50 text-[10px]">
+              <th className="px-2 py-2 text-center">
+                <input
+                  type="checkbox"
+                  aria-label="Seleccionar todos los visibles"
+                  checked={allChecked}
+                  ref={(el) => { if (el) el.indeterminate = !allChecked && someChecked; }}
+                  onChange={() => toggleAll(visibleIds)}
+                />
+              </th>
               <th className="px-3 py-2 text-left"><SortableHeader label="● En línea" sortKey="online" current={sort} onSort={setSort} /></th>
               <th className="px-3 py-2 text-left"><SortableHeader label="Estado" sortKey="status" current={sort} onSort={setSort} /></th>
               <th className="px-3 py-2 text-left"><SortableHeader label="Lead" sortKey="name" current={sort} onSort={setSort} /></th>
@@ -159,7 +225,7 @@ export function LeadsTable({
           <tbody className="divide-y divide-slate-100">
             {sorted.length === 0 ? (
               <tr>
-                <td colSpan={11} className="px-3 py-12 text-center text-sm text-slate-400">
+                <td colSpan={12} className="px-3 py-12 text-center text-sm text-slate-400">
                   Sin leads para el filtro actual.
                 </td>
               </tr>
@@ -168,7 +234,15 @@ export function LeadsTable({
               const online = lastMs > 0 && now - lastMs < ONLINE_WINDOW_MS;
               const tone = STATUS_TONE[r.status];
               return (
-                <tr key={r.id} className="hover:bg-slate-50/60">
+                <tr key={r.id} className={selected.has(r.id) ? "bg-brand-50/40" : "hover:bg-slate-50/60"}>
+                  <td className="px-2 py-2.5 text-center">
+                    <input
+                      type="checkbox"
+                      aria-label={`Seleccionar ${r.fullName}`}
+                      checked={selected.has(r.id)}
+                      onChange={() => toggleSel(r.id)}
+                    />
+                  </td>
                   <td className="px-3 py-2.5">
                     {online ? (
                       <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700">
@@ -231,7 +305,180 @@ export function LeadsTable({
           onClose={() => setActiveLead(null)}
         />
       ) : null}
+
+      {showImport ? <LeadsImport onClose={() => setShowImport(false)} /> : null}
+
+      {bulkMode === "email" ? (
+        <BulkEmailDrawer
+          rows={selectedRows}
+          onClose={() => setBulkMode(null)}
+          onDone={() => { setBulkMode(null); setSelected(new Set()); }}
+        />
+      ) : null}
+      {bulkMode === "whatsapp" ? (
+        <BulkWhatsAppDrawer
+          rows={selectedRows}
+          template={whatsappTemplate}
+          onClose={() => setBulkMode(null)}
+        />
+      ) : null}
     </>
+  );
+}
+
+// ────────────────────────────────────────────────────────────────────
+//  Acciones masivas
+// ────────────────────────────────────────────────────────────────────
+
+function BulkEmailDrawer({
+  rows, onClose, onDone,
+}: { rows: LeadRow[]; onClose: () => void; onDone: () => void }) {
+  const [subject, setSubject] = useState("");
+  const [body, setBody] = useState("");
+  const [busy, startTx] = useTransition();
+  const [result, setResult] = useState<ActionResult | null>(null);
+
+  function fire() {
+    if (subject.trim().length < 3 || body.trim().length < 3) {
+      setResult({ ok: false, error: "Asunto y cuerpo son obligatorios." }); return;
+    }
+    startTx(async () => {
+      const r = await sendBulkLeadEmail({ leadIds: rows.map((x) => x.id), subject, body });
+      setResult(r);
+      if (r.ok) setTimeout(onDone, 1200);
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex" role="dialog" aria-modal>
+      <button onClick={onClose} className="flex-1 bg-slate-950/40 backdrop-blur-sm" />
+      <aside className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl">
+        <header className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Correo masivo</p>
+              <h2 className="text-lg font-bold text-slate-900">A {rows.length} lead(s)</h2>
+              <p className="text-xs text-slate-500">Use <code className="rounded bg-slate-200 px-1">{"{nombre}"}</code> en el cuerpo para personalizar el saludo de cada destinatario.</p>
+            </div>
+            <button onClick={onClose} className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs">Cerrar ✕</button>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 text-sm">
+          <details className="rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-600 ring-1 ring-slate-200">
+            <summary className="cursor-pointer font-semibold">Ver destinatarios ({rows.length})</summary>
+            <ul className="mt-1 max-h-40 space-y-0.5 overflow-y-auto font-mono">
+              {rows.map((r) => <li key={r.id}>{r.fullName} &lt;{r.email}&gt;</li>)}
+            </ul>
+          </details>
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Asunto *</span>
+            <input value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={200} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          </label>
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Cuerpo *</span>
+            <textarea value={body} onChange={(e) => setBody(e.target.value)} rows={9} placeholder="Hola {nombre}, …" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          </label>
+          <ActionFeedback state={result} />
+        </div>
+        <footer className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+          <button onClick={onClose} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs">Cancelar</button>
+          <button disabled={busy} onClick={fire} className="rounded-md btn-grad-navy px-4 py-1.5 text-xs font-bold disabled:opacity-50">
+            {busy ? "Enviando…" : `📧 Enviar a ${rows.length}`}
+          </button>
+        </footer>
+      </aside>
+    </div>
+  );
+}
+
+function BulkWhatsAppDrawer({
+  rows, template, onClose,
+}: { rows: LeadRow[]; template: string; onClose: () => void }) {
+  const [msg, setMsg] = useState(template);
+  const withPhone = rows.filter((r) => !!r.phone);
+  const withoutPhone = rows.length - withPhone.length;
+  const [logged, setLogged] = useState(false);
+
+  async function logOnce() {
+    if (logged) return;
+    setLogged(true);
+    await logBulkWhatsApp(withPhone.map((r) => r.id)).catch(() => undefined);
+  }
+
+  return (
+    <div className="fixed inset-0 z-40 flex" role="dialog" aria-modal>
+      <button onClick={onClose} className="flex-1 bg-slate-950/40 backdrop-blur-sm" />
+      <aside className="flex h-full w-full max-w-xl flex-col overflow-hidden bg-white shadow-2xl">
+        <header className="border-b border-slate-200 bg-slate-50 px-5 py-4">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">WhatsApp masivo</p>
+              <h2 className="text-lg font-bold text-slate-900">{withPhone.length} con teléfono</h2>
+              {withoutPhone > 0 ? (
+                <p className="text-[11px] text-amber-700">{withoutPhone} lead(s) seleccionado(s) no tienen teléfono; serán omitidos.</p>
+              ) : null}
+            </div>
+            <button onClick={onClose} className="rounded-md border border-slate-300 bg-white px-2 py-1 text-xs">Cerrar ✕</button>
+          </div>
+        </header>
+        <div className="flex-1 overflow-y-auto p-5 space-y-3 text-sm">
+          <label className="block">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Mensaje plantilla</span>
+            <textarea value={msg} onChange={(e) => setMsg(e.target.value)} rows={4} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+            <span className="mt-1 block text-[10px] text-slate-400">Use <code>{"{nombre}"}</code> para personalizar el saludo.</span>
+          </label>
+          <p className="rounded-md bg-amber-50 px-3 py-2 text-[11px] text-amber-900 ring-1 ring-amber-200">
+            WhatsApp Web no permite envío masivo automatizado por la API gratuita. Generamos los enlaces wa.me personalizados — usted los abre uno por uno (o usa &ldquo;Abrir todos&rdquo; para que el navegador despache cada uno en una pestaña).
+          </p>
+          <div className="rounded-lg border border-slate-200">
+            <div className="border-b border-slate-100 bg-slate-50 px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+              Enlaces personalizados ({withPhone.length})
+            </div>
+            <ul className="max-h-72 divide-y divide-slate-100 overflow-y-auto">
+              {withPhone.map((r) => {
+                const phone = (r.phone ?? "").replace(/[^\d]/g, "");
+                const text = encodeURIComponent(msg.replace(/{nombre}/gi, r.fullName.split(" ")[0]));
+                const url = `https://wa.me/${phone}?text=${text}`;
+                return (
+                  <li key={r.id} className="flex items-center justify-between gap-3 px-3 py-2 text-xs">
+                    <span>
+                      <span className="font-semibold text-slate-800">{r.fullName}</span>
+                      <span className="ml-2 text-slate-500">· {r.phone}</span>
+                    </span>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noreferrer"
+                      onClick={logOnce}
+                      className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-800 hover:bg-emerald-100"
+                    >
+                      💬 Abrir
+                    </a>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </div>
+        <footer className="flex justify-between gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+          <button
+            onClick={() => {
+              logOnce();
+              for (const r of withPhone) {
+                const phone = (r.phone ?? "").replace(/[^\d]/g, "");
+                const text = encodeURIComponent(msg.replace(/{nombre}/gi, r.fullName.split(" ")[0]));
+                window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+              }
+            }}
+            disabled={withPhone.length === 0}
+            className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-bold text-emerald-800 hover:bg-emerald-100 disabled:opacity-50"
+          >
+            🚀 Abrir todos ({withPhone.length})
+          </button>
+          <button onClick={onClose} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs">Cerrar</button>
+        </footer>
+      </aside>
+    </div>
   );
 }
 
