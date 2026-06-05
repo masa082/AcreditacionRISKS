@@ -6,6 +6,7 @@ import {
   verificationEmail,
   passwordResetEmail,
   certificateIssuedEmail,
+  examScoreEmail,
 } from "./templates";
 
 // ============================================================================
@@ -350,4 +351,24 @@ export async function sendPasswordResetEmail(subscriberId: string | null, to: st
 export async function sendCertificateIssuedEmail(subscriberId: string, to: string, data: { holderName: string; title: string; code: string; verifyUrl: string }): Promise<SendResult> {
   const brand = await loadBrand(subscriberId);
   return dispatch(to, subscriberId, certificateIssuedEmail(brand, data));
+}
+
+/// Notificación al candidato con el puntaje obtenido al cerrar el intento.
+/// Se llama desde submitAttempt (calificación automática) y desde
+/// finalizeManualGrading (cuando se cierra la revisión manual).
+export async function sendExamScoreEmail(
+  subscriberId: string,
+  to: string,
+  data: {
+    holderName: string;
+    examName: string;
+    scorePercent: number;
+    passingScore: number;
+    passed: boolean | null;
+    nextStep: "COMMITTEE" | "CERTIFIED" | "APPROVED" | "REJECTED" | "MANUAL_GRADING";
+    portalUrl: string;
+  },
+): Promise<SendResult> {
+  const brand = await loadBrand(subscriberId);
+  return dispatch(to, subscriberId, examScoreEmail(brand, data));
 }

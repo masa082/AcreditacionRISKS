@@ -730,7 +730,7 @@ model Exam {
   // Configuración de prueba
   durationMin    Int      @default(60)
   totalPoints    Decimal  @default(100) @db.Decimal(8, 2)
-  passingScore   Decimal  @default(70) @db.Decimal(8, 2) // umbral aprobatorio
+  passingScore   Decimal  @default(80) @db.Decimal(8, 2) // umbral aprobatorio (política: ≥80%)
   numQuestions   Int      @default(0) // 0 => suma de secciones
   /// Máximo de preguntas que verá el candidato por intento. Si la suma
   /// de las secciones es mayor, se hace un sampling aleatorio sin repetir
@@ -747,7 +747,7 @@ model Exam {
   showResultImmediately Boolean @default(false)
   showCorrectAnswers    Boolean @default(false)
   allowReview           Boolean @default(false)
-  requireCommittee      Boolean @default(false)
+  requireCommittee      Boolean @default(true)
   requirePayment        Boolean @default(true)
   requireSchedule       Boolean @default(false)
   autoCertificate       Boolean @default(false)

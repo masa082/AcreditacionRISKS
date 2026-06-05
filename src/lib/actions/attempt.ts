@@ -15,6 +15,8 @@ import {
 } from "@/lib/exam-attempt";
 import { saveUpload, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
 import { issuePresentationCertificate } from "@/lib/certificate";
+import { sendExamScoreEmail } from "@/lib/email";
+import { BRAND } from "@/lib/brand";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const FINISHED = ["SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED", "PASSED", "FAILED", "PENDING_COMMITTEE", "VOID"];
@@ -271,24 +273,38 @@ export async function submitAttempt(attemptId: string): Promise<void> {
   let enrollmentStatus: EnrollmentStatus;
   let attemptStatus: "MANUAL_GRADING" | "PASSED" | "FAILED" | "PENDING_COMMITTEE";
   let passed: boolean | null;
+  // Para el email + email-template usamos un "nextStep" legible.
+  let nextStep: "COMMITTEE" | "CERTIFIED" | "APPROVED" | "REJECTED" | "MANUAL_GRADING";
 
   if (needsManual) {
     attemptStatus = "MANUAL_GRADING";
     enrollmentStatus = "GRADING";
     passed = null;
+    nextStep = "MANUAL_GRADING";
   } else {
     passed = scorePercent >= passingScore;
     if (passed) {
+      // Política operativa: toda aprobación de prueba teórica pasa por el
+      // comité para revisar historia laboral y documentos del candidato.
+      // El flag requireCommittee del examen permite excepción (por ejemplo
+      // evaluaciones diagnósticas o de prueba), pero el default es true.
       if (attempt.exam.requireCommittee) {
         attemptStatus = "PENDING_COMMITTEE";
         enrollmentStatus = "COMMITTEE";
+        nextStep = "COMMITTEE";
+      } else if (attempt.exam.autoCertificate) {
+        attemptStatus = "PASSED";
+        enrollmentStatus = "CERTIFIED";
+        nextStep = "CERTIFIED";
       } else {
         attemptStatus = "PASSED";
-        enrollmentStatus = attempt.exam.autoCertificate ? "CERTIFIED" : "APPROVED";
+        enrollmentStatus = "APPROVED";
+        nextStep = "APPROVED";
       }
     } else {
       attemptStatus = "FAILED";
       enrollmentStatus = "REJECTED";
+      nextStep = "REJECTED";
     }
   }
 
@@ -306,6 +322,27 @@ export async function submitAttempt(attemptId: string): Promise<void> {
   });
   await prisma.enrollment.update({ where: { id: attempt.enrollmentId }, data: { status: enrollmentStatus } });
 
+  // Si pasó la prueba y aplica comité, garantizar que exista la revisión
+  // para que el panel del comité la vea en su bandeja inmediatamente.
+  if (attemptStatus === "PENDING_COMMITTEE") {
+    const existing = await prisma.committeeReview.findFirst({
+      where: { enrollmentId: attempt.enrollmentId, attemptId },
+      select: { id: true },
+    });
+    if (!existing) {
+      await prisma.committeeReview.create({
+        data: { subscriberId, enrollmentId: attempt.enrollmentId, attemptId, decision: "PENDING" },
+      });
+      await audit(ctx, {
+        action: "committee.review.create",
+        entity: "CommitteeReview",
+        entityId: attempt.enrollmentId,
+        subscriberId,
+        after: { trigger: "attempt.submit", scorePercent, passingScore },
+      });
+    }
+  }
+
   // Constancia de presentación del examen (no debe romper el envío).
   try {
     await issuePresentationCertificate(attemptId);
@@ -313,12 +350,35 @@ export async function submitAttempt(attemptId: string): Promise<void> {
     /* la constancia se puede reintentar después */
   }
 
+  // Notificación al candidato con su puntaje (0–100) y siguiente paso.
+  // No queremos que un fallo del proveedor de correo rompa el cierre del
+  // intento, así que va envuelto en try.
+  try {
+    const candidate = await prisma.candidate.findUnique({
+      where: { id: candidateId },
+      select: { firstName: true, lastName: true, email: true },
+    });
+    if (candidate?.email) {
+      await sendExamScoreEmail(subscriberId, candidate.email, {
+        holderName: `${candidate.firstName} ${candidate.lastName}`.trim(),
+        examName: attempt.exam.name,
+        scorePercent,
+        passingScore,
+        passed,
+        nextStep,
+        portalUrl: `${BRAND.appUrl}/portal/inscripcion/${attempt.enrollmentId}`,
+      });
+    }
+  } catch {
+    /* el correo se reintenta de oficio o por acción del operador */
+  }
+
   await audit(ctx, {
     action: "attempt.submit",
     entity: "ExamAttempt",
     entityId: attemptId,
     subscriberId,
-    after: { scorePercent, passed, status: attemptStatus },
+    after: { scorePercent, passingScore, passed, status: attemptStatus, nextStep },
   });
   revalidatePath(`/portal/inscripcion/${attempt.enrollmentId}`);
   redirect(`/portal/examen/${attemptId}/resultado`);

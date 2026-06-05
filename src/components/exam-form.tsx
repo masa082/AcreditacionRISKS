@@ -91,7 +91,7 @@ export function ExamForm({
 
       <div className="grid gap-5 sm:grid-cols-3">
         <Field label="Duración (min)" required><Input name="durationMin" type="number" min={1} max={1440} required defaultValue={initial?.durationMin ?? 60} /></Field>
-        <Field label="Puntaje mínimo (%)" required hint="Umbral aprobatorio."><Input name="passingScore" type="number" min={0} max={100} step="0.1" required defaultValue={initial?.passingScore ?? 70} /></Field>
+        <Field label="Puntaje mínimo (%)" required hint="Umbral aprobatorio (política: ≥80%)."><Input name="passingScore" type="number" min={0} max={100} step="0.1" required defaultValue={initial?.passingScore ?? 80} /></Field>
         <Field label="Intentos permitidos" required><Input name="attemptsAllowed" type="number" min={1} max={20} required defaultValue={initial?.attemptsAllowed ?? 1} /></Field>
       </div>
 

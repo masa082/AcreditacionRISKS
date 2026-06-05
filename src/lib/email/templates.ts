@@ -71,6 +71,147 @@ export function passwordResetEmail(brand: Brand, data: { actionUrl: string }): R
   };
 }
 
+/// Notificación al candidato cuando termina su examen: muestra el puntaje
+/// obtenido (0–100), si superó el umbral, y le explica el siguiente paso
+/// (revisión del comité evaluador cuando aplica).
+export function examScoreEmail(
+  brand: Brand,
+  data: {
+    holderName: string;
+    examName: string;
+    scorePercent: number;        // 0 a 100
+    passingScore: number;        // 0 a 100
+    passed: boolean | null;       // null = aún en calificación manual
+    nextStep: "COMMITTEE" | "CERTIFIED" | "APPROVED" | "REJECTED" | "MANUAL_GRADING";
+    portalUrl: string;
+  },
+): RenderedEmail {
+  const color = brand.primaryColor || "#1e3a8a";
+  const score = Math.round(data.scorePercent * 100) / 100;
+  const passing = Math.round(data.passingScore * 100) / 100;
+
+  // Estilo de resultado por estado.
+  const palette =
+    data.passed === true
+      ? { fg: "#047857", bg: "#ecfdf5", border: "#10b981", label: "Aprobó la evaluación" }
+      : data.passed === false
+        ? { fg: "#b91c1c", bg: "#fef2f2", border: "#ef4444", label: "No alcanzó el umbral" }
+        : { fg: "#92400e", bg: "#fffbeb", border: "#f59e0b", label: "En calificación" };
+
+  const subjectVerb =
+    data.nextStep === "REJECTED"
+      ? "Resultado de su evaluación"
+      : data.nextStep === "MANUAL_GRADING"
+        ? "Recibimos su evaluación"
+        : `Aprobó la evaluación — puntaje ${score}`;
+
+  const nextStepBlock = (() => {
+    switch (data.nextStep) {
+      case "COMMITTEE":
+        return `
+          <p style="margin:16px 0 4px;font-size:14px;line-height:1.6">
+            <b>Siguiente paso — Comité evaluador.</b> Su caso pasó automáticamente al
+            comité para la revisión de su <b>historia laboral y documentos
+            cargados</b>. El comité dejará constancia de su decisión (aprobar o
+            no aprobar) y le notificaremos por este mismo medio.
+          </p>`;
+      case "CERTIFIED":
+        return `
+          <p style="margin:16px 0 4px;font-size:14px;line-height:1.6">
+            <b>Siguiente paso — Emisión del certificado.</b> Su certificado se
+            emitirá en las próximas horas y llegará a su portal con QR de
+            verificación pública.
+          </p>`;
+      case "APPROVED":
+        return `
+          <p style="margin:16px 0 4px;font-size:14px;line-height:1.6">
+            <b>Siguiente paso — Cierre administrativo.</b> El equipo del
+            organismo finalizará la documentación y, en breve, le emitiremos
+            su certificado.
+          </p>`;
+      case "MANUAL_GRADING":
+        return `
+          <p style="margin:16px 0 4px;font-size:14px;line-height:1.6">
+            <b>Siguiente paso — Calificación manual.</b> Algunas respuestas
+            requieren revisión humana (casos prácticos, abiertas o archivos).
+            El equipo evaluador calificará y le enviaremos el puntaje final
+            por este mismo medio.
+          </p>`;
+      case "REJECTED":
+        return `
+          <p style="margin:16px 0 4px;font-size:14px;line-height:1.6">
+            <b>Siguiente paso — Reintento.</b> No alcanzó el umbral mínimo de
+            <b>${passing}%</b>. Si su esquema permite reintento, podrá
+            volver a presentar la evaluación desde su portal.
+          </p>`;
+      default:
+        return "";
+    }
+  })();
+
+  // Si está en calificación manual, ocultamos el valor numérico — todavía no
+  // está consolidado.
+  const showScore = data.nextStep !== "MANUAL_GRADING";
+
+  const body = `
+    <h1 style="margin:0 0 8px;font-size:20px">Resultado de su evaluación</h1>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      ${escapeHtml(data.holderName)}, recibimos su evaluación
+      <b>${escapeHtml(data.examName)}</b>. Estos son sus resultados:
+    </p>
+
+    ${showScore ? `
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:18px 0;border-collapse:collapse">
+      <tr>
+        <td style="padding:18px;background:${palette.bg};border:1px solid ${palette.border};border-radius:10px;text-align:center">
+          <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:${palette.fg};font-weight:bold">Puntaje obtenido</div>
+          <div style="font-size:48px;font-weight:800;color:${palette.fg};line-height:1.05;margin:6px 0">${score}<span style="font-size:22px"> / 100</span></div>
+          <div style="font-size:13px;color:${palette.fg};font-weight:bold">${palette.label}</div>
+          <div style="margin-top:8px;font-size:11px;color:#64748b">Umbral mínimo: ${passing}%</div>
+        </td>
+      </tr>
+    </table>` : `
+    <p style="margin:18px 0;padding:16px;background:${palette.bg};border:1px solid ${palette.border};border-radius:10px;font-size:14px;color:${palette.fg}">
+      Su evaluación quedó <b>en calificación manual</b>. El puntaje definitivo se
+      le notificará en este mismo medio.
+    </p>`}
+
+    ${nextStepBlock}
+
+    ${button(data.portalUrl, "Ver mi inscripción en el portal", color)}
+
+    <p style="margin:14px 0 0;font-size:11px;color:#94a3b8">
+      Este correo es comprobante del envío de su evaluación. Conserve la
+      copia para sus registros — el organismo mantiene trazabilidad completa
+      del proceso (intento, respuestas, calificación y decisiones del comité).
+    </p>`;
+
+  const html = layout(brand, body);
+
+  const text = showScore
+    ? `${data.holderName}, su evaluación "${data.examName}" obtuvo ${score}/100 (umbral ${passing}). ` +
+      `Estado: ${palette.label}. Siguiente paso: ${nextStepHuman(data.nextStep)}. ` +
+      `Portal: ${data.portalUrl}`
+    : `${data.holderName}, recibimos su evaluación "${data.examName}". Quedó en calificación manual. ` +
+      `Le enviaremos el puntaje final cuando esté consolidado. Portal: ${data.portalUrl}`;
+
+  return {
+    subject: `${subjectVerb} — ${brand.orgName}`,
+    html,
+    text,
+  };
+}
+
+function nextStepHuman(s: "COMMITTEE" | "CERTIFIED" | "APPROVED" | "REJECTED" | "MANUAL_GRADING"): string {
+  switch (s) {
+    case "COMMITTEE": return "revisión por comité evaluador (historia laboral + documentos)";
+    case "CERTIFIED": return "emisión automática del certificado";
+    case "APPROVED": return "cierre administrativo y emisión del certificado";
+    case "REJECTED": return "reintento disponible según su esquema";
+    case "MANUAL_GRADING": return "calificación manual de respuestas abiertas";
+  }
+}
+
 export function certificateIssuedEmail(brand: Brand, data: { holderName: string; title: string; code: string; verifyUrl: string }): RenderedEmail {
   const color = brand.primaryColor || "#1e3a8a";
   const html = layout(brand, `

@@ -8,6 +8,8 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberAction } from "@/lib/guards";
 import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { sendExamScoreEmail } from "@/lib/email";
+import { BRAND } from "@/lib/brand";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const gradeSchema = z.object({
@@ -67,7 +69,11 @@ export async function finalizeManualGrading(attemptId: string): Promise<void> {
   const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.GRADE_MANUAL);
   const attempt = await prisma.examAttempt.findUnique({
     where: { id: attemptId },
-    include: { exam: true, questions: { include: { answers: true } } },
+    include: {
+      exam: true,
+      questions: { include: { answers: true } },
+      candidate: { select: { firstName: true, lastName: true, email: true } },
+    },
   });
   if (!attempt || attempt.subscriberId !== subscriberId) return;
   if (attempt.status !== "MANUAL_GRADING") return;
@@ -92,15 +98,23 @@ export async function finalizeManualGrading(attemptId: string): Promise<void> {
 
   let attemptStatus: "PASSED" | "FAILED" | "PENDING_COMMITTEE";
   let enrollmentStatus: EnrollmentStatus;
+  let nextStep: "COMMITTEE" | "CERTIFIED" | "APPROVED" | "REJECTED";
   if (passed && attempt.exam.requireCommittee) {
     attemptStatus = "PENDING_COMMITTEE";
     enrollmentStatus = "COMMITTEE";
+    nextStep = "COMMITTEE";
+  } else if (passed && attempt.exam.autoCertificate) {
+    attemptStatus = "PASSED";
+    enrollmentStatus = "CERTIFIED";
+    nextStep = "CERTIFIED";
   } else if (passed) {
     attemptStatus = "PASSED";
-    enrollmentStatus = attempt.exam.autoCertificate ? "CERTIFIED" : "APPROVED";
+    enrollmentStatus = "APPROVED";
+    nextStep = "APPROVED";
   } else {
     attemptStatus = "FAILED";
     enrollmentStatus = "REJECTED";
+    nextStep = "REJECTED";
   }
 
   await prisma.examAttempt.update({
@@ -116,10 +130,39 @@ export async function finalizeManualGrading(attemptId: string): Promise<void> {
       await prisma.committeeReview.create({
         data: { subscriberId, enrollmentId: attempt.enrollmentId, attemptId, decision: "PENDING" },
       });
+      await audit(ctx, {
+        action: "committee.review.create",
+        entity: "CommitteeReview",
+        entityId: attempt.enrollmentId,
+        subscriberId,
+        after: { trigger: "grading.finalize", scorePercent, passingScore },
+      });
     }
   }
 
-  await audit(ctx, { action: "attempt.grade.finalize", entity: "ExamAttempt", entityId: attemptId, subscriberId, after: { scorePercent, passed, status: attemptStatus } });
+  // Notificar al candidato con su puntaje final tras la revisión manual.
+  // Tolerante a fallos de SMTP/Resend para no bloquear el cierre del intento.
+  try {
+    if (attempt.candidate?.email) {
+      await sendExamScoreEmail(subscriberId, attempt.candidate.email, {
+        holderName: `${attempt.candidate.firstName} ${attempt.candidate.lastName}`.trim(),
+        examName: attempt.exam.name,
+        scorePercent,
+        passingScore,
+        passed,
+        nextStep,
+        portalUrl: `${BRAND.appUrl}/portal/inscripcion/${attempt.enrollmentId}`,
+      });
+    }
+  } catch { /* email tolerante */ }
+
+  await audit(ctx, {
+    action: "attempt.grade.finalize",
+    entity: "ExamAttempt",
+    entityId: attemptId,
+    subscriberId,
+    after: { scorePercent, passingScore, passed, status: attemptStatus, nextStep },
+  });
   revalidatePath(`/panel/calificacion/${attemptId}`);
   revalidatePath("/panel/calificacion");
 }
