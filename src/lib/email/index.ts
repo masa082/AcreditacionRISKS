@@ -7,6 +7,7 @@ import {
   passwordResetEmail,
   certificateIssuedEmail,
   examScoreEmail,
+  habeasReceiptEmail,
 } from "./templates";
 
 // ============================================================================
@@ -140,12 +141,26 @@ function resolveBccList(toAddress: string): string[] {
   return Array.from(set);
 }
 
+/**
+ * Adjunto de correo. Resend admite hasta 40 MB combinados por mensaje
+ * y acepta tanto `content` en base64 como `path` (URL). Aquí usamos
+ * base64 porque generamos los PDFs en memoria.
+ */
+export interface EmailAttachment {
+  filename: string;
+  /** Bytes del archivo. Se convierte a base64 al llamar al API. */
+  content: Uint8Array;
+  /** Opcional. Default: application/pdf si el filename termina en .pdf. */
+  contentType?: string;
+}
+
 interface SendOpts {
   to: string;
   subject: string;
   html: string;
   text: string;
   subscriberId?: string | null;
+  attachments?: EmailAttachment[];
 }
 
 export interface SendResult {
@@ -167,6 +182,14 @@ async function callResend(
   opts: SendOpts,
   bcc: string[],
 ): Promise<{ status: number; data: { id?: string; message?: string; name?: string } }> {
+  // Adjuntos: Resend espera `{ filename, content: <base64-string> }`.
+  // Convertimos los bytes a base64 server-side (Node Buffer).
+  const attachments = opts.attachments?.map((a) => ({
+    filename: a.filename,
+    content: Buffer.from(a.content).toString("base64"),
+    contentType: a.contentType ?? (a.filename.toLowerCase().endsWith(".pdf") ? "application/pdf" : undefined),
+  }));
+
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
@@ -178,6 +201,7 @@ async function callResend(
       subject: opts.subject,
       html: opts.html,
       text: opts.text,
+      ...(attachments && attachments.length > 0 ? { attachments } : {}),
     }),
   });
   const data = (await res.json().catch(() => ({}))) as { id?: string; message?: string; name?: string };
@@ -351,6 +375,45 @@ export async function sendPasswordResetEmail(subscriberId: string | null, to: st
 export async function sendCertificateIssuedEmail(subscriberId: string, to: string, data: { holderName: string; title: string; code: string; verifyUrl: string }): Promise<SendResult> {
   const brand = await loadBrand(subscriberId);
   return dispatch(to, subscriberId, certificateIssuedEmail(brand, data));
+}
+
+/// Envío del recibo Habeas Data con el PDF de la autorización como
+/// adjunto. Se llama al final de `registerCandidate` después de que la
+/// transacción persista el DataConsent. El BCC obligatorio sigue
+/// aplicando (gerencia + formación quedan con copia del adjunto).
+export async function sendHabeasReceiptEmail(
+  subscriberId: string,
+  to: string,
+  data: {
+    holderName: string;
+    documentLabel: string;
+    acceptedAt: Date;
+    responsibleEmail: string;
+    policyUrl: string;
+    evidenceHash: string;
+    pdfBytes: Uint8Array;
+  },
+): Promise<SendResult> {
+  const brand = await loadBrand(subscriberId);
+  const rendered = habeasReceiptEmail(brand, {
+    holderName: data.holderName,
+    documentLabel: data.documentLabel,
+    acceptedAt: data.acceptedAt,
+    responsibleEmail: data.responsibleEmail,
+    policyUrl: data.policyUrl,
+    evidenceHash: data.evidenceHash,
+  });
+  return sendEmail({
+    subscriberId, to,
+    subject: rendered.subject, html: rendered.html, text: rendered.text,
+    attachments: [
+      {
+        filename: `Autorizacion-Habeas-Data-${data.holderName.replace(/\s+/g, "-")}.pdf`,
+        content: data.pdfBytes,
+        contentType: "application/pdf",
+      },
+    ],
+  });
 }
 
 /// Notificación al candidato con el puntaje obtenido al cerrar el intento.

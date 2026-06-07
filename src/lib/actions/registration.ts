@@ -5,8 +5,9 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, newToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
-import { sendVerificationEmail } from "@/lib/email";
+import { sendVerificationEmail, sendHabeasReceiptEmail } from "@/lib/email";
 import { appBaseUrl } from "@/lib/app-url";
+import { buildHabeasReceipt } from "@/lib/habeas-pdf";
 
 export interface RegisterState {
   ok: boolean;
@@ -171,6 +172,7 @@ export async function registerCandidate(
   const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
   const userAgent = h.get("user-agent") ?? null;
 
+  let candidateIdRef = "";
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -238,6 +240,7 @@ export async function registerCandidate(
       },
       update: {},
     });
+    candidateIdRef = candidate.id;
     await tx.dataConsent.create({
       data: {
         subscriberId: subscriber.id,
@@ -291,7 +294,67 @@ export async function registerCandidate(
     after: { email, documentNumber: data.documentNumber },
   });
 
+  // 1) Correo de verificación (activar cuenta).
   await sendVerificationEmail(subscriber.id, email, data.firstName, `${appBaseUrl()}/activar/${verificationToken}`);
+
+  // 2) Recibo Habeas Data con PDF firmado por click-wrap como constancia.
+  //    Se envía al correo del candidato; el BCC obligatorio asegura que
+  //    gerencia/formación queden con copia del PDF para respaldo.
+  //    Tolerante a fallos: si Resend/PDF falla, NO rompe el registro;
+  //    queda audit log con motivo y el candidato siempre puede pedir
+  //    la copia desde su portal.
+  try {
+    const acceptedAt = new Date();
+    const documentLabel =
+      data.documentType && data.documentNumber
+        ? `${data.documentType} ${data.documentNumber}`
+        : "(no consignada)";
+    const responsible = {
+      name: "RISKS INTERNATIONAL S.A.S.",
+      address: "Bogotá D.C., Colombia",
+      email: "habeasdata@risksint.com",
+      phone: "+57 601 794 1834",
+      policyUrl: "https://www.risksint.com/habeas-data/",
+    };
+    const receipt = await buildHabeasReceipt({
+      holderName: `${data.firstName} ${data.lastName}`.trim(),
+      documentType: data.documentType,
+      documentNumber: data.documentNumber,
+      email,
+      acceptedAt,
+      ip, userAgent,
+      policyVersion: data.consentPolicyVersion,
+      responsible,
+    });
+    // Persiste el hash de evidencia en el DataConsent para integridad.
+    await prisma.dataConsent.updateMany({
+      where: { candidateId: candidateIdRef, evidenceHash: null },
+      data: { evidenceHash: receipt.evidenceHash },
+    }).catch(() => undefined);
+    await sendHabeasReceiptEmail(subscriber.id, email, {
+      holderName: `${data.firstName} ${data.lastName}`.trim(),
+      documentLabel,
+      acceptedAt,
+      responsibleEmail: responsible.email,
+      policyUrl: responsible.policyUrl,
+      evidenceHash: receipt.evidenceHash,
+      pdfBytes: receipt.pdfBytes,
+    });
+    await audit(null, {
+      action: "habeas.receipt.send",
+      entity: "DataConsent",
+      subscriberId: subscriber.id,
+      after: { to: email, hash: receipt.evidenceHash },
+    });
+  } catch (e) {
+    await audit(null, {
+      action: "habeas.receipt.fail",
+      entity: "DataConsent",
+      subscriberId: subscriber.id,
+      after: { to: email, error: e instanceof Error ? e.message : String(e) },
+    }).catch(() => undefined);
+    /* registro sigue OK aunque el recibo falle */
+  }
 
   return { ok: true, activationToken: verificationToken };
 }

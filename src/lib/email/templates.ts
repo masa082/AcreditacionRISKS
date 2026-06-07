@@ -212,6 +212,84 @@ function nextStepHuman(s: "COMMITTEE" | "CERTIFIED" | "APPROVED" | "REJECTED" | 
   }
 }
 
+/**
+ * Recibo de la autorización Habeas Data — se manda al candidato (con
+ * BCC obligatorio a gerencia/formación) llevando como adjunto el PDF
+ * de la autorización con click-wrap firmado.
+ */
+export function habeasReceiptEmail(
+  brand: Brand,
+  data: {
+    holderName: string;
+    documentLabel: string;
+    acceptedAt: Date;
+    responsibleEmail: string;
+    policyUrl: string;
+    evidenceHash: string;
+  },
+): RenderedEmail {
+  const color = brand.primaryColor || "#0b1d44";
+  const localDate = new Intl.DateTimeFormat("es-CO", {
+    dateStyle: "full", timeStyle: "long", timeZone: "America/Bogota",
+  }).format(data.acceptedAt);
+
+  const body = `
+    <p style="margin:0 0 12px;font-size:14px;line-height:1.6">
+      Hola <strong>${escapeHtml(data.holderName)}</strong>,
+    </p>
+    <p style="margin:0 0 12px;font-size:14px;line-height:1.6">
+      Confirmamos que el día <strong>${escapeHtml(localDate)}</strong> usted aceptó la
+      <strong>Autorización de Tratamiento de Datos Personales</strong> en nuestra plataforma de
+      certificación. Adjuntamos a este correo la copia oficial en PDF para que la conserve como
+      constancia.
+    </p>
+
+    <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;margin:14px 0;border-collapse:collapse">
+      <tr><td style="padding:12px 14px;background:#f1f5f9;border-radius:10px">
+        <div style="font-size:11px;font-weight:bold;text-transform:uppercase;letter-spacing:0.08em;color:${color}">Resumen del acto</div>
+        <table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:8px;font-size:12.5px;color:#1f2937">
+          <tr><td style="padding:2px 14px 2px 0"><b>Titular</b></td><td>${escapeHtml(data.holderName)}</td></tr>
+          <tr><td style="padding:2px 14px 2px 0"><b>Identificación</b></td><td>${escapeHtml(data.documentLabel)}</td></tr>
+          <tr><td style="padding:2px 14px 2px 0"><b>Aceptado en</b></td><td>${escapeHtml(localDate)}</td></tr>
+          <tr><td style="padding:2px 14px 2px 0"><b>Base legal</b></td><td>Ley 1581/2012 · Decreto 1377/2013</td></tr>
+          <tr><td style="padding:2px 14px 2px 0;vertical-align:top"><b>Hash de integridad</b></td>
+              <td style="font-family:ui-monospace,Menlo,monospace;font-size:10px;word-break:break-all">${escapeHtml(data.evidenceHash)}</td></tr>
+        </table>
+      </td></tr>
+    </table>
+
+    <p style="margin:0 0 8px;font-size:13px;line-height:1.6">
+      El PDF adjunto contiene el detalle completo: las 5 declaraciones aceptadas, las finalidades del
+      tratamiento, sus derechos como titular, la base legal citada y la evidencia electrónica de la
+      aceptación (fecha, hora, IP y navegador).
+    </p>
+    <p style="margin:0 0 8px;font-size:13px;line-height:1.6">
+      Puede revocar esta autorización o ejercer cualquiera de sus derechos en cualquier momento
+      escribiendo a
+      <a href="mailto:${data.responsibleEmail}" style="color:${color};font-weight:bold">${escapeHtml(data.responsibleEmail)}</a>.
+      Tenemos 15 días hábiles para responderle.
+    </p>
+    ${button(data.policyUrl, "Ver política completa", color)}
+    <p style="margin:10px 0 0;font-size:11px;color:#94a3b8">
+      Este correo es la prueba electrónica de su autorización conforme al art. 12 del Decreto
+      1377/2013. Conserve esta copia y el PDF adjunto para sus registros.
+    </p>`;
+  const html = layout(brand, body);
+  const text =
+    `Hola ${data.holderName},\n\n` +
+    `Confirmamos que el ${localDate} usted aceptó la Autorización de Tratamiento de Datos Personales.\n` +
+    `Adjuntamos el PDF oficial con la evidencia electrónica completa.\n\n` +
+    `Titular: ${data.holderName}\nIdentificación: ${data.documentLabel}\n` +
+    `Hash de integridad: ${data.evidenceHash}\n\n` +
+    `Para revocar o ejercer derechos: ${data.responsibleEmail}\nPolítica completa: ${data.policyUrl}\n\n` +
+    `${brand.orgName} — Habeas Data, Ley 1581/2012.`;
+  return {
+    subject: `Su autorización de tratamiento de datos — ${brand.orgName}`,
+    html,
+    text,
+  };
+}
+
 export function certificateIssuedEmail(brand: Brand, data: { holderName: string; title: string; code: string; verifyUrl: string }): RenderedEmail {
   const color = brand.primaryColor || "#1e3a8a";
   const html = layout(brand, `

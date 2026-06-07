@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { BRAND, CTAS } from "@/lib/brand";
 import { getBrandAssets } from "@/lib/brand-assets";
+import { getServerLocale } from "@/lib/i18n/server";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { t } from "@/lib/i18n/locale";
 
 const NAV = [
   { href: "/", label: "Inicio" },
@@ -15,6 +18,7 @@ const NAV = [
 
 export async function LandingHeader() {
   const { logoUrl } = await getBrandAssets();
+  const locale = await getServerLocale();
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-3">
@@ -39,17 +43,18 @@ export async function LandingHeader() {
         </nav>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitcher initial={locale} />
           <Link
             href={CTAS.login.href}
             className="hidden rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 sm:inline-block"
           >
-            {CTAS.login.label}
+            {t("nav.login", locale)}
           </Link>
           <Link
             href={CTAS.certify.href}
             className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white shadow-sm"
           >
-            {CTAS.certify.label}
+            {t("cta.start", locale)}
           </Link>
         </div>
       </div>
