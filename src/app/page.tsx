@@ -18,7 +18,7 @@ import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
 import { getMarketingConfig } from "@/lib/marketing-config";
 import { getBrandAssets } from "@/lib/brand-assets";
 import { getServerLocale } from "@/lib/i18n/server";
-import { t } from "@/lib/i18n/locale";
+import { t, type Locale } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
   title: "Certificación profesional que abre puertas — RISKS INTERNATIONAL",
@@ -37,12 +37,14 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image" },
 };
 
-function trustMetrics(m: Awaited<ReturnType<typeof getMarketingConfig>>) {
+type Tr = (k: string) => string;
+
+function trustMetrics(m: Awaited<ReturnType<typeof getMarketingConfig>>, tr: Tr) {
   return [
-    { value: m.socialProof.professionalsCertified, label: "profesionales certificados" },
-    { value: m.socialProof.companiesTrust, label: "empresas confían en RISKS" },
-    { value: m.socialProof.avgScore, label: "puntaje promedio de aprobación" },
-    { value: m.socialProof.daysToIssue, label: "días hábiles para emitir el certificado" },
+    { value: m.socialProof.professionalsCertified, label: tr("trust.professionals") },
+    { value: m.socialProof.companiesTrust, label: tr("trust.companies") },
+    { value: m.socialProof.avgScore, label: tr("trust.avgScore") },
+    { value: m.socialProof.daysToIssue, label: tr("trust.daysToIssue") },
   ];
 }
 
@@ -51,211 +53,150 @@ function trustMetrics(m: Awaited<ReturnType<typeof getMarketingConfig>>) {
  * Cada card responde una pregunta concreta que el candidato se hace antes
  * de pagar: ¿qué me cambia esto en mi carrera?
  */
-const BENEFITS: Array<{
+function buildBenefits(tr: Tr): Array<{
   icon: keyof typeof Icon;
   title: string;
   desc: string;
   callout?: string;
-}> = [
-  {
-    icon: "ChartUp",
-    title: "Negocie su próximo salario con argumentos",
-    desc:
-      "Llegar a la revisión con un certificado bajo ISO/IEC 17024 no es lo mismo que llegar con buena voluntad. Tiene cómo sustentar lo que pide.",
-    callout: "Salario",
-  },
-  {
-    icon: "Briefcase",
-    title: "Quede en la lista corta de las vacantes top",
-    desc:
-      "Las empresas vigiladas necesitan oficiales con competencias demostrables. Reclutadores filtran por credencial — usted ya está del lado correcto del filtro.",
-    callout: "Empleabilidad",
-  },
-  {
-    icon: "Rocket",
-    title: "Salte al siguiente cargo más rápido",
-    desc:
-      "De analista a oficial. De oficial a líder. La credencial es el empujón que faltaba para que su jefe — o el de la otra empresa — diga sí.",
-    callout: "Promoción",
-  },
-  {
-    icon: "Linkedin",
-    title: "Su LinkedIn deja de ser uno más",
-    desc:
-      "Sube el diploma con QR público. Cualquier reclutador escanea, valida en 10 segundos y le llega un mensaje. Pasa de buscar trabajo a recibir ofertas.",
-    callout: "Visibilidad",
-  },
-  {
-    icon: "BadgeCheck",
-    title: "Demuestre el conocimiento que ya tiene",
-    desc:
-      "Lleva años haciendo el trabajo bien. Ahora hay un documento formal — emitido bajo norma internacional — que respalda lo que usted ya sabe.",
-    callout: "Reconocimiento",
-  },
-  {
-    icon: "Sparkles",
-    title: "Crezca con respaldo, no con suerte",
-    desc:
-      "Recordatorios de vencimiento, recertificación con un clic, histórico permanente. Su carrera no se queda colgada del azar — queda registrada en una credencial viva.",
-    callout: "Continuidad",
-  },
-];
+}> {
+  return [
+    { icon: "ChartUp", title: tr("benefit.salary.title"), desc: tr("benefit.salary.desc"), callout: tr("benefit.salary.callout") },
+    { icon: "Briefcase", title: tr("benefit.shortlist.title"), desc: tr("benefit.shortlist.desc"), callout: tr("benefit.shortlist.callout") },
+    { icon: "Rocket", title: tr("benefit.promotion.title"), desc: tr("benefit.promotion.desc"), callout: tr("benefit.promotion.callout") },
+    { icon: "Linkedin", title: tr("benefit.linkedin.title"), desc: tr("benefit.linkedin.desc"), callout: tr("benefit.linkedin.callout") },
+    { icon: "BadgeCheck", title: tr("benefit.recognition.title"), desc: tr("benefit.recognition.desc"), callout: tr("benefit.recognition.callout") },
+    { icon: "Sparkles", title: tr("benefit.continuity.title"), desc: tr("benefit.continuity.desc"), callout: tr("benefit.continuity.callout") },
+  ];
+}
 
-const STEPS = [
-  { n: "01", title: "Crea tu cuenta", desc: "Correo, datos personales y autorización de tratamiento. Tres campos." },
-  { n: "02", title: "Elige tu certificación", desc: "Programa alineado al cargo o al rol que ocupas hoy." },
-  { n: "03", title: "Paga con seguridad", desc: "Tarjeta, PSE o transferencia con confirmación. Nada avanza sin recibo." },
-  { n: "04", title: "Carga tus documentos", desc: "Hoja de vida, cédula y foto. Los revisa una persona real, no una IA." },
-  { n: "05", title: "Agenda la prueba", desc: "Tú escoges la fecha y la hora del examen." },
-  { n: "06", title: "Presenta la evaluación", desc: "Online, con tiempo controlado y reglas de integridad declaradas." },
-  { n: "07", title: "Recibe tu resultado", desc: "Calificación automática; revisión por comité cuando aplique." },
-  { n: "08", title: "Descarga tu diploma", desc: "PDF con QR, sello dorado y datos formales para imprimir." },
-  { n: "09", title: "Comparte el código", desc: "Cualquier tercero verifica tu certificado desde nuestra web." },
-  { n: "10", title: "Recertifícate a tiempo", desc: "Te avisamos antes del vencimiento. Sin sorpresas." },
-];
+function buildSteps(tr: Tr) {
+  return [
+    { n: "01", title: tr("step.01.title"), desc: tr("step.01.desc") },
+    { n: "02", title: tr("step.02.title"), desc: tr("step.02.desc") },
+    { n: "03", title: tr("step.03.title"), desc: tr("step.03.desc") },
+    { n: "04", title: tr("step.04.title"), desc: tr("step.04.desc") },
+    { n: "05", title: tr("step.05.title"), desc: tr("step.05.desc") },
+    { n: "06", title: tr("step.06.title"), desc: tr("step.06.desc") },
+    { n: "07", title: tr("step.07.title"), desc: tr("step.07.desc") },
+    { n: "08", title: tr("step.08.title"), desc: tr("step.08.desc") },
+    { n: "09", title: tr("step.09.title"), desc: tr("step.09.desc") },
+    { n: "10", title: tr("step.10.title"), desc: tr("step.10.desc") },
+  ];
+}
 
 /** Diferenciadores frente a "cursos online genéricos" o constancias internas. */
-const COMPARISON: Array<{ axis: string; them: string; us: string }> = [
-  { axis: "Verificación pública", them: "PDF con un código que nadie valida", us: "QR + página pública con firma y vigencia" },
-  { axis: "Control del examen", them: "Trivia con respuestas a la vista del navegador", us: "Marca de agua, tiempo por pregunta, anti-screenshot" },
-  { axis: "Norma de referencia", them: "Sin estándar declarado", us: "Estructurado bajo ISO/IEC 17024" },
-  { axis: "Revisión humana", them: "Todo automático, sin contraste", us: "Comité evaluador en casos prácticos y apelaciones" },
-  { axis: "Vencimiento", them: "Sin recordatorio (caduca y nadie avisa)", us: "Avisos 90/60/30 días + recertificación con un clic" },
-  { axis: "Continuidad", them: "Si la plataforma cierra, su certificado desaparece", us: "Histórico permanente verificable mientras exista el dominio" },
-];
+function buildComparison(tr: Tr): Array<{ axis: string; them: string; us: string }> {
+  return [
+    { axis: tr("comp.pub.axis"), them: tr("comp.pub.them"), us: tr("comp.pub.us") },
+    { axis: tr("comp.exam.axis"), them: tr("comp.exam.them"), us: tr("comp.exam.us") },
+    { axis: tr("comp.norm.axis"), them: tr("comp.norm.them"), us: tr("comp.norm.us") },
+    { axis: tr("comp.human.axis"), them: tr("comp.human.them"), us: tr("comp.human.us") },
+    { axis: tr("comp.expiry.axis"), them: tr("comp.expiry.them"), us: tr("comp.expiry.us") },
+    { axis: tr("comp.continuity.axis"), them: tr("comp.continuity.them"), us: tr("comp.continuity.us") },
+  ];
+}
 
 const FEATURED_CERTS = CERTIFICATIONS.slice(0, 4);
 
-const HOME_FAQ = [
-  { q: "¿Qué es una certificación de competencias?", a: "Es el proceso mediante el cual una entidad evalúa formalmente si una persona cumple con los conocimientos y habilidades de un perfil profesional, bajo los principios de la norma ISO/IEC 17024. Al aprobarlo, recibe un certificado verificable." },
-  { q: "¿Cómo puedo certificarme con RISKS INTERNATIONAL?", a: "Crea tu cuenta, elige la certificación de tu interés, paga la inscripción, agenda y presenta la evaluación en línea. Si apruebas, descargas tu diploma con código único y QR." },
-  { q: "¿Las pruebas son virtuales?", a: "Sí. Todas las evaluaciones se presentan en una plataforma digital segura, con tiempo controlado, registro de presentación y reglas de antifraude básico." },
-  { q: "¿El certificado se puede verificar en línea?", a: "Sí. Cada certificado tiene un código único y QR que cualquier persona puede validar públicamente desde la página de verificación." },
-  { q: "¿Cuánto tiempo tiene vigencia la certificación?", a: "Los programas principales tienen una vigencia de 3 años. Antes del vencimiento recibirás recordatorios para iniciar la recertificación." },
-];
+function buildHomeFaq(tr: Tr) {
+  return [
+    { q: tr("faq.q1.q"), a: tr("faq.q1.a") },
+    { q: tr("faq.q2.q"), a: tr("faq.q2.a") },
+    { q: tr("faq.q3.q"), a: tr("faq.q3.a") },
+    { q: tr("faq.q4.q"), a: tr("faq.q4.a") },
+    { q: tr("faq.q5.q"), a: tr("faq.q5.a") },
+  ];
+}
 
 /** Testimonios redactados con foco en outcome de carrera concreto: ascenso,
  *  aumento, mejor oferta, postulación ganada. Sin apellidos completos por
- *  privacidad — el formato "Nombre L. · Cargo · Sector · Outcome" se
- *  siente real sin fabricar identidades verificables. */
-const TESTIMONIALS = [
-  {
-    quote:
-      "Lo subí al LinkedIn un martes. El jueves siguiente me escribió una head-hunter para una vacante en banca. Tres semanas después estaba firmando contrato — con 28 % más de lo que ganaba.",
-    name: "Carolina M.",
-    role: "Oficial de cumplimiento",
-    sector: "Sector financiero",
-    outcome: "+28 % en su nuevo salario",
-    initial: "CM",
-  },
-  {
-    quote:
-      "Llevaba dos años pidiendo el ascenso a líder del área. Llegué a la reunión de evaluación con el diploma y el código QR impreso. No tuvieron mucho que decir — me lo dieron esa misma semana.",
-    name: "Andrés P.",
-    role: "De analista a líder SARLAFT",
-    sector: "Cooperativa financiera",
-    outcome: "Ascenso en 7 días",
-    initial: "AP",
-  },
-  {
-    quote:
-      "Soy consultora independiente. Antes mandaba 20 propuestas para cerrar una. Ahora mando 5 y firmo 2. Mis clientes ven el QR, me validan, y eso ya cierra la conversación de credibilidad.",
-    name: "Diana R.",
-    role: "Consultora",
-    sector: "Compliance LA/FT",
-    outcome: "Tasa de cierre 4× mayor",
-    initial: "DR",
-  },
-];
+ *  privacidad. */
+function buildTestimonials(tr: Tr) {
+  return [
+    {
+      quote: tr("testimonial.carolina.quote"),
+      name: "Carolina M.",
+      role: tr("testimonial.carolina.role"),
+      sector: tr("testimonial.carolina.sector"),
+      outcome: tr("testimonial.carolina.outcome"),
+      initial: "CM",
+    },
+    {
+      quote: tr("testimonial.andres.quote"),
+      name: "Andrés P.",
+      role: tr("testimonial.andres.role"),
+      sector: tr("testimonial.andres.sector"),
+      outcome: tr("testimonial.andres.outcome"),
+      initial: "AP",
+    },
+    {
+      quote: tr("testimonial.diana.quote"),
+      name: "Diana R.",
+      role: tr("testimonial.diana.role"),
+      sector: tr("testimonial.diana.sector"),
+      outcome: tr("testimonial.diana.outcome"),
+      initial: "DR",
+    },
+  ];
+}
 
-/** Personas-tipo a las que la certificación les rinde inmediato. Cada card
- *  habla en segunda persona y termina con una promesa concreta. */
-const PERSONAS: Array<{
+/** Personas-tipo a las que la certificación les rinde inmediato. */
+function buildPersonas(tr: Tr): Array<{
   icon: keyof typeof Icon;
   who: string;
   pain: string;
   promise: string;
-}> = [
-  {
-    icon: "Briefcase",
-    who: "Oficial de Cumplimiento",
-    pain: "Tu jefe te pide soporte formal antes de la próxima visita de la Súper.",
-    promise: "Llegas con el certificado bajo norma internacional. Pregunta cerrada.",
-  },
-  {
-    icon: "ChartUp",
-    who: "Analista que quiere subir",
-    pain: "Sabes hacerlo, pero en el CV se ve igual al de los demás analistas.",
-    promise: "Una credencial verificable te pone arriba de la pila en RR.HH.",
-  },
-  {
-    icon: "Handshake",
-    who: "Consultor o consultora",
-    pain: "Cada cliente nuevo te pide demostrar credibilidad desde cero.",
-    promise: "El QR cierra la conversación de confianza antes de la primera reunión.",
-  },
-  {
-    icon: "Sparkles",
-    who: "Profesional en transición",
-    pain: "Estás cambiando de sector — necesitas una credencial que abra puertas hoy.",
-    promise: "Una semana hábil y ya tienes algo que mostrar al empleador objetivo.",
-  },
-];
+}> {
+  return [
+    { icon: "Briefcase", who: tr("persona.officer.who"), pain: tr("persona.officer.pain"), promise: tr("persona.officer.promise") },
+    { icon: "ChartUp", who: tr("persona.analyst.who"), pain: tr("persona.analyst.pain"), promise: tr("persona.analyst.promise") },
+    { icon: "Handshake", who: tr("persona.consultant.who"), pain: tr("persona.consultant.pain"), promise: tr("persona.consultant.promise") },
+    { icon: "Sparkles", who: tr("persona.transition.who"), pain: tr("persona.transition.pain"), promise: tr("persona.transition.promise") },
+  ];
+}
 
 /** Inventario de lo que recibe el candidato — UX de "unboxing". */
-const DELIVERABLES: Array<{
+function buildDeliverables(tr: Tr): Array<{
   icon: keyof typeof Icon;
   title: string;
   detail: string;
-}> = [
-  {
-    icon: "Diploma",
-    title: "Diploma digital en PDF",
-    detail: "Tamaño carta, formato horizontal, sello dorado, código único, firma autorizada. Para imprimir y enmarcar.",
-  },
-  {
-    icon: "QR",
-    title: "Código + QR de verificación pública",
-    detail: "Página propia en okacreditado.com/verificar/{su-código} que cualquier tercero abre desde el celular.",
-  },
-  {
-    icon: "BadgeCheck",
-    title: "Insignia para LinkedIn y firma",
-    detail: "Imagen verificable para perfil profesional, hoja de vida y firma de correo. Lista para descargar.",
-  },
-  {
-    icon: "Archive",
-    title: "Carpeta de evidencias propia",
-    detail: "Documentos cargados, resultados del examen, fecha de presentación, IP, comité revisor — todo trazado y descargable.",
-  },
-  {
-    icon: "Bell",
-    title: "Recordatorios de vigencia",
-    detail: "Avisos 90, 60 y 30 días antes del vencimiento, por correo. La carrera no se pausa por una fecha que se le pasó.",
-  },
-  {
-    icon: "Refresh",
-    title: "Recertificación con un clic",
-    detail: "Cuando toque renovar, no empieza de cero. El sistema reconoce su histórico y le pide solo lo nuevo.",
-  },
-];
+}> {
+  return [
+    { icon: "Diploma", title: tr("deliverable.diploma.title"), detail: tr("deliverable.diploma.detail") },
+    { icon: "QR", title: tr("deliverable.qr.title"), detail: tr("deliverable.qr.detail") },
+    { icon: "BadgeCheck", title: tr("deliverable.badge.title"), detail: tr("deliverable.badge.detail") },
+    { icon: "Archive", title: tr("deliverable.evidence.title"), detail: tr("deliverable.evidence.detail") },
+    { icon: "Bell", title: tr("deliverable.bell.title"), detail: tr("deliverable.bell.detail") },
+    { icon: "Refresh", title: tr("deliverable.recert.title"), detail: tr("deliverable.recert.detail") },
+  ];
+}
 
-/** ROI — datos concretos para que el candidato calcule si vale la pena.
- *  Cifras del mercado colombiano público (encuestas salariales 2024-2026
- *  de portales como ComputrabajoCO, Indeed y reportes Adecco LATAM). */
-const ROI: Array<{ label: string; value: string; hint: string }> = [
-  { label: "Diferencia salarial promedio con certificación", value: "+22 %", hint: "Oficial de cumplimiento certificado vs. no certificado · Colombia 2025" },
-  { label: "Tiempo entre certificarse y nueva oferta", value: "≤ 60 días", hint: "Mediana reportada por egresados que comparten en LinkedIn" },
-  { label: "Recuperación de la inversión", value: "1 mes", hint: "Con el primer aumento o el primer cliente cerrado, queda paga" },
-  { label: "Vida útil de la credencial", value: "3 años", hint: "Con recertificación asistida, sin tener que volver a empezar" },
-];
+/** ROI — datos concretos para que el candidato calcule si vale la pena. */
+function buildRoi(tr: Tr): Array<{ label: string; value: string; hint: string }> {
+  return [
+    { label: tr("roi.salary.label"), value: tr("roi.salary.value"), hint: tr("roi.salary.hint") },
+    { label: tr("roi.time.label"), value: tr("roi.time.value"), hint: tr("roi.time.hint") },
+    { label: tr("roi.payback.label"), value: tr("roi.payback.value"), hint: tr("roi.payback.hint") },
+    { label: tr("roi.life.label"), value: tr("roi.life.value"), hint: tr("roi.life.hint") },
+  ];
+}
 
 export default async function HomePage() {
   const { logoUrl } = await getBrandAssets();
   const marketing = await getMarketingConfig();
-  const TRUST_METRICS = trustMetrics(marketing);
-  const locale = await getServerLocale();
+  const locale: Locale = await getServerLocale();
   const tr = (k: string) => t(k, locale);
+
+  // Builders dependientes del locale — se invocan una vez por render.
+  const TRUST_METRICS = trustMetrics(marketing, tr);
+  const BENEFITS = buildBenefits(tr);
+  const STEPS = buildSteps(tr);
+  const COMPARISON = buildComparison(tr);
+  const HOME_FAQ = buildHomeFaq(tr);
+  const TESTIMONIALS = buildTestimonials(tr);
+  const PERSONAS = buildPersonas(tr);
+  const DELIVERABLES = buildDeliverables(tr);
+  const ROI = buildRoi(tr);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -337,20 +278,20 @@ export default async function HomePage() {
                 <CertificateMock />
               </div>
               <div className="absolute -left-3 bottom-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 xl:block">
-                <div className="text-[10px] uppercase tracking-wider text-slate-400">Estado</div>
-                <div className="text-sm font-bold text-emerald-700">✓ Verificado</div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">{tr("land.hero.mock.status")}</div>
+                <div className="text-sm font-bold text-emerald-700">{tr("land.hero.mock.statusValue")}</div>
               </div>
               <div className="absolute -right-2 top-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 xl:block">
-                <div className="text-[10px] uppercase tracking-wider text-slate-400">Vigencia</div>
-                <div className="text-sm font-bold text-brand-800">3 años</div>
+                <div className="text-[10px] uppercase tracking-wider text-slate-400">{tr("land.hero.mock.validity")}</div>
+                <div className="text-sm font-bold text-brand-800">{tr("land.hero.mock.validityValue")}</div>
               </div>
             </div>
-            <HeroMicroForm />
+            <HeroMicroForm locale={locale} />
           </div>
 
           {/* Microformulario también en mobile bajo el hero */}
           <div className="lg:hidden">
-            <HeroMicroForm />
+            <HeroMicroForm locale={locale} />
           </div>
         </div>
       </section>
@@ -360,17 +301,13 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-14">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-              Lo que respalda este diploma
+              {tr("land.trust.eyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">
-              <span className="font-display">Más de una década</span> sosteniendo
-              sistemas de prevención y cumplimiento en empresas reales
+              <span className="font-display">{tr("land.trust.title.1")}</span> {tr("land.trust.title.2")}
             </h2>
             <p className="mt-3 text-sm text-slate-600 sm:text-base">
-              No somos una academia que decidió un día emitir certificados.
-              Llevamos doce años operando SARLAFT, SAGRILAFT y debida
-              diligencia desde adentro — esa experiencia es la que se traduce
-              en este programa.
+              {tr("land.trust.body")}
             </p>
           </div>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
@@ -389,16 +326,14 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-              ¿Es esto para usted?
+              {tr("land.personas.eyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
-              <span className="font-display italic">Hecho para</span>{" "}
-              cuatro perfiles que ya conocemos bien
+              <span className="font-display italic">{tr("land.personas.title.1")}</span>{" "}
+              {tr("land.personas.title.2")}
             </h2>
             <p className="mt-3 text-[15px] text-slate-600">
-              Llevamos doce años trabajando con estos cargos. Sabemos qué
-              piden los jefes, qué filtran los reclutadores y qué pesa en una
-              negociación salarial. Por eso esto está hecho como está.
+              {tr("land.personas.body")}
             </p>
           </div>
 
@@ -424,11 +359,11 @@ export default async function HomePage() {
           </div>
 
           <p className="mx-auto mt-10 max-w-2xl text-center text-[13px] italic text-slate-500">
-            ¿No se reconoce exactamente en ninguno? Probablemente sí encaja —{" "}
+            {tr("land.personas.foot.before")}
             <Link href={CTAS.contact.href} className="font-semibold text-brand-800 not-italic hover:underline">
-              escríbanos y vemos
-            </Link>{" "}
-            qué certificación se ajusta a su rol.
+              {tr("land.personas.foot.link")}
+            </Link>
+            {tr("land.personas.foot.after")}
           </p>
         </div>
       </section>
@@ -438,17 +373,15 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-16">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">Catálogo activo</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">{tr("land.catalog.eyebrow")}</p>
               <h2 className="mt-1 text-2xl font-bold text-brand-900 sm:text-3xl">
-                Programas alineados al cargo que ya ocupas
+                {tr("land.catalog.title")}
               </h2>
               <p className="mt-2 max-w-2xl text-sm text-slate-600">
-                Cada certificación responde a una norma de referencia y a un
-                cargo real del sector. No vendemos cursos: acreditamos
-                competencias.
+                {tr("land.catalog.body")}
               </p>
             </div>
-            <Link href="/certificaciones" className="text-sm font-semibold text-brand-800 hover:text-brand-900">Ver catálogo completo →</Link>
+            <Link href="/certificaciones" className="text-sm font-semibold text-brand-800 hover:text-brand-900">{tr("land.catalog.link")}</Link>
           </div>
 
           <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -460,7 +393,7 @@ export default async function HomePage() {
                   <div className="flex items-start justify-between gap-2">
                     <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800">{c.category}</span>
                     {isComing ? (
-                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200">Próximamente</span>
+                      <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 ring-1 ring-amber-200">{tr("land.cert.comingSoon")}</span>
                     ) : (
                       <span className="text-[10px] uppercase tracking-wider text-slate-400">{c.level}</span>
                     )}
@@ -468,22 +401,22 @@ export default async function HomePage() {
                   <h3 className="mt-3 text-base font-bold leading-snug text-brand-900">{c.shortName}</h3>
                   <p className="mt-2 line-clamp-3 text-xs leading-relaxed text-slate-600">{c.description}</p>
                   <dl className="mt-4 grid grid-cols-2 gap-x-2 gap-y-1 text-[11px] text-slate-500">
-                    <dt>Duración</dt><dd className="text-right font-semibold text-slate-700">{c.durationMin} min</dd>
-                    <dt>Vigencia</dt><dd className="text-right font-semibold text-slate-700">{Math.round(c.validityMonths / 12)} años</dd>
-                    <dt>Inversión</dt><dd className="text-right font-bold text-brand-800">{c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : "Consultar"}</dd>
+                    <dt>{tr("land.cert.duration")}</dt><dd className="text-right font-semibold text-slate-700">{c.durationMin} {tr("land.cert.min")}</dd>
+                    <dt>{tr("land.cert.validity")}</dt><dd className="text-right font-semibold text-slate-700">{Math.round(c.validityMonths / 12)} {tr("land.cert.years")}</dd>
+                    <dt>{tr("land.cert.investment")}</dt><dd className="text-right font-bold text-brand-800">{c.priceCOP ? `${formatCOP(c.priceCOP)} + IVA` : tr("land.cert.consult")}</dd>
                   </dl>
                   <div className="mt-4 flex items-center justify-between gap-2">
-                    <Link href={`/certificaciones/${c.slug}`} className="text-xs font-semibold text-brand-800 hover:underline">Ver detalles</Link>
+                    <Link href={`/certificaciones/${c.slug}`} className="text-xs font-semibold text-brand-800 hover:underline">{tr("land.cert.details")}</Link>
                     {isComing ? (
                       <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-amber-300 bg-white px-3 py-1.5 text-xs font-semibold text-amber-700 hover:bg-amber-50">
-                        Notificarme
+                        {tr("land.cert.notifyMe")}
                       </Link>
                     ) : isOnRequest ? (
                       <Link href={`/contacto?cert=${c.slug}`} className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                        Solicitar info
+                        {tr("land.cert.requestInfo")}
                       </Link>
                     ) : (
-                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white">Inscribirme</Link>
+                      <Link href={`/registro?cert=${c.slug}`} className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white">{tr("land.cert.enroll")}</Link>
                     )}
                   </div>
                 </article>
@@ -499,18 +432,15 @@ export default async function HomePage() {
           <div className="grid items-end gap-6 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-                Lo que cambia en su carrera el día que se certifica
+                {tr("land.benefits.eyebrow")}
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
-                Seis cosas concretas que pasan{" "}
-                <span className="font-display italic">después</span> del diploma
+                {tr("land.benefits.title.1")}{" "}
+                <span className="font-display italic">{tr("land.benefits.title.2")}</span> {tr("land.benefits.title.3")}
               </h2>
             </div>
             <p className="text-sm leading-relaxed text-slate-600 lg:col-span-5">
-              Esta no es la lista corporativa habitual. Cada punto responde a
-              un momento real que vivirá: la negociación de aumento, la
-              postulación grande, el mensaje del head-hunter, el cliente que
-              le pide credibilidad.
+              {tr("land.benefits.body")}
             </p>
           </div>
 
@@ -547,18 +477,15 @@ export default async function HomePage() {
           <div className="grid items-end gap-6 lg:grid-cols-12">
             <div className="lg:col-span-7">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-                Qué se lleva a casa el día de la emisión
+                {tr("land.deliv.eyebrow")}
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
-                No es solo un PDF. Es{" "}
-                <span className="font-display italic">un kit completo</span> de
-                credibilidad profesional.
+                {tr("land.deliv.title.1")}{" "}
+                <span className="font-display italic">{tr("land.deliv.title.2")}</span> {tr("land.deliv.title.3")}
               </h2>
             </div>
             <p className="text-sm leading-relaxed text-slate-600 lg:col-span-5">
-              Todo lo que necesita para que reclutadores, empleadores,
-              clientes y entes de control validen su perfil en segundos —
-              entregado en su correo el mismo día de la aprobación.
+              {tr("land.deliv.body")}
             </p>
           </div>
 
@@ -589,15 +516,14 @@ export default async function HomePage() {
 
           <div className="mt-10 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 px-5 py-4">
             <p className="text-[13.5px] text-emerald-900">
-              <strong className="font-bold">Todo digital, todo verificable.</strong>{" "}
-              Sin pasar por una oficina, sin fotocopias, sin sellos físicos.
-              Su credencial vive en internet y la actualizamos por usted.
+              <strong className="font-bold">{tr("land.deliv.note.bold")}</strong>
+              {tr("land.deliv.note.rest")}
             </p>
             <Link
               href={CTAS.certify.href}
               className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800"
             >
-              Quiero mi kit completo →
+              {tr("land.deliv.cta")}
             </Link>
           </div>
         </div>
@@ -608,25 +534,23 @@ export default async function HomePage() {
         <div className="mx-auto max-w-5xl px-6 py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-              Por qué no es lo mismo
+              {tr("land.comp.eyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.1rem]">
-              <span className="font-display italic">Diploma colgado en la pared</span>{" "}
-              vs. credencial que aguanta una auditoría
+              <span className="font-display italic">{tr("land.comp.title.1")}</span>{" "}
+              {tr("land.comp.title.2")}
             </h2>
             <p className="mt-3 text-[15px] text-slate-600">
-              Hay muchos cursos. Muy pocos terminan en algo que un auditor de
-              la Súper, un cliente nuevo o un reclutador puedan verificar
-              ellos mismos. Esta es la diferencia, punto por punto.
+              {tr("land.comp.body")}
             </p>
           </div>
 
           <div className="mt-10 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="grid grid-cols-12 border-b border-slate-200 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-              <div className="col-span-12 px-4 py-3 sm:col-span-4 sm:py-4">Criterio</div>
-              <div className="col-span-6 px-4 py-3 sm:col-span-4 sm:py-4">Curso o constancia común</div>
+              <div className="col-span-12 px-4 py-3 sm:col-span-4 sm:py-4">{tr("comp.col.criterion")}</div>
+              <div className="col-span-6 px-4 py-3 sm:col-span-4 sm:py-4">{tr("comp.col.them")}</div>
               <div className="col-span-6 border-l border-slate-200 px-4 py-3 text-brand-800 sm:col-span-4 sm:py-4">
-                Certificación CIOC · {BRAND.shortName}
+                {tr("comp.col.us.prefix")} {BRAND.shortName}
               </div>
             </div>
             <ul>
@@ -656,8 +580,7 @@ export default async function HomePage() {
           </div>
 
           <p className="mt-5 text-center text-xs italic text-slate-500">
-            Si su programa actual tiene todas las columnas verdes, perfecto.
-            Si no — hablemos.
+            {tr("land.comp.footer")}
           </p>
         </div>
       </section>
@@ -667,26 +590,18 @@ export default async function HomePage() {
         <div className="mx-auto max-w-4xl px-6 py-20">
           <div className="rounded-3xl border border-slate-200 bg-white p-8 shadow-premium sm:p-12">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-              Carta abierta del equipo
+              {tr("land.letter.eyebrow")}
             </p>
             <h2 className="mt-3 font-display text-[1.9rem] leading-[1.18] text-brand-900 sm:text-[2.4rem]">
-              &ldquo;Construimos esto porque a nosotros nos hizo falta
-              cuando empezamos.&rdquo;
+              {tr("land.letter.quote")}
             </h2>
 
             <div className="mt-8 grid gap-6 text-[15px] leading-relaxed text-slate-700 sm:grid-cols-2">
               <p>
-                Durante años acompañamos a oficiales de cumplimiento que
-                hacían bien su trabajo, pero no tenían cómo demostrarlo
-                cuando llegaba una nueva visita de la Súper, un cambio de
-                empleador o una postulación grande. El conocimiento estaba.
-                El soporte formal, no.
+                {tr("land.letter.p1")}
               </p>
               <p>
-                Esta plataforma es nuestra respuesta. Una credencial digital,
-                construida bajo {BRAND.isoNorm}, con examen serio, QR
-                público y vigencia controlada — para que el trabajo bien
-                hecho no se pierda en una hoja sin sello.
+                {tr("land.letter.p2.before")}{BRAND.isoNorm}{tr("land.letter.p2.after")}
               </p>
             </div>
 
@@ -694,11 +609,11 @@ export default async function HomePage() {
 
             <div className="flex flex-wrap items-end justify-between gap-4">
               <div>
-                <p className="handwritten text-[28px] leading-none text-brand-900">Equipo {BRAND.shortName}</p>
-                <p className="mt-1 text-xs text-slate-500">Compliance · SARLAFT · SAGRILAFT · Debida diligencia · {BRAND.address}</p>
+                <p className="handwritten text-[28px] leading-none text-brand-900">{tr("land.letter.signLabel")} {BRAND.shortName}</p>
+                <p className="mt-1 text-xs text-slate-500">{tr("land.letter.signSub")}{BRAND.address}</p>
               </div>
               <Link href={CTAS.contact.href} className="inline-flex items-center gap-2 text-sm font-semibold text-brand-800 hover:text-brand-900">
-                <Icon.Handshake size={18} /> Hablar con nosotros
+                <Icon.Handshake size={18} /> {tr("land.letter.contactCta")}
               </Link>
             </div>
           </div>
@@ -710,20 +625,19 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-              Cómo funciona, sin letra menuda
+              {tr("land.process.eyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">
-              Diez pasos desde &ldquo;quiero certificarme&rdquo; hasta el QR en el LinkedIn
+              {tr("land.process.title")}
             </h2>
             <p className="mt-3 text-sm text-slate-600">
-              Tiempo total medio: una semana hábil. Sin filas, sin
-              fotocopias, sin viajar.
+              {tr("land.process.body")}
             </p>
           </div>
           <ol className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
             {STEPS.map((s) => (
               <li key={s.n} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-brand-200 hover:shadow-premium">
-                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-600">Paso {s.n}</div>
+                <div className="text-[10px] font-bold uppercase tracking-[0.18em] text-gold-600">{tr("land.process.stepLabel")} {s.n}</div>
                 <div className="mt-1 text-sm font-bold text-brand-900">{s.title}</div>
                 <p className="mt-1 text-xs leading-relaxed text-slate-500">{s.desc}</p>
               </li>
@@ -742,24 +656,21 @@ export default async function HomePage() {
       <section className="bg-white">
         <div className="mx-auto grid max-w-6xl items-center gap-10 px-6 py-16 lg:grid-cols-2">
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">Examen, no formulario</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">{tr("land.examPrev.eyebrow")}</p>
             <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">
-              Si la prueba es seria, el certificado pesa
+              {tr("land.examPrev.title")}
             </h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-600 sm:text-base">
-              Cada candidato presenta sobre un banco aleatorio de preguntas, con
-              su nombre marcado en pantalla, tiempo por pregunta y registro de
-              todo lo que pasa durante el examen. No es trivia: es evaluación
-              real.
+              {tr("land.examPrev.body")}
             </p>
             <ul className="mt-6 space-y-3 text-sm">
               {[
-                ["Bolt", "Preguntas aleatorias por banco y nivel de dificultad"],
-                ["Clock", "Tiempo controlado con guardado automático"],
-                ["Check", "Calificación automática + manual con rúbricas"],
-                ["Lock", "Marca de agua personal + bloqueo de PrintScreen"],
-                ["Eye", "Registro de salidas de pantalla y foco"],
-                ["Handshake", "Revisión por evaluador y comité cuando aplique"],
+                ["Bolt", tr("land.examPrev.f1")],
+                ["Clock", tr("land.examPrev.f2")],
+                ["Check", tr("land.examPrev.f3")],
+                ["Lock", tr("land.examPrev.f4")],
+                ["Eye", tr("land.examPrev.f5")],
+                ["Handshake", tr("land.examPrev.f6")],
               ].map(([k, txt]) => {
                 const I = Icon[k as keyof typeof Icon];
                 return (
@@ -804,17 +715,13 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-block rounded-full border border-gold-500 bg-white px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-gold-600">
-              Diploma final
+              {tr("land.gallery.badge")}
             </span>
             <h2 className="mt-3 text-2xl font-bold text-brand-900 sm:text-3xl">
-              <span className="font-display italic">Diseñado para imprimirlo</span> y
-              enmarcarlo — o para colgarlo en su firma de correo
+              <span className="font-display italic">{tr("land.gallery.title.1")}</span> {tr("land.gallery.title.2")}
             </h2>
             <p className="mt-3 text-[15px] text-slate-600">
-              Cada certificado emitido por {BRAND.shortName} S.A.S. lleva
-              código único, QR de verificación, firma autorizada y la marca
-              institucional. Inspira confianza ante empleadores, clientes y
-              autoridades.
+              {tr("land.gallery.body.before")}{BRAND.shortName}{tr("land.gallery.body.after")}
             </p>
           </div>
           <div className="mt-12">
@@ -835,26 +742,24 @@ export default async function HomePage() {
       <section id="verificar" className="bg-white">
         <div className="mx-auto max-w-3xl px-6 py-16 text-center">
           <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-800">
-            <Icon.QR size={12} /> Verificación pública abierta
+            <Icon.QR size={12} /> {tr("land.verify.badge")}
           </span>
           <h2 className="mt-3 text-2xl font-bold text-brand-900 sm:text-3xl">
-            ¿Le pasaron un certificado? Confírmelo en diez segundos
+            {tr("land.verify.title")}
           </h2>
           <p className="mt-2 text-sm text-slate-600">
-            Empresas, empleadores, clientes y entes de control validan
-            cualquier certificado emitido por {BRAND.shortName} con solo el
-            código o el QR del documento.
+            {tr("land.verify.body.before")}{BRAND.shortName}{tr("land.verify.body.after")}
           </p>
           <form action="/verificar" method="get" className="mx-auto mt-6 flex max-w-md flex-col gap-2 sm:flex-row">
             <input
               name="code"
               required
-              placeholder="Ingrese el código (p. ej. CERT-2026-XXXX)"
+              placeholder={tr("land.verify.placeholder")}
               className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-800 outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
             />
-            <button type="submit" className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white">Verificar</button>
+            <button type="submit" className="rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white">{tr("land.verify.btn")}</button>
           </form>
-          <p className="mt-3 text-xs text-slate-400">También puede escanear el QR impreso en el diploma.</p>
+          <p className="mt-3 text-xs text-slate-400">{tr("land.verify.alt")}</p>
         </div>
       </section>
 
@@ -863,27 +768,25 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="grid gap-10 lg:grid-cols-3">
             <div className="lg:col-span-1">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">Vigencia bajo control</p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">{tr("land.recert.eyebrow")}</p>
               <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">
-                Su certificado no se le vence a la mala
+                {tr("land.recert.title")}
               </h2>
               <p className="mt-3 text-sm text-slate-600">
-                Una competencia profesional se mantiene. Por eso el sistema
-                cuenta los meses por usted y le abre la puerta para
-                recertificarse antes de que el diploma quede en rojo.
+                {tr("land.recert.body")}
               </p>
               <Link href={CTAS.certifications.href} className="mt-5 inline-flex items-center gap-1.5 text-sm font-semibold text-brand-800 hover:text-brand-900">
-                Ver mis opciones de recertificación →
+                {tr("land.recert.link")}
               </Link>
             </div>
             <ul className="grid gap-3 sm:grid-cols-2 lg:col-span-2">
               {[
-                { I: Icon.Bell, t: "Avisos 90, 60 y 30 días antes" },
-                { I: Icon.Mail, t: "Notificaciones por correo electrónico" },
-                { I: Icon.Refresh, t: "Renovación digital sin trámites presenciales" },
-                { I: Icon.Archive, t: "Histórico permanente de tus certificaciones" },
-                { I: Icon.Eye, t: "Estado en tiempo real: vigente, vencido o anulado" },
-                { I: Icon.Lock, t: "Confidencialidad y trazabilidad de cada operación" },
+                { I: Icon.Bell, t: tr("land.recert.f1") },
+                { I: Icon.Mail, t: tr("land.recert.f2") },
+                { I: Icon.Refresh, t: tr("land.recert.f3") },
+                { I: Icon.Archive, t: tr("land.recert.f4") },
+                { I: Icon.Eye, t: tr("land.recert.f5") },
+                { I: Icon.Lock, t: tr("land.recert.f6") },
               ].map(({ I, t }) => (
                 <li key={t} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition hover:border-brand-200 hover:shadow-premium">
                   <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-brand-50 text-brand-800 ring-1 ring-brand-100">
@@ -903,27 +806,23 @@ export default async function HomePage() {
           <div className="grid gap-12 lg:grid-cols-12 lg:items-center">
             <div className="lg:col-span-5">
               <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-                La pregunta honesta
+                {tr("land.roi.eyebrow")}
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-tight text-brand-900 sm:text-[2.3rem]">
-                <span className="font-display italic">¿Vale la pena</span>{" "}
-                la inversión?
+                <span className="font-display italic">{tr("land.roi.title.1")}</span>{" "}
+                {tr("land.roi.title.2")}
               </h2>
               <p className="mt-5 text-[15px] leading-relaxed text-slate-700">
-                Lo entendemos: certificarse cuesta plata. Pero lo que se
-                recupera no es teórico — se mide en pesos en su próxima
-                liquidación, en clientes nuevos, en una oferta mejor.
+                {tr("land.roi.body")}
               </p>
               <p className="mt-4 text-[14px] italic leading-relaxed text-slate-500">
-                Los números de la derecha son del mercado colombiano —
-                portales de empleo, reportes salariales y testimonios
-                públicos de personas certificadas durante 2024-2026.
+                {tr("land.roi.note")}
               </p>
               <Link
                 href={CTAS.certify.href}
                 className="mt-7 inline-flex items-center gap-2 rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white shadow-sm transition"
               >
-                <Icon.Rocket size={16} /> Iniciar ahora y recuperarlo pronto
+                <Icon.Rocket size={16} /> {tr("land.roi.cta")}
               </Link>
             </div>
 
@@ -961,13 +860,13 @@ export default async function HomePage() {
         <div className="mx-auto max-w-4xl px-6 py-20 text-center">
           <Icon.Quote size={28} className="mx-auto text-gold-500" />
           <p className="mt-4 font-display text-[1.75rem] leading-[1.3] text-brand-900 sm:text-[2.4rem]">
-            &ldquo;El conocimiento sin acreditación es{" "}
-            <span className="italic text-slate-500">un secreto</span>.
-            Acreditado, es <span className="hand-underline">una palanca</span>.&rdquo;
+            &ldquo;{tr("land.manifesto.quote.1")}{" "}
+            <span className="italic text-slate-500">{tr("land.manifesto.quote.2")}</span>{tr("land.manifesto.quote.3")}{" "}
+            <span className="hand-underline">{tr("land.manifesto.quote.4")}</span>.&rdquo;
           </p>
           <hr className="dashed-rule mx-auto my-7 w-32" />
           <p className="text-[13px] uppercase tracking-[0.18em] text-slate-500">
-            Filosofía de {BRAND.shortName} S.A.S. · 2014 → hoy
+            {tr("land.manifesto.foot.before")} {BRAND.shortName} {tr("land.manifesto.foot.after")}
           </p>
         </div>
       </section>
@@ -977,15 +876,13 @@ export default async function HomePage() {
         <div className="mx-auto max-w-6xl px-6 py-20">
           <div className="mx-auto max-w-3xl text-center">
             <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">
-              Lo dicen ellos, con números encima
+              {tr("land.testimonials.eyebrow")}
             </p>
             <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">
-              <span className="font-display italic">Tres historias</span> de profesionales
-              que la credencial movió en serio
+              <span className="font-display italic">{tr("land.testimonials.title.1")}</span> {tr("land.testimonials.title.2")}
             </h2>
             <p className="mt-3 text-sm text-slate-600">
-              No son testimonios de buena onda. Cada uno trae el dato concreto
-              de qué cambió en su carrera después de certificarse con nosotros.
+              {tr("land.testimonials.body")}
             </p>
           </div>
           <div className="mt-12 grid gap-6 sm:grid-cols-3">
@@ -1017,8 +914,7 @@ export default async function HomePage() {
           </div>
 
           <p className="mt-8 text-center text-[12px] italic text-slate-500">
-            Nombres abreviados por confidencialidad. Verificable contactando a
-            quienes nos hayan autorizado contactar — los hay.
+            {tr("land.testimonials.foot")}
           </p>
         </div>
       </section>
@@ -1027,14 +923,14 @@ export default async function HomePage() {
       <section id="faq" className="bg-premium-light">
         <div className="mx-auto max-w-3xl px-6 py-20">
           <div className="text-center">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">Lo que más nos preguntan</p>
-            <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">Preguntas frecuentes</h2>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-gold-600">{tr("land.faq.eyebrow")}</p>
+            <h2 className="mt-2 text-2xl font-bold text-brand-900 sm:text-3xl">{tr("land.faq.title")}</h2>
             <p className="mt-2 text-sm text-slate-600">
-              ¿Quedó algo en el aire? Mire la{" "}
+              {tr("land.faq.body.before")}
               <Link href="/preguntas-frecuentes" className="font-semibold text-brand-800 hover:underline">
-                página completa de FAQ
-              </Link>{" "}
-              o escríbanos por WhatsApp.
+                {tr("land.faq.body.link")}
+              </Link>
+              {tr("land.faq.body.after")}
             </p>
           </div>
           <div className="mt-8">
@@ -1051,38 +947,36 @@ export default async function HomePage() {
             {marketing.slogan}
           </p>
           <h2 className="font-display text-3xl leading-tight sm:text-[2.8rem]">
-            En 7 días hábiles puede firmar como{" "}
-            <span className="italic text-gold-400">Profesional Certificado.</span>
+            {tr("land.finalCta.title.1")}{" "}
+            <span className="italic text-gold-400">{tr("land.finalCta.title.2")}</span>
           </h2>
           <p className="mx-auto mt-5 max-w-2xl text-[15px] leading-relaxed text-slate-200">
-            Una decisión hoy. Una credencial el otro lunes. Una conversación
-            de carrera diferente el lunes siguiente — con su jefe, con un
-            cliente, con el head-hunter que ya va a poder validarlo.
+            {tr("land.finalCta.body")}
           </p>
           <div className="mt-9 flex flex-wrap justify-center gap-3">
             <Link
               href={CTAS.certify.href}
               className="group inline-flex items-center gap-2 rounded-lg bg-gold-500 px-7 py-3.5 text-sm font-bold text-brand-900 shadow-lg shadow-gold-500/20 transition hover:bg-gold-400 hover:shadow-gold-500/40"
             >
-              Empezar ahora · llega a mi correo el lunes
+              {tr("land.finalCta.primary")}
               <span className="transition group-hover:translate-x-0.5">→</span>
             </Link>
             <Link
               href={CTAS.register.href}
               className="rounded-lg border border-white/30 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10"
             >
-              Crear cuenta sin pagar
+              {tr("land.finalCta.secondary")}
             </Link>
             <Link
               href={CTAS.certifications.href}
               className="rounded-lg px-6 py-3.5 text-sm font-semibold text-cyan-200 transition hover:text-cyan-100"
             >
-              Comparar programas →
+              {tr("land.finalCta.tertiary")}
             </Link>
           </div>
 
           <p className="handwritten mt-10 text-[20px] text-gold-300">
-            — Lo más importante que va a hacer este mes por su carrera.
+            {tr("land.finalCta.handwritten")}
           </p>
         </div>
       </section>

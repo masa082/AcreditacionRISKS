@@ -5,20 +5,21 @@ import { getServerLocale } from "@/lib/i18n/server";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { t } from "@/lib/i18n/locale";
 
-const NAV = [
-  { href: "/", label: "Inicio" },
-  { href: "/certificaciones", label: "Certificaciones" },
-  { href: "/#beneficios", label: "Beneficios" },
-  { href: "/#proceso", label: "Proceso" },
-  { href: "/verificar", label: "Verificar certificado" },
-  { href: "/refiere-y-gana", label: "Refiere y gana" },
-  { href: "/preguntas-frecuentes", label: "FAQ" },
-  { href: "/contacto", label: "Contacto" },
-];
-
 export async function LandingHeader() {
   const { logoUrl } = await getBrandAssets();
   const locale = await getServerLocale();
+  // NAV se construye dentro de la función para que las etiquetas se traduzcan
+  // según el locale del visitante (cookie `app-locale`).
+  const NAV = [
+    { href: "/", label: t("nav.home", locale) },
+    { href: "/certificaciones", label: t("nav.certifications", locale) },
+    { href: "/#beneficios", label: t("nav.benefits", locale) },
+    { href: "/#proceso", label: t("nav.process", locale) },
+    { href: "/verificar", label: t("nav.verify.long", locale) },
+    { href: "/refiere-y-gana", label: t("nav.referrals", locale) },
+    { href: "/preguntas-frecuentes", label: t("nav.faq", locale) },
+    { href: "/contacto", label: t("nav.contact", locale) },
+  ];
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-6 px-6 py-3">
