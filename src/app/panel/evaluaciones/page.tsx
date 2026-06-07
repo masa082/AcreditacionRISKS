@@ -21,9 +21,34 @@ export default async function ExamsPage() {
     orderBy: { createdAt: "desc" },
     include: {
       scheme: { select: { name: true } },
+      sections: { select: { bankId: true } },
       _count: { select: { sections: true } },
     },
   });
+
+  // Stock real por examen: cuenta APPROVED en los bancos referenciados
+  // por las secciones. Una sola query agrupada por bankId nos da el
+  // total por banco para todos los exámenes; luego sumamos por examen
+  // (sin doble-conteo si dos secciones comparten banco — usamos Set).
+  const allBankIds = Array.from(
+    new Set(exams.flatMap((e) => e.sections.map((s) => s.bankId).filter((b): b is string => !!b))),
+  );
+  const stocksByBank = allBankIds.length
+    ? Object.fromEntries(
+        (await prisma.question.groupBy({
+          by: ["bankId"],
+          where: { subscriberId, bankId: { in: allBankIds }, status: "APPROVED" },
+          _count: { _all: true },
+        })).map((r) => [r.bankId, r._count._all] as const),
+      )
+    : {};
+  const realPoolByExam = new Map<string, number>();
+  for (const e of exams) {
+    const uniq = new Set(e.sections.map((s) => s.bankId).filter((b): b is string => !!b));
+    let pool = 0;
+    for (const bid of uniq) pool += stocksByBank[bid] ?? 0;
+    realPoolByExam.set(e.id, pool);
+  }
 
   return (
     <>
@@ -53,7 +78,14 @@ export default async function ExamsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {exams.map((e) => (
+                {exams.map((e) => {
+                  const realPool = realPoolByExam.get(e.id) ?? 0;
+                  // Servir-por-intento: min(maxQuestions, stockReal). Cuando
+                  // el examen no tiene maxQuestions configurado, sirve todo.
+                  const perAttempt = e.maxQuestions > 0
+                    ? Math.min(e.maxQuestions, realPool || e.numQuestions)
+                    : realPool || e.numQuestions;
+                  return (
                   <tr key={e.id} className="hover:bg-slate-50">
                     <td className="px-5 py-3">
                       <div className="font-medium text-slate-800">{e.name}</div>
@@ -63,13 +95,11 @@ export default async function ExamsPage() {
                     <td className="px-5 py-3 text-slate-600">{EXAM_MODALITY_LABELS[e.modality]}</td>
                     <td className="px-5 py-3 text-slate-600">
                       <div>
-                        <b className="text-brand-800">
-                          {e.maxQuestions > 0 ? Math.min(e.maxQuestions, e.numQuestions) : e.numQuestions}
-                        </b>{" "}
+                        <b className="text-brand-800">{perAttempt}</b>{" "}
                         <span className="text-xs text-slate-400">por intento</span>
                       </div>
                       <div className="text-xs text-slate-400">
-                        banco: {e.numQuestions} · {e._count.sections} secc.
+                        disponible en banco: <b>{realPool}</b> · {e._count.sections} secc.
                       </div>
                     </td>
                     <td className="px-5 py-3 text-slate-600">{Number(e.passingScore)}%</td>
@@ -78,7 +108,8 @@ export default async function ExamsPage() {
                       <Link href={`/panel/evaluaciones/${e.id}`} className="text-sm font-medium text-brand-700 hover:underline">{manage ? "Configurar" : "Ver"}</Link>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -46,6 +46,27 @@ export default async function ExamDetailPage({
     prisma.questionBank.findMany({ where: { subscriberId, isActive: true }, orderBy: { name: "asc" }, select: { id: true, code: true, name: true } }),
   ]);
 
+  // Stock REAL del banco: cantidad de preguntas APPROVED en TODOS los
+  // bancos referenciados por las secciones del examen. Esto es lo que
+  // se le muestra al suscriptor — si el banco crece, este número crece
+  // automáticamente sin tocar la configuración de secciones.
+  //
+  // Calcular por banco y luego sumar evita doble-conteo cuando dos
+  // secciones usan el mismo banco (la pregunta solo existe una vez).
+  const sectionBankIds = Array.from(
+    new Set(exam.sections.map((s) => s.bankId).filter((b): b is string => !!b)),
+  );
+  const bankStocks = sectionBankIds.length
+    ? await prisma.question.groupBy({
+        by: ["bankId"],
+        where: { subscriberId, bankId: { in: sectionBankIds }, status: "APPROVED" },
+        _count: { _all: true },
+      })
+    : [];
+  const realBankPool = bankStocks.reduce((sum, b) => sum + b._count._all, 0);
+  // Por banco para el desglose visual.
+  const stockByBankId = new Map(bankStocks.map((b) => [b.bankId, b._count._all]));
+
   const initial: ExamInitial = {
     code: exam.code, name: exam.name, description: exam.description,
     schemeId: exam.schemeId, type: exam.type, modality: exam.modality,
@@ -67,7 +88,7 @@ export default async function ExamDetailPage({
     <>
       <PageHeader
         title={exam.name}
-        subtitle={`${exam.code} · ${exam.numQuestions} preguntas en bancos · máx ${exam.maxQuestions > 0 ? exam.maxQuestions : "sin tope"} por intento · ${exam.durationMin} min`}
+        subtitle={`${exam.code} · ${realBankPool} preguntas disponibles en bancos · máx ${exam.maxQuestions > 0 ? exam.maxQuestions : "sin tope"} por intento · ${exam.durationMin} min`}
         actions={
           <div className="flex items-center gap-2">
             <Badge tone={STATUS_TONE[exam.status]}>{EXAM_STATUS_LABELS[exam.status]}</Badge>
@@ -105,32 +126,52 @@ export default async function ExamDetailPage({
               <EmptyState>Sin secciones. Agregue una para definir cuántas preguntas se toman de cada banco.</EmptyState>
             ) : (
               <ul className="space-y-2">
-                {exam.sections.map((s) => (
-                  <li key={s.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-3 text-sm">
-                    <div>
-                      <div className="font-medium text-slate-800">{s.title}</div>
-                      <div className="text-xs text-slate-500">
-                        {s.questionCount} preg · {s.bank?.code ?? "—"}
-                        {s.difficulty ? ` · ${DIFFICULTY_LABELS[s.difficulty]}` : ""}
-                        {s.pointsPerQuestion ? ` · ${Number(s.pointsPerQuestion)} pts c/u` : ""}
+                {exam.sections.map((s) => {
+                  // Disponibilidad real en el banco de la sección: nos sirve
+                  // para avisar al suscriptor si la configuración excede el
+                  // stock (p. ej. pide 30 y el banco solo tiene 12).
+                  const sectionStock = s.bankId ? stockByBankId.get(s.bankId) ?? 0 : 0;
+                  const insufficient = sectionStock > 0 && s.questionCount > sectionStock;
+                  return (
+                    <li key={s.id} className="flex items-start justify-between rounded-lg border border-slate-200 p-3 text-sm">
+                      <div>
+                        <div className="font-medium text-slate-800">{s.title}</div>
+                        <div className="text-xs text-slate-500">
+                          {s.questionCount} preg · {s.bank?.code ?? "—"}
+                          {s.bankId ? (
+                            <span className={insufficient ? "ml-1 font-semibold text-rose-600" : "ml-1 text-slate-400"}>
+                              (disponible: {sectionStock})
+                            </span>
+                          ) : null}
+                          {s.difficulty ? ` · ${DIFFICULTY_LABELS[s.difficulty]}` : ""}
+                          {s.pointsPerQuestion ? ` · ${Number(s.pointsPerQuestion)} pts c/u` : ""}
+                        </div>
                       </div>
-                    </div>
-                    {manage ? (
-                      <form action={removeSection.bind(null, s.id)}>
-                        <button className="text-rose-600 hover:underline">Quitar</button>
-                      </form>
-                    ) : null}
-                  </li>
-                ))}
+                      {manage ? (
+                        <form action={removeSection.bind(null, s.id)}>
+                          <button className="text-rose-600 hover:underline">Quitar</button>
+                        </form>
+                      ) : null}
+                    </li>
+                  );
+                })}
               </ul>
             )}
             <div className="mt-3 space-y-1 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500">
-              <div>Total disponible en bancos: <b>{exam.numQuestions}</b> preguntas · <b>{Number(exam.totalPoints)}</b> puntos</div>
+              <div>
+                Disponible en bancos referenciados:{" "}
+                <b className="text-brand-800">{realBankPool}</b> preguntas APPROVED
+                {sectionBankIds.length > 1 ? ` (${sectionBankIds.length} bancos)` : null}
+              </div>
+              <div className="text-slate-400">
+                Configurado para tomar de las secciones:{" "}
+                <b>{exam.numQuestions}</b> preg · <b>{Number(exam.totalPoints)}</b> puntos
+              </div>
               <div>
                 Por intento el candidato verá:{" "}
                 <b className="text-brand-800">
                   {exam.maxQuestions > 0
-                    ? `${Math.min(exam.maxQuestions, exam.numQuestions)} preguntas`
+                    ? `${Math.min(exam.maxQuestions, exam.numQuestions || realBankPool)} preguntas`
                     : `${exam.numQuestions} preguntas (sin tope)`}
                 </b>
                 {" "}al azar, sin repetir.
