@@ -6,6 +6,7 @@ import { Field, Input, Select, FormError, SubmitButton } from "@/components/form
 import { registerCandidate, type RegisterState } from "@/lib/actions/registration";
 import { ConsentBlock } from "@/components/consent-block";
 import { LocationPicker } from "@/components/location-picker";
+import { t, type Locale, DEFAULT_LOCALE } from "@/lib/i18n/locale";
 
 interface Org {
   slug: string;
@@ -21,23 +22,28 @@ export interface CertOption {
 
 const initial: RegisterState = { ok: false };
 
-const STATUS_BADGE: Record<CertOption["status"], { label: string; cls: string }> = {
-  AVAILABLE: { label: "Disponible", cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
-  COMING_SOON: { label: "Próximamente", cls: "bg-amber-50 text-amber-700 ring-amber-200" },
-  ON_REQUEST: { label: "Solicitar info", cls: "bg-slate-100 text-slate-600 ring-slate-200" },
-};
-
 export function RegisterForm({
   orgs,
   lockedOrg,
   certifications,
   preselectedCert,
+  locale = DEFAULT_LOCALE,
 }: {
   orgs: Org[];
   lockedOrg?: string;
   certifications?: CertOption[];
   preselectedCert?: string;
+  /** Idioma activo, leído server-side desde la cookie y pasado como prop.
+   *  El form traduce labels, hints y mensajes con la función `t()`. */
+  locale?: Locale;
 }) {
+  // Helpers internos ligados al locale — evita pasar `locale` en cada `t()`.
+  const tr = (k: string) => t(k, locale);
+  const STATUS_BADGE: Record<CertOption["status"], { label: string; cls: string }> = {
+    AVAILABLE: { label: tr("registro.status.available"), cls: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+    COMING_SOON: { label: tr("registro.status.comingSoon"), cls: "bg-amber-50 text-amber-700 ring-amber-200" },
+    ON_REQUEST: { label: tr("registro.status.onRequest"), cls: "bg-slate-100 text-slate-600 ring-slate-200" },
+  };
   const [state, action] = useActionState(registerCandidate, initial);
   const certs = certifications ?? [];
   const availableCerts = certs.filter((c) => c.available);
@@ -51,17 +57,13 @@ export function RegisterForm({
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100 text-2xl">
           ✉️
         </div>
-        <h2 className="text-lg font-semibold text-slate-900">Revise su correo</h2>
-        <p className="text-sm text-slate-500">
-          Le enviamos un enlace para validar su cuenta. En este entorno de
-          demostración no hay servidor de correo, por lo que puede activar su
-          cuenta directamente con el siguiente botón.
-        </p>
+        <h2 className="text-lg font-semibold text-slate-900">{tr("registro.success.title")}</h2>
+        <p className="text-sm text-slate-500">{tr("registro.success.body")}</p>
         <Link
           href={href}
           className="inline-block rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white"
         >
-          Activar mi cuenta ahora
+          {tr("registro.success.activate")}
         </Link>
       </div>
     );
@@ -76,8 +78,9 @@ export function RegisterForm({
             <div className="space-y-2">
               <p className="font-semibold">
                 {state.duplicate.kind === "document"
-                  ? "Esa identificación ya tiene una cuenta creada"
-                  : "Ese correo ya tiene una cuenta creada"} en {state.duplicate.subscriberName}.
+                  ? tr("registro.duplicate.title.doc")
+                  : tr("registro.duplicate.title.email")}{" "}
+                · {state.duplicate.subscriberName}.
               </p>
               {state.duplicate.hintedEmail ? (
                 <p>
@@ -97,27 +100,27 @@ export function RegisterForm({
                   href="/forgot"
                   className="inline-flex items-center gap-1 rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white"
                 >
-                  Restablecer contraseña →
+                  {tr("registro.duplicate.cta.reset")}
                 </Link>
                 <Link
                   href="/login"
                   className="inline-flex items-center gap-1 rounded-lg border border-brand-700 px-3 py-1.5 text-xs font-semibold text-brand-800 hover:bg-brand-50"
                 >
-                  Iniciar sesión
+                  {tr("registro.duplicate.cta.login")}
                 </Link>
                 {state.duplicate.subscriberContact ? (
                   <a
                     href={`mailto:${state.duplicate.subscriberContact}?subject=Actualización de datos de mi cuenta`}
                     className="inline-flex items-center gap-1 rounded-lg border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                   >
-                    Solicitar actualización al administrador
+                    {tr("registro.duplicate.cta.admin")}
                   </a>
                 ) : (
                   <Link
                     href="/contacto"
                     className="inline-flex items-center gap-1 rounded-lg border border-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-800 hover:bg-amber-100"
                   >
-                    Solicitar actualización al administrador
+                    {tr("registro.duplicate.cta.admin")}
                   </Link>
                 )}
               </div>
@@ -131,7 +134,7 @@ export function RegisterForm({
       {lockedOrg ? (
         <input type="hidden" name="org" value={lockedOrg} />
       ) : (
-        <Field label="Entidad certificadora" htmlFor="org" required hint="Organización ante la cual se certificará.">
+        <Field label={tr("registro.org")} htmlFor="org" required hint={tr("registro.org.hint")}>
           <Select id="org" name="org" required defaultValue={orgs[0]?.slug}>
             {orgs.map((o) => (
               <option key={o.slug} value={o.slug}>
@@ -144,10 +147,10 @@ export function RegisterForm({
 
       {certs.length > 0 ? (
         <Field
-          label="Certificación de interés"
+          label={tr("registro.cert")}
           htmlFor="certificationOfInterest"
           required
-          hint="Su cuenta queda registrada para iniciar la inscripción a este programa."
+          hint={tr("registro.cert.hint")}
         >
           <input type="hidden" name="certificationOfInterest" value={selectedCert} />
           <div className="space-y-2">
@@ -173,7 +176,7 @@ export function RegisterForm({
                       {c.name}
                     </div>
                     {!c.available ? (
-                      <p className="mt-0.5 text-[11px] text-slate-500">Lanzamiento próximo · podrá inscribirse cuando se habilite.</p>
+                      <p className="mt-0.5 text-[11px] text-slate-500">{tr("registro.cert.comingSoon")}</p>
                     ) : null}
                   </div>
                   <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ring-1 ${badge.cls}`}>
@@ -189,29 +192,29 @@ export function RegisterForm({
       {/* ──────────── Sección 1: Identificación ──────────── */}
       <Section
         icon="👤"
-        title="Datos personales"
-        description="Datos básicos del titular. Aparecerán en su Hoja de Vida y en el certificado emitido."
+        title={tr("registro.sec.personal")}
+        description={tr("registro.sec.personal.desc")}
       >
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Nombres" htmlFor="firstName" required>
+          <Field label={tr("registro.firstName")} htmlFor="firstName" required>
             <Input id="firstName" name="firstName" required autoComplete="given-name" />
           </Field>
-          <Field label="Apellidos" htmlFor="lastName" required>
+          <Field label={tr("registro.lastName")} htmlFor="lastName" required>
             <Input id="lastName" name="lastName" required autoComplete="family-name" />
           </Field>
         </div>
 
         <div className="mt-5 grid gap-5 sm:grid-cols-2">
-          <Field label="Tipo de documento" htmlFor="documentType" required>
+          <Field label={tr("registro.documentType")} htmlFor="documentType" required>
             <Select id="documentType" name="documentType" required defaultValue="CC">
-              <option value="CC">Cédula de ciudadanía</option>
-              <option value="CE">Cédula de extranjería</option>
-              <option value="PASAPORTE">Pasaporte</option>
-              <option value="TI">Tarjeta de identidad</option>
-              <option value="NIT">NIT</option>
+              <option value="CC">{tr("registro.doc.cc")}</option>
+              <option value="CE">{tr("registro.doc.ce")}</option>
+              <option value="PASAPORTE">{tr("registro.doc.passport")}</option>
+              <option value="TI">{tr("registro.doc.ti")}</option>
+              <option value="NIT">{tr("registro.doc.nit")}</option>
             </Select>
           </Field>
-          <Field label="Número de documento" htmlFor="documentNumber" required>
+          <Field label={tr("registro.documentNumber")} htmlFor="documentNumber" required>
             <Input id="documentNumber" name="documentNumber" required inputMode="numeric" />
           </Field>
         </div>
@@ -220,8 +223,8 @@ export function RegisterForm({
       {/* ──────────── Sección 2: Ubicación ──────────── */}
       <Section
         icon="📍"
-        title="Ubicación"
-        description="Su lugar de residencia. Si está en Colombia, el departamento se completa automáticamente al elegir el municipio."
+        title={tr("registro.sec.location")}
+        description={tr("registro.sec.location.desc")}
       >
         <LocationPicker defaultCountry="CO" />
       </Section>
@@ -229,14 +232,14 @@ export function RegisterForm({
       {/* ──────────── Sección 3: Contacto ──────────── */}
       <Section
         icon="✉️"
-        title="Contacto"
-        description="Por aquí le enviaremos su comprobante de inscripción, el resultado de la evaluación y su certificado emitido."
+        title={tr("registro.sec.contact")}
+        description={tr("registro.sec.contact.desc")}
       >
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Correo electrónico" htmlFor="email" required>
+          <Field label={tr("registro.email")} htmlFor="email" required>
             <Input id="email" name="email" type="email" required autoComplete="email" />
           </Field>
-          <Field label="Teléfono" htmlFor="phone">
+          <Field label={tr("registro.phone")} htmlFor="phone">
             <Input id="phone" name="phone" type="tel" autoComplete="tel" placeholder="+57 300 000 0000" />
           </Field>
         </div>
@@ -245,14 +248,14 @@ export function RegisterForm({
       {/* ──────────── Sección 4: Credenciales ──────────── */}
       <Section
         icon="🔐"
-        title="Acceso a su cuenta"
-        description="Cree una contraseña fuerte. La usará para iniciar sesión en su portal de candidato."
+        title={tr("registro.sec.account")}
+        description={tr("registro.sec.account.desc")}
       >
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Contraseña" htmlFor="password" required hint="Mínimo 8 caracteres.">
+          <Field label={tr("registro.password")} htmlFor="password" required hint={tr("registro.passwordHint")}>
             <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
           </Field>
-          <Field label="Confirmar contraseña" htmlFor="confirm" required>
+          <Field label={tr("registro.passwordConfirm")} htmlFor="confirm" required>
             <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
           </Field>
         </div>
@@ -266,9 +269,9 @@ export function RegisterForm({
 
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
         <Link href="/login" className="text-sm font-medium text-brand-700 hover:underline">
-          ← Ya tengo cuenta
+          {tr("registro.haveAccount")}
         </Link>
-        <SubmitButton pendingText="Creando cuenta…">Crear cuenta de candidato →</SubmitButton>
+        <SubmitButton pendingText={tr("registro.submit.pending")}>{tr("registro.submit")}</SubmitButton>
       </div>
     </form>
   );

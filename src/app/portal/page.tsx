@@ -3,6 +3,8 @@ import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { StatTile, PageHeader, Badge, EmptyState, Card } from "@/components/ui";
 import { dateOnly } from "@/lib/format";
+import { WelcomeWizard, ProcessSteps } from "@/components/process-steps";
+import { getServerLocale } from "@/lib/i18n/server";
 
 export const metadata = { title: "Mi portal" };
 
@@ -32,8 +34,9 @@ function toneFor(status: string): "green" | "amber" | "blue" | "slate" {
 
 export default async function CandidatePortal() {
   const { candidateId } = await requireCandidatePage();
+  const locale = await getServerLocale();
 
-  const [enrollments, certificates] = await Promise.all([
+  const [enrollments, certificates, candidate] = await Promise.all([
     prisma.enrollment.findMany({
       where: { candidateId },
       orderBy: { createdAt: "desc" },
@@ -43,7 +46,24 @@ export default async function CandidatePortal() {
       where: { candidateId },
       orderBy: { issuedAt: "desc" },
     }),
+    prisma.candidate.findUnique({
+      where: { id: candidateId },
+      select: { firstName: true },
+    }),
   ]);
+
+  // Determinar el paso "actual" del candidato según el estado de la
+  // inscripción más reciente. Esto le da feedback claro de dónde está.
+  const latest = enrollments[0];
+  const stepFromStatus = (s: string | undefined): 1 | 2 | 3 | 4 => {
+    if (!s) return 1;
+    if (s === "CERTIFIED" || s === "APPROVED") return 4;
+    if (s === "GRADING" || s === "COMMITTEE") return 4;
+    if (s === "IN_PROGRESS" || s === "READY" || s === "SCHEDULING") return 3;
+    if (s === "DOCS_PENDING" || s === "PAYMENT_PENDING" || s === "CONSENT_PENDING") return 2;
+    return 2;
+  };
+  const currentStep = stepFromStatus(latest?.status);
 
   const activeCerts = certificates.filter((c) => c.status === "VALID");
   const pending = enrollments.filter(
@@ -64,6 +84,25 @@ export default async function CandidatePortal() {
           </Link>
         }
       />
+
+      {/* Wizard guiado:
+          - Si el candidato aún no se ha inscrito, mostramos el bienvenida
+            grande con CTA principal a /portal/evaluaciones y los 4 pasos.
+          - Si ya está en proceso, mostramos un stepper compacto con el
+            paso actual resaltado para ubicarlo y motivarlo. */}
+      {enrollments.length === 0 ? (
+        <div className="mb-5">
+          <WelcomeWizard
+            candidateFirstName={candidate?.firstName ?? undefined}
+            enrollmentsCount={enrollments.length}
+            locale={locale}
+          />
+        </div>
+      ) : (
+        <div className="mb-5">
+          <ProcessSteps currentStep={currentStep} variant="compact" locale={locale} />
+        </div>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-3">
         <StatTile label="Inscripciones" value={enrollments.length} />

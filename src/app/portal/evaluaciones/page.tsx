@@ -6,6 +6,8 @@ import { SubmitButton } from "@/components/form";
 import { startEnrollment } from "@/lib/actions/enrollment";
 import { money, dateOnly } from "@/lib/format";
 import { isSchemeComingSoon } from "@/lib/brand";
+import { ProcessSteps } from "@/components/process-steps";
+import { getServerLocale } from "@/lib/i18n/server";
 
 export const metadata = { title: "Programas de certificación disponibles" };
 
@@ -40,6 +42,7 @@ interface SchemeGroup {
 
 export default async function AvailableExamsPage() {
   const { subscriberId, candidateId } = await requireCandidatePage();
+  const locale = await getServerLocale();
   const now = new Date();
 
   const [exams, activeEnrollments] = await Promise.all([
@@ -114,7 +117,16 @@ export default async function AvailableExamsPage() {
     g.exams.push(row);
     groups.set(e.schemeId, g);
   }
-  const schemeList = Array.from(groups.values()).sort((a, b) => a.schemeName.localeCompare(b.schemeName));
+  // Orden: primero los programas ACTIVOS (DISPONIBLE), luego los
+  // "Próximamente", y al final alfabéticamente dentro de cada grupo.
+  // Así el candidato ve siempre lo que puede inscribir antes de lo que
+  // todavía no está abierto — patrón de UX para listas mixtas.
+  const schemeList = Array.from(groups.values()).sort((a, b) => {
+    const aSoon = isSchemeComingSoon(a.schemeName) ? 1 : 0;
+    const bSoon = isSchemeComingSoon(b.schemeName) ? 1 : 0;
+    if (aSoon !== bSoon) return aSoon - bSoon;
+    return a.schemeName.localeCompare(b.schemeName);
+  });
 
   return (
     <>
@@ -122,6 +134,12 @@ export default async function AvailableExamsPage() {
         title="Programas de certificación disponibles"
         subtitle="Cada programa incluye dos evaluaciones (Caso Práctico y Examen Teórico) que culminan en una certificación profesional verificable."
       />
+
+      {/* Stepper compacto: ubica al candidato en el paso 2 (Documentos + pago)
+          y le recuerda lo que falta, sin distraer de la lista. */}
+      <div className="mb-5">
+        <ProcessSteps currentStep={2} variant="compact" locale={locale} />
+      </div>
 
       {schemeList.length === 0 && orphanExams.length === 0 ? (
         <EmptyState>

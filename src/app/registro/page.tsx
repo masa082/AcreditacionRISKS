@@ -3,6 +3,10 @@ import { prisma } from "@/lib/prisma";
 import { RegisterForm } from "@/components/register-form";
 import { CERTIFICATIONS } from "@/lib/brand";
 import { OnacBadge } from "@/components/onac-badge";
+import { ProcessSteps } from "@/components/process-steps";
+import { getServerLocale } from "@/lib/i18n/server";
+import { t } from "@/lib/i18n/locale";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export const metadata = { title: "Registro de candidato" };
 
@@ -14,6 +18,7 @@ export default async function RegistroPage({
   searchParams: Promise<{ org?: string; cert?: string }>;
 }) {
   const { org, cert } = await searchParams;
+  const locale = await getServerLocale();
 
   const subscribers = await prisma.subscriber.findMany({
     where: { status: { in: ["ACTIVE", "TRIAL"] } },
@@ -50,6 +55,12 @@ export default async function RegistroPage({
   return (
     <main className="flex min-h-screen flex-col items-center justify-start bg-gradient-to-b from-slate-50 to-white px-4 py-10">
       <div className="w-full max-w-4xl space-y-4">
+        {/* Selector de idioma flotante: la página de registro no usa el
+            header del landing, así que mantenemos el switcher visible para
+            que el candidato pueda cambiar idioma antes de llenar el form. */}
+        <div className="flex justify-end">
+          <LanguageSwitcher initial={locale} />
+        </div>
         <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-10">
           <div className="mb-6 text-center">
             {featuredOrg?.logoUrl ? (
@@ -77,12 +88,9 @@ export default async function RegistroPage({
               </p>
             ) : null}
             <h1 className="mt-4 text-lg font-semibold text-slate-900">
-              Cree su cuenta de candidato
+              {t("registro.title", locale)}
             </h1>
-            <p className="mt-1 text-sm text-slate-500">
-              Regístrese para inscribirse en procesos de evaluación y
-              certificación de personas.
-            </p>
+            <p className="mt-1 text-sm text-slate-500">{t("registro.subtitle", locale)}</p>
             <div className="mt-3 inline-flex items-center justify-center rounded-md border border-amber-200 bg-amber-50 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.15em] text-amber-800">
               EN PROCESO DE CERTIFICACIÓN ONAC
             </div>
@@ -99,9 +107,15 @@ export default async function RegistroPage({
               lockedOrg={lockedOrg}
               certifications={certOptions}
               preselectedCert={preselectedCert}
+              locale={locale}
             />
           )}
         </div>
+
+        {/* Mapa de los 4 pasos del proceso de certificación. El primero
+            (Registro) se marca como "actual" para que el candidato vea
+            exactamente dónde está y qué viene después. */}
+        <ProcessSteps currentStep={1} />
 
         {/* Badge ONAC visible bajo la tarjeta para reforzar respaldo */}
         <div className="flex justify-center">

@@ -17,6 +17,8 @@ import { Icon } from "@/components/landing/icon";
 import { BRAND, CTAS, CERTIFICATIONS, formatCOP } from "@/lib/brand";
 import { getMarketingConfig } from "@/lib/marketing-config";
 import { getBrandAssets } from "@/lib/brand-assets";
+import { getServerLocale } from "@/lib/i18n/server";
+import { t } from "@/lib/i18n/locale";
 
 export const metadata: Metadata = {
   title: "Certificación profesional que abre puertas — RISKS INTERNATIONAL",
@@ -252,6 +254,8 @@ export default async function HomePage() {
   const { logoUrl } = await getBrandAssets();
   const marketing = await getMarketingConfig();
   const TRUST_METRICS = trustMetrics(marketing);
+  const locale = await getServerLocale();
+  const tr = (k: string) => t(k, locale);
 
   return (
     <main className="min-h-screen bg-white text-slate-900">
@@ -262,52 +266,45 @@ export default async function HomePage() {
       <section className="relative bg-premium-light">
         {/* Nota lateral manuscrita — desktop solo. Ancla visual humana. */}
         <span className="handwritten pointer-events-none absolute right-6 top-10 hidden text-[15px] text-gold-600 lg:block">
-          ↘ su próximo aumento empieza aquí
+          {tr("land.hero.note")}
         </span>
 
         <div className="mx-auto grid max-w-6xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-24">
           <div className="lg:col-span-7">
             <div className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/60 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-brand-800">
               <span className="h-1.5 w-1.5 rounded-full bg-gold-500" />
-              Organismo de Certificación de Personas · {BRAND.isoNorm}
+              {tr("land.hero.eyebrow")} · {BRAND.isoNorm}
             </div>
 
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] text-brand-900 sm:text-[3.2rem]">
-              <span className="font-display block text-slate-900">Conviértase en</span>
+              <span className="font-display block text-slate-900">{tr("land.hero.title.1")}</span>
               <span className="mt-1 block">
-                <span className="hand-underline">Profesional Certificado</span>
+                <span className="hand-underline">{tr("land.hero.title.2")}</span>
               </span>
               <span className="mt-1 block font-display text-[1.65rem] font-medium text-slate-500 sm:text-[2rem]">
-                y deje de competir con quien no lo está.
+                {tr("land.hero.title.3")}
               </span>
             </h1>
 
             <p className="mt-6 max-w-xl text-[15px] leading-relaxed text-slate-600">
-              Una credencial bajo {BRAND.isoNorm} en SARLAFT, SAGRILAFT y
-              debida diligencia — emitida por {BRAND.shortName} S.A.S. con
-              examen vigilado, QR público y firma autorizada. La diferencia
-              entre <strong className="text-brand-900">postular</strong> y{" "}
-              <strong className="text-brand-900">que lo busquen</strong>;
-              entre <strong className="text-brand-900">pedir aumento</strong> y{" "}
-              <strong className="text-brand-900">que se lo ofrezcan</strong>.
+              {tr("land.hero.body")}
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href={CTAS.certify.href} className="group inline-flex items-center gap-2 rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-premium">
-                Empezar mi certificación
+                {tr("land.hero.cta.primary")}
                 <span className="transition group-hover:translate-x-0.5">→</span>
               </Link>
               <Link href={CTAS.certifications.href} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-50">
-                Ver certificaciones
+                {tr("land.hero.cta.secondary")}
               </Link>
               <Link href={CTAS.verify.href} className="inline-flex items-center gap-1.5 rounded-lg px-5 py-3 text-sm font-semibold text-brand-700 hover:text-brand-900">
-                <Icon.QR size={16} /> Verificar un certificado
+                <Icon.QR size={16} /> {tr("land.hero.cta.verify")}
               </Link>
             </div>
 
             <p className="mt-3 text-[11px] text-slate-500">
-              Una semana hábil entre el clic y el diploma en su correo · sin
-              compromisos hasta que pague · 100 % online
+              {tr("land.hero.disclaimer")}
             </p>
 
             <div className="relative mt-10 mx-auto max-w-xs lg:hidden">
@@ -316,10 +313,10 @@ export default async function HomePage() {
 
             <ul className="mt-10 grid max-w-md grid-cols-1 gap-2 text-[13px] text-slate-700 sm:grid-cols-2">
               {[
-                ["QR", "Verificable por terceros"],
-                ["Stamp", "Examen vigilado y trazable"],
-                ["ShieldCheck", "Respaldo institucional"],
-                ["Refresh", "Recertificación asistida"],
+                ["QR", tr("land.hero.feat.qr")],
+                ["Stamp", tr("land.hero.feat.proctor")],
+                ["ShieldCheck", tr("land.hero.feat.backing")],
+                ["Refresh", tr("land.hero.feat.recert")],
               ].map(([k, txt]) => {
                 const I = Icon[k as keyof typeof Icon];
                 return (

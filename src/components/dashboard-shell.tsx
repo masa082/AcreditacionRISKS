@@ -7,13 +7,15 @@ import { OnacBadge } from "@/components/onac-badge";
 import { LegalTimeCO } from "@/components/legal-time-co";
 import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
 import { FeedbackButton } from "@/components/feedback-button";
+import { LanguageSwitcher } from "@/components/language-switcher";
+import { getServerLocale } from "@/lib/i18n/server";
 
 const APP_NAME = "CIOC";
 const APP_LONG = "Certificado de Idoneidad como Oficial de Cumplimiento";
 
 export type { NavItem };
 
-export function DashboardShell({
+export async function DashboardShell({
   area,
   nav,
   user,
@@ -31,6 +33,8 @@ export function DashboardShell({
   /** Nombre comercial del suscriptor para alt y tooltip del logo. */
   subscriberName?: string;
 }) {
+  // Locale activo del usuario — usado por el switcher persistente del header.
+  const locale = await getServerLocale();
   return (
     <div className="flex min-h-screen bg-slate-50">
       <aside className="hidden w-64 shrink-0 flex-col border-r border-slate-200 bg-white md:flex">
@@ -70,6 +74,7 @@ export function DashboardShell({
         <header className="flex h-16 items-center justify-between border-b border-slate-200 bg-white px-6">
           <div className="text-sm text-slate-500 md:hidden">{APP_NAME}</div>
           <div className="ml-auto flex items-center gap-3">
+            <LanguageSwitcher initial={locale} />
             <NotificationBellServer />
             <div className="hidden text-right sm:block">
               <div className="text-sm font-medium text-slate-800">
