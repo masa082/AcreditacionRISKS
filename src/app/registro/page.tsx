@@ -48,9 +48,9 @@ export default async function RegistroPage({
     cert && certOptions.some((o) => o.slug === cert && o.available) ? cert : undefined;
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-slate-50 px-4 py-10">
-      <div className="w-full max-w-xl space-y-4">
-        <div className="rounded-2xl bg-white p-8 shadow-sm ring-1 ring-slate-200">
+    <main className="flex min-h-screen flex-col items-center justify-start bg-gradient-to-b from-slate-50 to-white px-4 py-10">
+      <div className="w-full max-w-4xl space-y-4">
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200 sm:p-10">
           <div className="mb-6 text-center">
             {featuredOrg?.logoUrl ? (
               <div className="mb-4 flex items-center justify-center gap-4">

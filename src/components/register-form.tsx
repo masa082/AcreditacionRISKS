@@ -5,6 +5,7 @@ import { useActionState, useState } from "react";
 import { Field, Input, Select, FormError, SubmitButton } from "@/components/form";
 import { registerCandidate, type RegisterState } from "@/lib/actions/registration";
 import { ConsentBlock } from "@/components/consent-block";
+import { LocationPicker } from "@/components/location-picker";
 
 interface Org {
   slug: string;
@@ -185,47 +186,77 @@ export function RegisterForm({
         </Field>
       ) : null}
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Nombres" htmlFor="firstName" required>
-          <Input id="firstName" name="firstName" required autoComplete="given-name" />
-        </Field>
-        <Field label="Apellidos" htmlFor="lastName" required>
-          <Input id="lastName" name="lastName" required autoComplete="family-name" />
-        </Field>
-      </div>
+      {/* ──────────── Sección 1: Identificación ──────────── */}
+      <Section
+        icon="👤"
+        title="Datos personales"
+        description="Datos básicos del titular. Aparecerán en su Hoja de Vida y en el certificado emitido."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Nombres" htmlFor="firstName" required>
+            <Input id="firstName" name="firstName" required autoComplete="given-name" />
+          </Field>
+          <Field label="Apellidos" htmlFor="lastName" required>
+            <Input id="lastName" name="lastName" required autoComplete="family-name" />
+          </Field>
+        </div>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Tipo de documento" htmlFor="documentType" required>
-          <Select id="documentType" name="documentType" required defaultValue="CC">
-            <option value="CC">Cédula de ciudadanía</option>
-            <option value="CE">Cédula de extranjería</option>
-            <option value="PASAPORTE">Pasaporte</option>
-            <option value="TI">Tarjeta de identidad</option>
-            <option value="NIT">NIT</option>
-          </Select>
-        </Field>
-        <Field label="Número de documento" htmlFor="documentNumber" required>
-          <Input id="documentNumber" name="documentNumber" required inputMode="numeric" />
-        </Field>
-      </div>
+        <div className="mt-5 grid gap-5 sm:grid-cols-2">
+          <Field label="Tipo de documento" htmlFor="documentType" required>
+            <Select id="documentType" name="documentType" required defaultValue="CC">
+              <option value="CC">Cédula de ciudadanía</option>
+              <option value="CE">Cédula de extranjería</option>
+              <option value="PASAPORTE">Pasaporte</option>
+              <option value="TI">Tarjeta de identidad</option>
+              <option value="NIT">NIT</option>
+            </Select>
+          </Field>
+          <Field label="Número de documento" htmlFor="documentNumber" required>
+            <Input id="documentNumber" name="documentNumber" required inputMode="numeric" />
+          </Field>
+        </div>
+      </Section>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Correo electrónico" htmlFor="email" required>
-          <Input id="email" name="email" type="email" required autoComplete="email" />
-        </Field>
-        <Field label="Teléfono" htmlFor="phone">
-          <Input id="phone" name="phone" type="tel" autoComplete="tel" placeholder="+57 300 000 0000" />
-        </Field>
-      </div>
+      {/* ──────────── Sección 2: Ubicación ──────────── */}
+      <Section
+        icon="📍"
+        title="Ubicación"
+        description="Su lugar de residencia. Si está en Colombia, el departamento se completa automáticamente al elegir el municipio."
+      >
+        <LocationPicker defaultCountry="CO" />
+      </Section>
 
-      <div className="grid gap-5 sm:grid-cols-2">
-        <Field label="Contraseña" htmlFor="password" required hint="Mínimo 8 caracteres.">
-          <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
-        </Field>
-        <Field label="Confirmar contraseña" htmlFor="confirm" required>
-          <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
-        </Field>
-      </div>
+      {/* ──────────── Sección 3: Contacto ──────────── */}
+      <Section
+        icon="✉️"
+        title="Contacto"
+        description="Por aquí le enviaremos su comprobante de inscripción, el resultado de la evaluación y su certificado emitido."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Correo electrónico" htmlFor="email" required>
+            <Input id="email" name="email" type="email" required autoComplete="email" />
+          </Field>
+          <Field label="Teléfono" htmlFor="phone">
+            <Input id="phone" name="phone" type="tel" autoComplete="tel" placeholder="+57 300 000 0000" />
+          </Field>
+        </div>
+      </Section>
+
+      {/* ──────────── Sección 4: Credenciales ──────────── */}
+      <Section
+        icon="🔐"
+        title="Acceso a su cuenta"
+        description="Cree una contraseña fuerte. La usará para iniciar sesión en su portal de candidato."
+      >
+        <div className="grid gap-5 sm:grid-cols-2">
+          <Field label="Contraseña" htmlFor="password" required hint="Mínimo 8 caracteres.">
+            <Input id="password" name="password" type="password" required minLength={8} autoComplete="new-password" />
+          </Field>
+          <Field label="Confirmar contraseña" htmlFor="confirm" required>
+            <Input id="confirm" name="confirm" type="password" required minLength={8} autoComplete="new-password" />
+          </Field>
+        </div>
+      </Section>
 
       <ConsentBlock />
 
@@ -233,12 +264,41 @@ export function RegisterForm({
           persista junto con la autorización en DataConsent (auditoría legal). */}
       <input type="hidden" name="consentPolicyVersion" value="v2026-06-05" />
 
-      <div className="flex items-center justify-between">
-        <Link href="/login" className="text-sm text-brand-700 hover:underline">
-          Ya tengo cuenta
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 pt-5">
+        <Link href="/login" className="text-sm font-medium text-brand-700 hover:underline">
+          ← Ya tengo cuenta
         </Link>
-        <SubmitButton pendingText="Creando cuenta…">Crear cuenta</SubmitButton>
+        <SubmitButton pendingText="Creando cuenta…">Crear cuenta de candidato →</SubmitButton>
       </div>
     </form>
+  );
+}
+
+/**
+ * Sección visual del formulario. Encabezado con ícono + título +
+ * descripción, contenido en card sutil. UX legal/forms: cada agrupación
+ * por intención (quién, dónde, cómo lo contactamos, cómo se conecta)
+ * reduce la carga cognitiva del candidato.
+ */
+function Section({
+  icon, title, description, children,
+}: {
+  icon: string; title: string; description?: string; children: React.ReactNode;
+}) {
+  return (
+    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+      <header className="mb-4 flex items-start gap-3">
+        <span aria-hidden className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-brand-50 text-xl">
+          {icon}
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-sm font-bold text-brand-900 sm:text-base">{title}</h3>
+          {description ? (
+            <p className="mt-0.5 text-[12px] leading-relaxed text-slate-500">{description}</p>
+          ) : null}
+        </div>
+      </header>
+      <div>{children}</div>
+    </section>
   );
 }

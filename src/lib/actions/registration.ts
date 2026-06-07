@@ -52,6 +52,13 @@ const registerSchema = z
         "Debe autorizar el tratamiento de datos sensibles (foto, antecedentes, antifraude). Sin esta autorización no es posible adelantar el proceso de certificación.",
     }),
     consentPolicyVersion: z.string().min(3).max(40).optional().default("v2026-06-05"),
+    // ── Ubicación (opcional pero recomendada para Hoja de Vida) ──
+    country: z.string().max(8).optional().nullable(),
+    countryName: z.string().max(80).optional().nullable(),
+    state: z.string().max(120).optional().nullable(),
+    stateCode: z.string().max(8).optional().nullable(),
+    city: z.string().max(120).optional().nullable(),
+    address: z.string().max(300).optional().nullable(),
   })
   .refine((d) => d.password === d.confirm, {
     message: "Las contraseñas no coinciden",
@@ -80,6 +87,12 @@ export async function registerCandidate(
     acceptPolicy: formData.get("acceptPolicy"),
     acceptSensitive: formData.get("acceptSensitive"),
     consentPolicyVersion: clean(formData.get("consentPolicyVersion")) ?? undefined,
+    country: clean(formData.get("country")),
+    countryName: clean(formData.get("countryName")),
+    state: clean(formData.get("state")),
+    stateCode: clean(formData.get("stateCode")),
+    city: clean(formData.get("city")),
+    address: clean(formData.get("address")),
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message };
@@ -173,6 +186,10 @@ export async function registerCandidate(
         roleId: candidateRole?.id ?? null,
       },
     });
+    // Estructura geográfica que persiste tanto en columnas indexables
+    // (country, city, address) — usadas para filtros del panel — como en
+    // el JSON `profile.location` que es lo que lee el constructor de la
+    // Hoja de Vida (PDF) para renderizar la ficha de ubicación completa.
     const candidate = await tx.candidate.create({
       data: {
         subscriberId: subscriber.id,
@@ -183,6 +200,20 @@ export async function registerCandidate(
         documentType: data.documentType,
         documentNumber: data.documentNumber,
         phone: data.phone,
+        country: data.countryName ?? data.country ?? null,
+        city: data.city ?? null,
+        address: data.address ?? null,
+        profile: {
+          location: {
+            countryCode: data.country ?? null,
+            countryName: data.countryName ?? null,
+            stateCode: data.stateCode ?? null,
+            stateName: data.state ?? null,
+            city: data.city ?? null,
+            address: data.address ?? null,
+            capturedAt: new Date().toISOString(),
+          },
+        },
       },
     });
 
