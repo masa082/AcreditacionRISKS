@@ -109,6 +109,14 @@ export async function createLead(
   const dedupeWindow = 60 * 24 * 60 * 60 * 1000;
   const reusable = existing && Date.now() - existing.createdAt.getTime() < dedupeWindow;
 
+  // Si el nombre del lead cambió en esta visita (p. ej. la primera vez
+  // se llamó "Juan Perez" y ahora aparece como "Ines Curtain" con el
+  // mismo correo), actualizamos al nombre más reciente — es el más
+  // probable de ser el correcto desde el punto de vista del operador.
+  // Para no perder trazabilidad, el nombre anterior queda en la
+  // metadata del VISIT_TRACK.
+  const nameChanged = reusable && parsed.data.fullName.trim().toLowerCase() !== existing!.fullName.trim().toLowerCase();
+
   const lead = reusable
     ? await prisma.lead.update({
         where: { id: existing.id },
@@ -116,6 +124,10 @@ export async function createLead(
           // Refresca la huella + suma visita; conserva status y notas.
           lastSiteVisitAt: new Date(),
           siteVisitCount: { increment: 1 },
+          // Tomamos el nombre más reciente (corrige el bug previo donde
+          // un lead "merged" se quedaba con el primer nombre y el
+          // operador no encontraba al prospecto que recién registró).
+          fullName: parsed.data.fullName,
           // Permite actualizar campos comerciales si vienen nuevos datos.
           phone: parsed.data.phone ?? existing.phone,
           country: parsed.data.country ?? existing.country,
@@ -131,6 +143,12 @@ export async function createLead(
               metadata: {
                 kind, source: parsed.data.source ?? null, ip: m.ip ?? null,
                 visitNumber: existing.siteVisitCount + 1,
+                // Si el nombre cambió en este touch, dejamos rastro de
+                // los dos nombres para que el operador del organismo
+                // tenga el contexto de la fusión.
+                ...(nameChanged
+                  ? { fullNameChanged: { from: existing.fullName, to: parsed.data.fullName } }
+                  : {}),
               },
             },
           },
@@ -168,7 +186,12 @@ export async function createLead(
       include: { role: { select: { permissions: true } } },
     });
     const kindLabel = LEAD_KIND_LABELS[kind];
-    const title = `Nuevo lead: ${parsed.data.fullName}`;
+    // Si fue dedupe-update lo decimos explícitamente: el operador no se
+    // confunde buscando un "lead nuevo" que en realidad es una nueva
+    // visita de un prospecto que ya está en la tabla.
+    const title = reusable
+      ? `Nueva visita: ${parsed.data.fullName} (visita #${(existing!.siteVisitCount ?? 1) + 1})`
+      : `Nuevo lead: ${parsed.data.fullName}`;
     const body = `${kindLabel}${parsed.data.certificationOfInterest ? ` · ${parsed.data.certificationOfInterest}` : ""}`;
     await Promise.all(
       staff
