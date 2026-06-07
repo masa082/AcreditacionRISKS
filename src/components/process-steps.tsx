@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { t, type Locale, DEFAULT_LOCALE } from "@/lib/i18n/locale";
 
 /**
@@ -8,6 +9,9 @@ import { t, type Locale, DEFAULT_LOCALE } from "@/lib/i18n/locale";
  *  - En mobile: cae a vertical, conector entre pasos.
  *  - Resalta el paso actual con anillo brand + halo dorado.
  *  - Estados de paso: completed (verde), current (brand), upcoming (slate).
+ *  - Cada paso es CLICKEABLE: lleva al destino accionable correspondiente
+ *    (registro / inscripción / agenda / certificados). El step "current"
+ *    se anuncia con `aria-current="step"`.
  *
  * Se usa en 3 sitios:
  *  - /registro       → step 0 (current = "Registro")
@@ -21,19 +25,27 @@ export interface ProcessStep {
   icon: string;
   titleKey: string;
   descKey: string;
+  /** Destino por defecto del paso. Puede sobreescribirse por instancia
+   *  vía la prop `stepHrefs` cuando la página tiene info más fresca
+   *  (p. ej. una inscripción activa con ID conocido). */
+  defaultHref: string;
 }
 
 export const PROCESS_STEPS: ProcessStep[] = [
-  { n: 1, icon: "✍️", titleKey: "process.s1.title", descKey: "process.s1.desc" },
-  { n: 2, icon: "📂", titleKey: "process.s2.title", descKey: "process.s2.desc" },
-  { n: 3, icon: "🧪", titleKey: "process.s3.title", descKey: "process.s3.desc" },
-  { n: 4, icon: "🏅", titleKey: "process.s4.title", descKey: "process.s4.desc" },
+  { n: 1, icon: "✍️", titleKey: "process.s1.title", descKey: "process.s1.desc", defaultHref: "/portal/perfil" },
+  { n: 2, icon: "📂", titleKey: "process.s2.title", descKey: "process.s2.desc", defaultHref: "/portal/evaluaciones" },
+  { n: 3, icon: "🧪", titleKey: "process.s3.title", descKey: "process.s3.desc", defaultHref: "/portal/agenda" },
+  { n: 4, icon: "🏅", titleKey: "process.s4.title", descKey: "process.s4.desc", defaultHref: "/portal/certificados" },
 ];
 
 /**
  * Render principal. `currentStep` define el paso activo (1..4) y los
  * anteriores se marcan como completados. `variant="compact"` quita la
  * descripción para layouts apretados.
+ *
+ * `stepHrefs` permite sobreescribir el destino de cada paso desde la
+ * página padre — útil cuando hay una inscripción en curso y el paso 2
+ * debe ir a `/portal/inscripcion/{id}` en vez de a la lista genérica.
  */
 export function ProcessSteps({
   currentStep = 1,
@@ -41,12 +53,14 @@ export function ProcessSteps({
   subtitle,
   variant = "default",
   locale = DEFAULT_LOCALE,
+  stepHrefs,
 }: {
   currentStep?: 1 | 2 | 3 | 4;
   title?: string;
   subtitle?: string;
   variant?: "default" | "compact";
   locale?: Locale;
+  stepHrefs?: Partial<Record<1 | 2 | 3 | 4, string>>;
 }) {
   const tr = (k: string) => t(k, locale);
   const compact = variant === "compact";
@@ -69,6 +83,48 @@ export function ProcessSteps({
           const status: "completed" | "current" | "upcoming" =
             step.n < currentStep ? "completed" : step.n === currentStep ? "current" : "upcoming";
           const isLast = i === PROCESS_STEPS.length - 1;
+          const href = stepHrefs?.[step.n as 1 | 2 | 3 | 4] ?? step.defaultHref;
+          // Estilo común del bloque interno (las clases visuales no cambian
+          // por estado link/no-link — solo el wrapper varía).
+          const inner = (
+            <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
+              <span
+                className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg shadow-sm ring-1 transition ${
+                  status === "completed"
+                    ? "bg-emerald-100 text-emerald-700 ring-emerald-300 group-hover:ring-emerald-500"
+                    : status === "current"
+                    ? "bg-brand-800 text-white ring-brand-300 shadow-brand-300/40 group-hover:ring-gold-400"
+                    : "bg-slate-100 text-slate-400 ring-slate-200 group-hover:bg-slate-200 group-hover:text-slate-600"
+                }`}
+              >
+                {status === "completed" ? "✓" : step.icon}
+                {status === "current" ? (
+                  <span aria-hidden className="absolute -inset-1 animate-pulse rounded-full ring-2 ring-gold-400/60" />
+                ) : null}
+              </span>
+              <div className="mt-2 sm:mt-3">
+                <p
+                  className={`text-[10px] font-bold uppercase tracking-wider ${
+                    status === "completed"
+                      ? "text-emerald-700"
+                      : status === "current"
+                      ? "text-brand-800"
+                      : "text-slate-400"
+                  }`}
+                >
+                  {tr("process.step")} {step.n}
+                </p>
+                <h4 className={`mt-0.5 text-[13px] font-bold leading-tight group-hover:underline ${
+                  status === "upcoming" ? "text-slate-500 group-hover:text-brand-800" : "text-brand-900"
+                }`}>
+                  {tr(step.titleKey)}
+                </h4>
+                {!compact ? (
+                  <p className="mt-1 text-[11.5px] leading-snug text-slate-500">{tr(step.descKey)}</p>
+                ) : null}
+              </div>
+            </div>
+          );
           return (
             <li key={step.n} className="relative">
               {/* Conector horizontal (desktop) */}
@@ -81,43 +137,14 @@ export function ProcessSteps({
                 />
               ) : null}
 
-              <div className="flex flex-col items-center text-center sm:items-start sm:text-left">
-                <span
-                  className={`relative grid h-11 w-11 shrink-0 place-items-center rounded-full text-lg shadow-sm ring-1 transition ${
-                    status === "completed"
-                      ? "bg-emerald-100 text-emerald-700 ring-emerald-300"
-                      : status === "current"
-                      ? "bg-brand-800 text-white ring-brand-300 shadow-brand-300/40"
-                      : "bg-slate-100 text-slate-400 ring-slate-200"
-                  }`}
-                >
-                  {status === "completed" ? "✓" : step.icon}
-                  {status === "current" ? (
-                    <span aria-hidden className="absolute -inset-1 animate-pulse rounded-full ring-2 ring-gold-400/60" />
-                  ) : null}
-                </span>
-                <div className="mt-2 sm:mt-3">
-                  <p
-                    className={`text-[10px] font-bold uppercase tracking-wider ${
-                      status === "completed"
-                        ? "text-emerald-700"
-                        : status === "current"
-                        ? "text-brand-800"
-                        : "text-slate-400"
-                    }`}
-                  >
-                    {tr("process.step")} {step.n}
-                  </p>
-                  <h4 className={`mt-0.5 text-[13px] font-bold leading-tight ${
-                    status === "upcoming" ? "text-slate-500" : "text-brand-900"
-                  }`}>
-                    {tr(step.titleKey)}
-                  </h4>
-                  {!compact ? (
-                    <p className="mt-1 text-[11.5px] leading-snug text-slate-500">{tr(step.descKey)}</p>
-                  ) : null}
-                </div>
-              </div>
+              <Link
+                href={href}
+                aria-current={status === "current" ? "step" : undefined}
+                title={`${tr("process.step")} ${step.n}: ${tr(step.titleKey)} — ${tr("process.gotoAction")}`}
+                className="group block rounded-xl p-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-300 hover:bg-white/60"
+              >
+                {inner}
+              </Link>
             </li>
           );
         })}
@@ -141,10 +168,12 @@ export function WelcomeWizard({
   candidateFirstName,
   enrollmentsCount,
   locale = DEFAULT_LOCALE,
+  stepHrefs,
 }: {
   candidateFirstName?: string;
   enrollmentsCount: number;
   locale?: Locale;
+  stepHrefs?: Partial<Record<1 | 2 | 3 | 4, string>>;
 }) {
   const tr = (k: string) => t(k, locale);
   const greeting = candidateFirstName ? `, ${candidateFirstName}` : "";
@@ -163,12 +192,12 @@ export function WelcomeWizard({
             {tr("portal.wizard.subtitle")}
           </p>
         </div>
-        <a
-          href="/portal/evaluaciones"
+        <Link
+          href={stepHrefs?.[2] ?? "/portal/evaluaciones"}
           className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-bold text-white"
         >
           {enrollmentsCount === 0 ? tr("portal.wizard.cta.start") : tr("portal.wizard.cta.continue")}
-        </a>
+        </Link>
       </div>
 
       <div className="mt-5">
@@ -177,6 +206,7 @@ export function WelcomeWizard({
           title=" "
           subtitle=" "
           locale={locale}
+          stepHrefs={stepHrefs}
         />
       </div>
     </section>

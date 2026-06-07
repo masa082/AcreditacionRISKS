@@ -5,24 +5,25 @@ import { StatTile, PageHeader, Badge, EmptyState, Card } from "@/components/ui";
 import { dateOnly } from "@/lib/format";
 import { WelcomeWizard, ProcessSteps } from "@/components/process-steps";
 import { getServerLocale } from "@/lib/i18n/server";
+import { t } from "@/lib/i18n/locale";
 
 export const metadata = { title: "Mi portal" };
 
-const ENROLL_STATUS_ES: Record<string, string> = {
-  STARTED: "Iniciado",
-  CONSENT_PENDING: "Pendiente de autorización de datos",
-  DOCS_PENDING: "Pendiente de documentos",
-  PAYMENT_PENDING: "Pendiente de pago",
-  SCHEDULING: "Por agendar",
-  READY: "Listo para presentar",
-  IN_PROGRESS: "En presentación",
-  GRADING: "En calificación",
-  COMMITTEE: "En revisión de comité",
-  APPROVED: "Aprobado",
-  REJECTED: "No aprobado",
-  CERTIFIED: "Certificado",
-  EXPIRED: "Vencido",
-  CANCELLED: "Cancelado",
+const ENROLL_STATUS_KEY: Record<string, string> = {
+  STARTED: "enroll.status.STARTED",
+  CONSENT_PENDING: "enroll.status.CONSENT_PENDING",
+  DOCS_PENDING: "enroll.status.DOCS_PENDING",
+  PAYMENT_PENDING: "enroll.status.PAYMENT_PENDING",
+  SCHEDULING: "enroll.status.SCHEDULING",
+  READY: "enroll.status.READY",
+  IN_PROGRESS: "enroll.status.IN_PROGRESS",
+  GRADING: "enroll.status.GRADING",
+  COMMITTEE: "enroll.status.COMMITTEE",
+  APPROVED: "enroll.status.APPROVED",
+  REJECTED: "enroll.status.REJECTED",
+  CERTIFIED: "enroll.status.CERTIFIED",
+  EXPIRED: "enroll.status.EXPIRED",
+  CANCELLED: "enroll.status.CANCELLED",
 };
 
 function toneFor(status: string): "green" | "amber" | "blue" | "slate" {
@@ -35,6 +36,7 @@ function toneFor(status: string): "green" | "amber" | "blue" | "slate" {
 export default async function CandidatePortal() {
   const { candidateId } = await requireCandidatePage();
   const locale = await getServerLocale();
+  const tr = (k: string) => t(k, locale);
 
   const [enrollments, certificates, candidate] = await Promise.all([
     prisma.enrollment.findMany({
@@ -70,17 +72,33 @@ export default async function CandidatePortal() {
     (e) => e.status.endsWith("PENDING") || e.status === "SCHEDULING",
   ).length;
 
+  // Si hay una inscripción "viva" (no cancelada ni vencida), el paso 2
+  // del wizard debe llevar a ESA inscripción específica para continuar
+  // donde la dejó. Si no, va a la lista de evaluaciones disponibles.
+  const liveEnrollment = enrollments.find(
+    (e) => e.status !== "CANCELLED" && e.status !== "EXPIRED" && e.status !== "REJECTED",
+  );
+  const step2Href = liveEnrollment
+    ? `/portal/inscripcion/${liveEnrollment.id}`
+    : "/portal/evaluaciones";
+  const stepHrefs: Partial<Record<1 | 2 | 3 | 4, string>> = {
+    1: "/portal/perfil",
+    2: step2Href,
+    3: "/portal/agenda",
+    4: activeCerts.length > 0 ? "/portal/certificados" : "/portal/certificados",
+  };
+
   return (
     <>
       <PageHeader
-        title="Mi proceso"
-        subtitle="Estado de sus procesos de certificación."
+        title={tr("portal.mi.title")}
+        subtitle={tr("portal.mi.subtitle")}
         actions={
           <Link
             href="/portal/evaluaciones"
             className="rounded-lg btn-grad-navy px-4 py-2 text-sm font-semibold text-white"
           >
-            Inscribirme en una evaluación
+            {tr("portal.mi.enrollCta")}
           </Link>
         }
       />
@@ -96,30 +114,36 @@ export default async function CandidatePortal() {
             candidateFirstName={candidate?.firstName ?? undefined}
             enrollmentsCount={enrollments.length}
             locale={locale}
+            stepHrefs={stepHrefs}
           />
         </div>
       ) : (
         <div className="mb-5">
-          <ProcessSteps currentStep={currentStep} variant="compact" locale={locale} />
+          <ProcessSteps
+            currentStep={currentStep}
+            variant="compact"
+            locale={locale}
+            stepHrefs={stepHrefs}
+          />
         </div>
       )}
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatTile label="Inscripciones" value={enrollments.length} />
-        <StatTile label="Certificados vigentes" value={activeCerts.length} tone="good" />
-        <StatTile label="Acciones pendientes" value={pending} tone="warn" />
+        <StatTile label={tr("portal.mi.stat.enrollments")} value={enrollments.length} />
+        <StatTile label={tr("portal.mi.stat.certs")} value={activeCerts.length} tone="good" />
+        <StatTile label={tr("portal.mi.stat.pending")} value={pending} tone="warn" />
       </div>
 
       <Card className="mt-6">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="font-semibold text-slate-900">Mis procesos</h2>
+          <h2 className="font-semibold text-slate-900">{tr("portal.mi.processes")}</h2>
         </div>
         <div className="p-5">
           {enrollments.length === 0 ? (
             <EmptyState>
-              Aún no tiene inscripciones.{" "}
+              {tr("portal.mi.empty.processes.before")}{" "}
               <Link href="/portal/evaluaciones" className="text-brand-700 hover:underline">
-                Vea las evaluaciones disponibles
+                {tr("portal.mi.empty.processes.link")}
               </Link>
               .
             </EmptyState>
@@ -132,14 +156,14 @@ export default async function CandidatePortal() {
                       href={`/portal/inscripcion/${e.id}`}
                       className="font-medium text-slate-800 hover:text-brand-800 hover:underline"
                     >
-                      {e.exam?.name ?? e.scheme?.name ?? "Proceso de certificación"}
+                      {e.exam?.name ?? e.scheme?.name ?? tr("portal.mi.processFallback")}
                     </Link>
                     <div className="text-xs text-slate-400">
-                      Folio {e.code} · {dateOnly(e.createdAt)}
+                      {tr("portal.mi.folio")} {e.code} · {dateOnly(e.createdAt)}
                     </div>
                   </div>
                   <Badge tone={toneFor(e.status)}>
-                    {ENROLL_STATUS_ES[e.status] ?? e.status}
+                    {ENROLL_STATUS_KEY[e.status] ? tr(ENROLL_STATUS_KEY[e.status]) : e.status}
                   </Badge>
                 </li>
               ))}
@@ -150,18 +174,18 @@ export default async function CandidatePortal() {
 
       <Card className="mt-6">
         <div className="border-b border-slate-200 px-5 py-4">
-          <h2 className="font-semibold text-slate-900">Mis certificados</h2>
+          <h2 className="font-semibold text-slate-900">{tr("portal.mi.certs")}</h2>
         </div>
         <div className="p-5">
           {certificates.length === 0 ? (
-            <EmptyState>Todavía no tiene certificados emitidos.</EmptyState>
+            <EmptyState>{tr("portal.mi.empty.certs")}</EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
               {certificates.map((c) => (
                 <li key={c.id} className="flex items-center justify-between py-3">
                   <div>
                     <div className="font-medium text-slate-800">{c.title}</div>
-                    <div className="text-xs text-slate-400">Código {c.code}</div>
+                    <div className="text-xs text-slate-400">{tr("portal.mi.code")} {c.code}</div>
                   </div>
                   <Badge tone={c.status === "VALID" ? "green" : "slate"}>{c.status}</Badge>
                 </li>
