@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState, useState } from "react";
 import { Field, Input, Select, FormError, SubmitButton } from "@/components/form";
 import { registerCandidate, type RegisterState } from "@/lib/actions/registration";
+import { ConsentBlock } from "@/components/consent-block";
 
 interface Org {
   slug: string;
@@ -226,13 +227,11 @@ export function RegisterForm({
         </Field>
       </div>
 
-      <label className="flex items-start gap-2 text-sm text-slate-600">
-        <input type="checkbox" name="acceptPolicy" className="mt-0.5 h-4 w-4 rounded border-slate-300" />
-        <span>
-          Autorizo el tratamiento de mis datos personales conforme a la política
-          de la entidad certificadora, con fines de evaluación y certificación.
-        </span>
-      </label>
+      <ConsentBlock />
+
+      {/* Versión y snapshot van como campos ocultos para que el server los
+          persista junto con la autorización en DataConsent (auditoría legal). */}
+      <input type="hidden" name="consentPolicyVersion" value="v2026-06-05" />
 
       <div className="flex items-center justify-between">
         <Link href="/login" className="text-sm text-brand-700 hover:underline">

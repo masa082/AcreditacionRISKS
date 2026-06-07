@@ -1,6 +1,7 @@
 "use server";
 
 import { z } from "zod";
+import { headers } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { hashPassword, newToken } from "@/lib/auth";
 import { audit } from "@/lib/audit";
@@ -44,8 +45,13 @@ const registerSchema = z
       .max(72),
     confirm: z.string(),
     acceptPolicy: z.literal("on", {
-      message: "Debe aceptar la política de tratamiento de datos",
+      message: "Debe autorizar el tratamiento de datos personales",
     }),
+    acceptSensitive: z.literal("on", {
+      message:
+        "Debe autorizar el tratamiento de datos sensibles (foto, antecedentes, antifraude). Sin esta autorización no es posible adelantar el proceso de certificación.",
+    }),
+    consentPolicyVersion: z.string().min(3).max(40).optional().default("v2026-06-05"),
   })
   .refine((d) => d.password === d.confirm, {
     message: "Las contraseñas no coinciden",
@@ -72,6 +78,8 @@ export async function registerCandidate(
     password: formData.get("password"),
     confirm: formData.get("confirm"),
     acceptPolicy: formData.get("acceptPolicy"),
+    acceptSensitive: formData.get("acceptSensitive"),
+    consentPolicyVersion: clean(formData.get("consentPolicyVersion")) ?? undefined,
   });
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message };
@@ -144,6 +152,12 @@ export async function registerCandidate(
   const verificationToken = newToken(24);
   const passwordHash = await hashPassword(data.password);
 
+  // Captura de IP + UA como evidencia digital de la autorización.
+  // Si el usuario está detrás de proxy/CDN, x-forwarded-for trae la IP real.
+  const h = await headers();
+  const ip = h.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
+  const userAgent = h.get("user-agent") ?? null;
+
   await prisma.$transaction(async (tx) => {
     const user = await tx.user.create({
       data: {
@@ -159,7 +173,7 @@ export async function registerCandidate(
         roleId: candidateRole?.id ?? null,
       },
     });
-    await tx.candidate.create({
+    const candidate = await tx.candidate.create({
       data: {
         subscriberId: subscriber.id,
         userId: user.id,
@@ -169,6 +183,72 @@ export async function registerCandidate(
         documentType: data.documentType,
         documentNumber: data.documentNumber,
         phone: data.phone,
+      },
+    });
+
+    // ── Autorización Habeas Data (Ley 1581/2012) ──────────────────
+    // Crea/reutiliza la versión vigente de política de privacidad del
+    // suscriptor (snapshot del texto que el candidato vio en ese momento)
+    // y persiste un `DataConsent` enlazado con purposes en JSON, IP y UA.
+    // Esto es la "prueba de la autorización" exigida por la SIC.
+    const policyVersion = data.consentPolicyVersion;
+    const policy = await tx.privacyPolicyVersion.upsert({
+      where: { subscriberId_version: { subscriberId: subscriber.id, version: policyVersion } },
+      create: {
+        subscriberId: subscriber.id,
+        version: policyVersion,
+        title: "Política de Tratamiento de Datos Personales — CIOC",
+        content:
+          "Versión publicada en /privacidad y en https://www.risksint.com/habeas-data/. " +
+          "El detalle de finalidades, derechos del titular, autorización de datos " +
+          "sensibles y datos de contacto del Responsable se entregó al candidato en " +
+          "el formulario de registro antes de capturar el consentimiento.",
+        isCurrent: true,
+      },
+      update: {},
+    });
+    await tx.dataConsent.create({
+      data: {
+        subscriberId: subscriber.id,
+        candidateId: candidate.id,
+        policyId: policy.id,
+        policyVersion: policy.version,
+        holderName: `${data.firstName} ${data.lastName}`.trim(),
+        documentType: data.documentType,
+        documentNumber: data.documentNumber,
+        ip,
+        userAgent,
+        purposes: {
+          accepted: true,
+          acceptedSensitive: true,
+          policyUrl: "https://www.risksint.com/habeas-data/",
+          internalPolicyUrl: "/privacidad",
+          // Snapshot canónico de finalidades aprobadas.
+          purposes: [
+            "Crear y administrar cuenta de candidato",
+            "Gestionar inscripción y presentación de evaluaciones",
+            "Verificar identidad, antecedentes y documentación",
+            "Emitir y publicar certificados verificables",
+            "Notificar por correo, WhatsApp o SMS",
+            "Atender solicitudes, quejas y reclamos",
+            "Cumplir obligaciones legales y reportes a autoridades",
+            "Realizar estadísticas internas (datos agregados)",
+            "Tratamiento de datos sensibles (foto, antecedentes, antifraude)",
+          ],
+          rights: [
+            "Conocer, actualizar y rectificar sus datos",
+            "Solicitar prueba de la autorización",
+            "Ser informado del uso dado a sus datos",
+            "Presentar quejas ante la SIC",
+            "Revocar la autorización y solicitar supresión",
+            "Acceder gratuitamente a sus datos",
+          ],
+          channels: {
+            email: "habeasdata@risksint.com",
+            phone: "+57 601 794 1834",
+          },
+          legalBasis: ["Ley 1581 de 2012", "Decreto 1377 de 2013", "Constitución Política art. 15"],
+        },
       },
     });
   });
