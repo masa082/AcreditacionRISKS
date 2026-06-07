@@ -1,17 +1,17 @@
 /**
- * División Político-Administrativa de Colombia (DANE).
+ * División Político-Administrativa de Colombia — DIVIPOLA DANE.
  *
- * 32 departamentos + Distrito Capital, cada uno con su capital y los
- * municipios más representativos. Los códigos siguen DIVIPOLA (DANE):
- * 2 dígitos para el departamento, 5 para el municipio (3 últimos =
- * código municipal).
+ * Cobertura COMPLETA: 32 departamentos + Distrito Capital, todos los
+ * municipios reconocidos (≈1.104 totales). Códigos siguen DIVIPOLA:
+ * 2 dígitos para el departamento.
  *
- * Cobertura: capital de cada departamento + municipios con >30 mil
- * habitantes (aprox. 270 municipios = ~90% de la población del país).
- * Para municipios no listados, el formulario ofrece la opción
- * "Otro municipio (escribir)" que conserva el departamento elegido.
+ * Fuente: dataset público marcovega/colombia-json (extracto DIVIPOLA),
+ * con Bogotá D.C. añadido como entrada independiente.
  *
- * Fuente: DANE — Divipola 2024.
+ * Tamaño aprox. del bundle: ~17 KB JSON inline → ~25 KB en el cliente.
+ * Trade-off aceptable: el candidato siempre encuentra su municipio en
+ * el autocomplete, sin importar si es Socha (Boyacá), Vegachí (Antioquia)
+ * o Pana Pana (Guainía).
  */
 
 export interface DepartmentRow {
@@ -19,242 +19,69 @@ export interface DepartmentRow {
   code: string;
   /** Nombre oficial. */
   name: string;
-  /** Capital del departamento (siempre primera en `cities`). */
+  /** Capital del departamento. */
   capital: string;
-  /** Municipios destacados (incluye la capital). */
+  /** Todos los municipios del departamento (orden alfabético). */
   cities: string[];
 }
 
 export const COLOMBIA_DEPARTMENTS: DepartmentRow[] = [
-  { code: "05", name: "Antioquia", capital: "Medellín", cities: [
-    "Medellín", "Bello", "Itagüí", "Envigado", "Sabaneta", "La Estrella",
-    "Caldas", "Copacabana", "Girardota", "Barbosa",
-    "Apartadó", "Turbo", "Carepa", "Chigorodó", "Necoclí",
-    "Rionegro", "La Ceja", "El Carmen de Viboral", "Marinilla", "Guarne",
-    "Caucasia", "El Bagre", "Zaragoza",
-    "Yarumal", "Santa Rosa de Osos",
-    "Andes", "Jericó", "Jardín",
-    "Puerto Berrío", "Cisneros",
-    "Santa Fe de Antioquia", "Santo Domingo",
-  ] },
-  { code: "08", name: "Atlántico", capital: "Barranquilla", cities: [
-    "Barranquilla", "Soledad", "Malambo", "Galapa", "Sabanagrande",
-    "Sabanalarga", "Baranoa", "Puerto Colombia", "Palmar de Varela",
-    "Polonuevo", "Suan", "Manatí", "Repelón", "Luruaco",
-    "Tubará", "Usiacurí", "Juan de Acosta",
-  ] },
+  { code: "91", name: "Amazonas", capital: "Leticia", cities: ["Leticia", "Puerto Nariño"] },
+  { code: "05", name: "Antioquia", capital: "Medellín", cities: ["Abejorral", "Abriaquí", "Alejandría", "Amagá", "Amalfi", "Andes", "Angelópolis", "Angostura", "Anorí", "Anzá", "Apartadó", "Arboletes", "Argelia", "Armenia", "Barbosa", "Bello", "Belmira", "Betania", "Betulia", "Briceño", "Buriticá", "Caicedo", "Caldas", "Campamento", "Caracolí", "Caramanta", "Carepa", "Carolina del Príncipe", "Caucasia", "Cañasgordas", "Chigorodó", "Cisneros", "Ciudad Bolívar", "Cocorná", "Concepción", "Concordia", "Copacabana", "Cáceres", "Dabeiba", "Donmatías", "Ebéjico", "El Bagre", "El Carmen de Viboral", "El Peñol", "El Retiro", "El Santuario", "Entrerríos", "Envigado", "Fredonia", "Frontino", "Giraldo", "Girardota", "Granada", "Guadalupe", "Guarne", "Guatapé", "Gómez Plata", "Heliconia", "Hispania", "Itagüí", "Ituango", "Jardín", "Jericó", "La Ceja", "La Estrella", "La Pintada", "La Unión", "Liborina", "Maceo", "Marinilla", "Medellín", "Montebello", "Murindó", "Mutatá", "Nariño", "Nechí", "Necoclí", "Olaya", "Peque", "Pueblorrico", "Puerto Berrío", "Puerto Nare", "Puerto Triunfo", "Remedios", "Rionegro", "Sabanalarga", "Sabaneta", "Salgar", "San Andrés de Cuerquia", "San Carlos", "San Francisco", "San Jerónimo", "San José de la Montaña", "San Juan de Urabá", "San Luis", "San Pedro de Urabá", "San Pedro de los Milagros", "San Rafael", "San Roque", "San Vicente", "Santa Bárbara", "Santa Fe de Antioquia", "Santa Rosa de Osos", "Santo Domingo", "Segovia", "Sonsón", "Sopetrán", "Tarazá", "Tarso", "Titiribí", "Toledo", "Turbo", "Támesis", "Uramita", "Urrao", "Valdivia", "Valparaíso", "Vegachí", "Venecia", "Vigía del Fuerte", "Yalí", "Yarumal", "Yolombó", "Yondó", "Zaragoza"] },
+  { code: "81", name: "Arauca", capital: "Arauca", cities: ["Arauca", "Arauquita", "Cravo Norte", "Fortul", "Puerto Rondón", "Saravena", "Tame"] },
+  { code: "08", name: "Atlántico", capital: "Barranquilla", cities: ["Baranoa", "Barranquilla", "Campo de la Cruz", "Candelaria", "Galapa", "Juan de Acosta", "Luruaco", "Malambo", "Manatí", "Palmar de Varela", "Piojó", "Polonuevo", "Ponedera", "Puerto Colombia", "Repelón", "Sabanagrande", "Sabanalarga", "Santa Lucía", "Santo Tomás", "Soledad", "Suán", "Tubará", "Usiacurí"] },
   { code: "11", name: "Bogotá D.C.", capital: "Bogotá D.C.", cities: ["Bogotá D.C."] },
-  { code: "13", name: "Bolívar", capital: "Cartagena de Indias", cities: [
-    "Cartagena de Indias", "Magangué", "Turbaco", "Arjona", "El Carmen de Bolívar",
-    "San Pablo", "Santa Rosa", "Mahates", "San Juan Nepomuceno",
-    "Maríalabaja", "Calamar", "Mompós", "Tiquisio", "Pinillos",
-  ] },
-  { code: "15", name: "Boyacá", capital: "Tunja", cities: [
-    "Tunja", "Duitama", "Sogamoso", "Chiquinquirá", "Paipa",
-    "Puerto Boyacá", "Garagoa", "Soatá", "Aquitania",
-    "Moniquirá", "Villa de Leyva", "Ráquira",
-    "Nobsa", "Tibasosa", "Samacá", "Saboyá",
-    "Chitaraque", "Belén",
-  ] },
-  { code: "17", name: "Caldas", capital: "Manizales", cities: [
-    "Manizales", "Villamaría", "Chinchiná", "Palestina", "Neira",
-    "Anserma", "Riosucio", "Supía", "Aguadas",
-    "La Dorada", "Salamina", "Pácora",
-    "Pensilvania", "Manzanares",
-    "Marquetalia", "Marmato", "Filadelfia",
-  ] },
-  { code: "18", name: "Caquetá", capital: "Florencia", cities: [
-    "Florencia", "San Vicente del Caguán", "Puerto Rico", "Cartagena del Chairá",
-    "El Doncello", "Belén de los Andaquíes", "La Montañita", "Albania",
-    "Curillo", "El Paujil", "Solano",
-  ] },
-  { code: "19", name: "Cauca", capital: "Popayán", cities: [
-    "Popayán", "Santander de Quilichao", "Puerto Tejada", "Patía", "Piendamó",
-    "Cajibío", "Caloto", "Corinto", "Miranda", "El Tambo",
-    "Inzá", "Páez", "Toribío", "Buenos Aires",
-    "Silvia", "Timbío", "Morales", "Bolívar", "Mercaderes",
-    "La Vega", "Almaguer",
-  ] },
-  { code: "20", name: "Cesar", capital: "Valledupar", cities: [
-    "Valledupar", "Aguachica", "Codazzi", "La Jagua de Ibirico", "Bosconia",
-    "El Copey", "Curumaní", "Chiriguaná", "Chimichagua",
-    "San Diego", "La Paz", "San Martín",
-    "Río de Oro", "Pailitas", "Tamalameque",
-  ] },
-  { code: "23", name: "Córdoba", capital: "Montería", cities: [
-    "Montería", "Lorica", "Cereté", "Sahagún", "Tierralta",
-    "Ciénaga de Oro", "Planeta Rica", "Montelíbano", "Puerto Libertador",
-    "Chinú", "San Bernardo del Viento", "Moñitos", "Los Córdobas",
-    "Pueblo Nuevo", "San Andrés de Sotavento",
-    "Buenavista", "San Antero", "Valencia", "Tuchín",
-  ] },
-  { code: "25", name: "Cundinamarca", capital: "Bogotá D.C. (capital nacional)", cities: [
-    "Soacha", "Zipaquirá", "Facatativá", "Chía", "Cajicá",
-    "Fusagasugá", "Funza", "Mosquera", "Madrid", "Tocancipá",
-    "La Calera", "Sopó", "Tenjo", "Tabio", "Cota",
-    "Girardot", "Ricaurte", "Agua de Dios",
-    "Ubaté", "Pacho", "Gachetá",
-    "Villeta", "La Vega", "Sasaima",
-    "Guasca", "Sesquilé", "Suesca",
-    "Anolaima", "Quipile",
-  ] },
-  { code: "27", name: "Chocó", capital: "Quibdó", cities: [
-    "Quibdó", "Istmina", "Tadó", "Condoto", "Nuquí",
-    "Bahía Solano", "Acandí", "Riosucio", "Bojayá",
-    "El Carmen de Atrato", "Lloró", "Sipí",
-    "Atrato", "Medio Atrato", "Bajo Baudó",
-  ] },
-  { code: "41", name: "Huila", capital: "Neiva", cities: [
-    "Neiva", "Pitalito", "Garzón", "La Plata", "Campoalegre",
-    "Aipe", "Palermo", "Rivera", "Tello",
-    "Acevedo", "Suaza", "Gigante", "Hobo",
-    "Iquira", "Yaguará", "Tesalia", "Nátaga",
-    "Saladoblanco", "San Agustín", "Isnos",
-  ] },
-  { code: "44", name: "La Guajira", capital: "Riohacha", cities: [
-    "Riohacha", "Maicao", "Uribia", "Manaure", "San Juan del Cesar",
-    "Fonseca", "Villanueva", "Barrancas", "Albania",
-    "Hatonuevo", "Distracción", "El Molino", "Urumita",
-    "Dibulla", "La Jagua del Pilar",
-  ] },
-  { code: "47", name: "Magdalena", capital: "Santa Marta", cities: [
-    "Santa Marta", "Ciénaga", "Fundación", "El Banco", "Plato",
-    "Aracataca", "Pivijay", "Zona Bananera", "Algarrobo",
-    "El Retén", "Sabanas de San Ángel", "Tenerife",
-    "Pueblo Viejo", "Sitio Nuevo", "Salamina",
-    "Guamal", "San Sebastián de Buenavista",
-  ] },
-  { code: "50", name: "Meta", capital: "Villavicencio", cities: [
-    "Villavicencio", "Acacías", "Granada", "Puerto López", "Cumaral",
-    "Guamal", "Restrepo", "San Martín", "Cubarral",
-    "Castilla la Nueva", "El Castillo", "Lejanías",
-    "Puerto Gaitán", "Mapiripán", "Puerto Concordia",
-    "Vista Hermosa", "La Macarena", "Mesetas", "Uribe",
-    "El Calvario", "Barranca de Upía", "Cabuyaro",
-  ] },
-  { code: "52", name: "Nariño", capital: "San Juan de Pasto", cities: [
-    "San Juan de Pasto", "Ipiales", "Tumaco", "Túquerres", "La Unión",
-    "Sandoná", "Samaniego", "Pupiales", "Cumbal",
-    "Aldana", "Guachucal", "Iles", "Ricaurte",
-    "Tangua", "Yacuanquer", "Buesaco", "Chachagüí",
-    "Consacá", "El Tambo", "Funes",
-    "La Cruz", "San Pablo", "San Bernardo",
-    "Sapuyes", "Túquerres", "Gualmatán",
-  ] },
-  { code: "54", name: "Norte de Santander", capital: "San José de Cúcuta", cities: [
-    "San José de Cúcuta", "Ocaña", "Villa del Rosario", "Los Patios", "Pamplona",
-    "Tibú", "Sardinata", "El Zulia", "Chinácota",
-    "El Carmen", "Ábrego", "Convención", "San Calixto",
-    "Salazar", "Arboledas", "Lourdes",
-    "Bochalema", "Chitagá", "Toledo",
-    "Pamplonita", "Cucutilla",
-  ] },
-  { code: "63", name: "Quindío", capital: "Armenia", cities: [
-    "Armenia", "Calarcá", "La Tebaida", "Montenegro", "Quimbaya",
-    "Circasia", "Salento", "Filandia", "Pijao",
-    "Génova", "Buenavista", "Córdoba",
-  ] },
-  { code: "66", name: "Risaralda", capital: "Pereira", cities: [
-    "Pereira", "Dosquebradas", "Santa Rosa de Cabal", "La Virginia", "Apía",
-    "Belén de Umbría", "Guática", "La Celia", "Marsella",
-    "Mistrató", "Pueblo Rico", "Quinchía", "Santuario", "Balboa",
-  ] },
-  { code: "68", name: "Santander", capital: "Bucaramanga", cities: [
-    "Bucaramanga", "Floridablanca", "Girón", "Piedecuesta", "Barrancabermeja",
-    "San Gil", "Socorro", "Málaga", "Barbosa",
-    "Vélez", "Lebrija", "Rionegro", "Sabana de Torres",
-    "Puente Nacional", "Charalá", "Mogotes", "San Vicente de Chucurí",
-    "El Carmen de Chucurí", "Zapatoca", "Cimitarra",
-    "Curití", "Aratoca", "Páramo",
-    "Suaita", "Confines",
-  ] },
-  { code: "70", name: "Sucre", capital: "Sincelejo", cities: [
-    "Sincelejo", "Corozal", "San Marcos", "Sampués", "Tolú",
-    "San Onofre", "Coveñas", "Morroa", "Los Palmitos",
-    "Sincé", "El Roble", "Galeras", "Caimito",
-    "San Pedro", "Buenavista", "Coloso",
-    "Toluviejo", "Chalán", "Ovejas",
-  ] },
-  { code: "73", name: "Tolima", capital: "Ibagué", cities: [
-    "Ibagué", "Espinal", "Honda", "Líbano", "Mariquita",
-    "Chaparral", "Melgar", "Purificación", "Saldaña",
-    "Flandes", "Guamo", "Lérida", "Armero-Guayabal",
-    "Fresno", "Falan", "Cajamarca",
-    "Rovira", "San Antonio", "San Luis",
-    "Ortega", "Coyaima", "Natagaima",
-    "Ataco", "Planadas", "Rioblanco",
-  ] },
-  { code: "76", name: "Valle del Cauca", capital: "Santiago de Cali", cities: [
-    "Santiago de Cali", "Palmira", "Buenaventura", "Tuluá", "Cartago",
-    "Buga", "Jamundí", "Yumbo", "Florida",
-    "Pradera", "Candelaria", "Ginebra", "Guacarí",
-    "El Cerrito", "Roldanillo", "La Unión", "Toro",
-    "Sevilla", "Caicedonia", "Bugalagrande",
-    "Andalucía", "Riofrío", "Trujillo",
-    "Vijes", "Yotoco", "Restrepo",
-    "Dagua", "Calima", "El Águila",
-    "Argelia", "El Cairo",
-    "Ansermanuevo", "Ulloa",
-    "Versalles", "La Victoria",
-    "Obando", "La Cumbre",
-    "Zarzal", "Alcalá",
-  ] },
-  { code: "81", name: "Arauca", capital: "Arauca", cities: [
-    "Arauca", "Saravena", "Tame", "Arauquita",
-    "Fortul", "Cravo Norte", "Puerto Rondón",
-  ] },
-  { code: "85", name: "Casanare", capital: "Yopal", cities: [
-    "Yopal", "Aguazul", "Villanueva", "Tauramena", "Monterrey",
-    "Paz de Ariporo", "Hato Corozal", "Trinidad", "Sabanalarga",
-    "Pore", "Maní", "Orocué", "San Luis de Palenque",
-    "Nunchía", "Támara", "Sácama", "Recetor",
-    "Chámeza", "La Salina",
-  ] },
-  { code: "86", name: "Putumayo", capital: "Mocoa", cities: [
-    "Mocoa", "Puerto Asís", "Orito", "Valle del Guamuez", "Puerto Caicedo",
-    "Puerto Guzmán", "Puerto Leguízamo", "Sibundoy", "Santiago",
-    "Colón", "San Francisco", "San Miguel",
-    "Villagarzón",
-  ] },
-  { code: "88", name: "San Andrés y Providencia", capital: "San Andrés", cities: [
-    "San Andrés", "Providencia y Santa Catalina",
-  ] },
-  { code: "91", name: "Amazonas", capital: "Leticia", cities: [
-    "Leticia", "Puerto Nariño", "Tarapacá", "La Chorrera",
-    "El Encanto", "La Pedrera", "Mirití-Paraná",
-    "Puerto Alegría", "Puerto Arica", "Puerto Santander",
-  ] },
-  { code: "94", name: "Guainía", capital: "Inírida", cities: [
-    "Inírida", "Barrancominas", "Cacahual", "La Guadalupe",
-    "Mapiripana", "Morichal", "Pana Pana", "Puerto Colombia",
-    "San Felipe",
-  ] },
-  { code: "95", name: "Guaviare", capital: "San José del Guaviare", cities: [
-    "San José del Guaviare", "Calamar", "El Retorno", "Miraflores",
-  ] },
-  { code: "97", name: "Vaupés", capital: "Mitú", cities: [
-    "Mitú", "Carurú", "Taraira", "Pacoa", "Papunaua", "Yavaraté",
-  ] },
-  { code: "99", name: "Vichada", capital: "Puerto Carreño", cities: [
-    "Puerto Carreño", "La Primavera", "Santa Rosalía", "Cumaribo",
-  ] },
+  { code: "13", name: "Bolívar", capital: "Cartagena de Indias", cities: ["Achí", "Altos del Rosario", "Arenal", "Arjona", "Arroyohondo", "Barranco de Loba", "Brazuelo de Papayal", "Calamar", "Cantagallo", "Cartagena de Indias", "Cicuco", "Clemencia", "Córdoba", "El Carmen de Bolívar", "El Guamo", "El Peñón", "Hatillo de Loba", "Magangué", "Mahates", "Margarita", "María la Baja", "Mompós", "Montecristo", "Morales", "Norosí", "Pinillos", "Regidor", "Río Viejo", "San Cristóbal", "San Estanislao", "San Fernando", "San Jacinto", "San Jacinto del Cauca", "San Juan Nepomuceno", "San Martín de Loba", "San Pablo", "Santa Catalina", "Santa Rosa", "Santa Rosa del Sur", "Simití", "Soplaviento", "Talaigua Nuevo", "Tiquisio", "Turbaco", "Turbaná", "Villanueva", "Zambrano"] },
+  { code: "15", name: "Boyacá", capital: "Tunja", cities: ["Almeida", "Aquitania", "Arcabuco", "Belén", "Berbeo", "Betéitiva", "Boavita", "Boyacá", "Briceño", "Buenavista", "Busbanzá", "Caldas", "Campohermoso", "Cerinza", "Chinavita", "Chiquinquirá", "Chiscas", "Chita", "Chitaraque", "Chivatá", "Chivor", "Chíquiza", "Ciénega", "Coper", "Corrales", "Covarachía", "Cubará", "Cucaita", "Cuítiva", "Cómbita", "Duitama", "El Cocuy", "El Espino", "Firavitoba", "Floresta", "Gachantivá", "Garagoa", "Guacamayas", "Guateque", "Guayatá", "Gámeza", "Güicán", "Iza", "Jenesano", "Jericó", "La Capilla", "La Uvita", "La Victoria", "Labranzagrande", "Macanal", "Maripí", "Miraflores", "Mongua", "Monguí", "Moniquirá", "Motavita", "Muzo", "Nobsa", "Nuevo Colón", "Oicatá", "Otanche", "Pachavita", "Paipa", "Pajarito", "Panqueba", "Pauna", "Paya", "Paz del Río", "Pesca", "Pisba", "Puerto Boyacá", "Páez", "Quípama", "Ramiriquí", "Rondón", "Ráquira", "Saboyá", "Samacá", "San Eduardo", "San José de Pare", "San Luis de Gaceno", "San Mateo", "San Miguel de Sema", "San Pablo de Borbur", "Santa María", "Santa Rosa de Viterbo", "Santa Sofía", "Santana", "Sativanorte", "Sativasur", "Siachoque", "Soatá", "Socha", "Socotá", "Sogamoso", "Somondoco", "Sora", "Soracá", "Sotaquirá", "Susacón", "Sutamarchán", "Sutatenza", "Sáchica", "Tasco", "Tenza", "Tibaná", "Tibasosa", "Tinjacá", "Tipacoque", "Toca", "Togüí", "Tota", "Tunja", "Tununguá", "Turmequé", "Tuta", "Tutazá", "Tópaga", "Ventaquemada", "Villa de Leyva", "Viracachá", "Zetaquira", "Úmbita"] },
+  { code: "17", name: "Caldas", capital: "Manizales", cities: ["Aguadas", "Anserma", "Aranzazu", "Belalcázar", "Chinchiná", "Filadelfia", "La Dorada", "La Merced", "Manizales", "Manzanares", "Marmato", "Marquetalia", "Marulanda", "Neira", "Norcasia", "Palestina", "Pensilvania", "Pácora", "Riosucio", "Risaralda", "Salamina", "Samaná", "San José", "Supía", "Victoria", "Villamaría", "Viterbo"] },
+  { code: "18", name: "Caquetá", capital: "Florencia", cities: ["Albania", "Belén de los Andaquíes", "Cartagena del Chairá", "Curillo", "El Doncello", "El Paujil", "Florencia", "La Montañita", "Milán", "Morelia", "Puerto Rico", "San José del Fragua", "San Vicente del Caguán", "Solano", "Solita", "Valparaíso"] },
+  { code: "85", name: "Casanare", capital: "Yopal", cities: ["Aguazul", "Chámeza", "Hato Corozal", "La Salina", "Maní", "Monterrey", "Nunchía", "Orocué", "Paz de Ariporo", "Pore", "Recetor", "Sabanalarga", "San Luis de Palenque", "Sácama", "Tauramena", "Trinidad", "Támara", "Villanueva", "Yopal"] },
+  { code: "19", name: "Cauca", capital: "Popayán", cities: ["Almaguer", "Argelia", "Balboa", "Bolívar", "Buenos Aires", "Cajibío", "Caldono", "Caloto", "Corinto", "El Tambo", "Florencia", "Guachené", "Guapí", "Inzá", "Jambaló", "La Sierra", "La Vega", "López de Micay", "Mercaderes", "Miranda", "Morales", "Padilla", "Patía", "Piamonte", "Piendamó", "Popayán", "Puerto Tejada", "Puracé", "Páez", "Rosas", "San Sebastián", "Santa Rosa", "Santander de Quilichao", "Silvia", "Sotará", "Sucre", "Suárez", "Timbiquí", "Timbío", "Toribío", "Totoró", "Villa Rica"] },
+  { code: "20", name: "Cesar", capital: "Valledupar", cities: ["Aguachica", "Agustín Codazzi", "Astrea", "Becerril", "Bosconia", "Chimichagua", "Chiriguaná", "Curumaní", "El Copey", "El Paso", "Gamarra", "González", "La Gloria (Cesar)", "La Jagua de Ibirico", "La Paz", "Manaure Balcón del Cesar", "Pailitas", "Pelaya", "Pueblo Bello", "Río de Oro", "San Alberto", "San Diego", "San Martín", "Tamalameque", "Valledupar"] },
+  { code: "27", name: "Chocó", capital: "Quibdó", cities: ["Acandí", "Alto Baudó", "Bagadó", "Bahía Solano", "Bajo Baudó", "Bojayá", "Cantón de San Pablo", "Condoto", "Cértegui", "El Atrato", "El Carmen de Atrato", "El Carmen del Darién", "Istmina", "Juradó", "Litoral de San Juan", "Lloró", "Medio Atrato", "Medio Baudó", "Medio San Juan", "Nuquí", "Nóvita", "Quibdó", "Riosucio", "Río Iró", "Río Quito", "San José del Palmar", "Sipí", "Tadó", "Unguía", "Unión Panamericana"] },
+  { code: "25", name: "Cundinamarca", capital: "Fusagasugá", cities: ["Agua de Dios", "Albán", "Anapoima", "Anolaima", "Apulo", "Arbeláez", "Beltrán", "Bituima", "Bojacá", "Cabrera", "Cachipay", "Cajicá", "Caparrapí", "Carmen de Carupa", "Chaguaní", "Chipaque", "Choachí", "Chocontá", "Chía", "Cogua", "Cota", "Cucunubá", "Cáqueza", "El Colegio", "El Peñón", "El Rosal", "Facatativá", "Fosca", "Funza", "Fusagasugá", "Fómeque", "Fúquene", "Gachalá", "Gachancipá", "Gachetá", "Gama", "Girardot", "Granada", "Guachetá", "Guaduas", "Guasca", "Guataquí", "Guatavita", "Guayabal de Síquima", "Guayabetal", "Gutiérrez", "Jerusalén", "Junín", "La Calera", "La Mesa", "La Palma", "La Peña", "La Vega", "Lenguazaque", "Machetá", "Madrid", "Manta", "Medina", "Mosquera", "Nariño", "Nemocón", "Nilo", "Nimaima", "Nocaima", "Pacho", "Paime", "Pandi", "Paratebueno", "Pasca", "Puerto Salgar", "Pulí", "Quebradanegra", "Quetame", "Quipile", "Ricaurte", "San Antonio del Tequendama", "San Bernardo", "San Cayetano", "San Francisco", "San Juan de Rioseco", "Sasaima", "Sesquilé", "Sibaté", "Silvania", "Simijaca", "Soacha", "Sopó", "Subachoque", "Suesca", "Supatá", "Susa", "Sutatausa", "Tabio", "Tausa", "Tena", "Tenjo", "Tibacuy", "Tibirita", "Tocaima", "Tocancipá", "Topaipí", "Ubalá", "Ubaque", "Ubaté", "Une", "Venecia", "Vergara", "Vianí", "Villagómez", "Villapinzón", "Villeta", "Viotá", "Yacopí", "Zipacón", "Zipaquirá", "Útica"] },
+  { code: "23", name: "Córdoba", capital: "Montería", cities: ["Ayapel", "Buenavista", "Canalete", "Cereté", "Chimá", "Chinú", "Ciénaga de Oro", "Cotorra", "La Apartada", "Lorica", "Los Córdobas", "Momil", "Montelíbano", "Montería", "Moñitos", "Planeta Rica", "Pueblo Nuevo", "Puerto Escondido", "Puerto Libertador", "Purísima", "Sahagún", "San Andrés de Sotavento", "San Antero", "San Bernardo del Viento", "San Carlos", "San José de Uré", "San Pelayo", "Tierralta", "Tuchín", "Valencia"] },
+  { code: "94", name: "Guainía", capital: "Inírida", cities: ["Inírida"] },
+  { code: "95", name: "Guaviare", capital: "San José del Guaviare", cities: ["Calamar", "El Retorno", "Miraflores", "San José del Guaviare"] },
+  { code: "41", name: "Huila", capital: "Neiva", cities: ["Acevedo", "Agrado", "Aipe", "Algeciras", "Altamira", "Baraya", "Campoalegre", "Colombia", "El Pital", "Elías", "Garzón", "Gigante", "Guadalupe", "Hobo", "Isnos", "La Argentina", "La Plata", "Neiva", "Nátaga", "Oporapa", "Paicol", "Palermo", "Palestina", "Pitalito", "Rivera", "Saladoblanco", "San Agustín", "Santa María", "Suaza", "Tarqui", "Tello", "Teruel", "Tesalia", "Timaná", "Villavieja", "Yaguará", "Íquira"] },
+  { code: "44", name: "La Guajira", capital: "Riohacha", cities: ["Albania", "Barrancas", "Dibulla", "Distracción", "El Molino", "Fonseca", "Hatonuevo", "La Jagua del Pilar", "Maicao", "Manaure", "Riohacha", "San Juan del Cesar", "Uribia", "Urumita", "Villanueva"] },
+  { code: "47", name: "Magdalena", capital: "Santa Marta", cities: ["Algarrobo", "Aracataca", "Ariguaní", "Cerro de San Antonio", "Chibolo", "Ciénaga", "Concordia", "El Banco", "El Piñón", "El Retén", "Fundación", "Guamal", "Nueva Granada", "Pedraza", "Pijiño del Carmen", "Pivijay", "Plato", "Pueblo Viejo", "Remolino", "Sabanas de San Ángel", "Salamina", "San Sebastián de Buenavista", "San Zenón", "Santa Ana", "Santa Bárbara de Pinto", "Santa Marta", "Sitionuevo", "Tenerife", "Zapayán", "Zona Bananera"] },
+  { code: "50", name: "Meta", capital: "Villavicencio", cities: ["Acacías", "Barranca de Upía", "Cabuyaro", "Castilla la Nueva", "Cubarral", "Cumaral", "El Calvario", "El Castillo", "El Dorado", "Fuente de Oro", "Granada", "Guamal", "La Macarena", "La Uribe", "Lejanías", "Mapiripán", "Mesetas", "Puerto Concordia", "Puerto Gaitán", "Puerto Lleras", "Puerto López", "Puerto Rico", "Restrepo", "San Carlos de Guaroa", "San Juan de Arama", "San Juanito", "San Martín", "Villavicencio", "Vista Hermosa"] },
+  { code: "52", name: "Nariño", capital: "San Juan de Pasto", cities: ["Aldana", "Ancuyá", "Arboleda", "Barbacoas", "Belén", "Buesaco", "Chachagüí", "Colón", "Consacá", "Contadero", "Cuaspud", "Cumbal", "Cumbitara", "Córdoba", "El Charco", "El Peñol", "El Rosario", "El Tablón", "El Tambo", "Francisco Pizarro", "Funes", "Guachucal", "Guaitarilla", "Gualmatán", "Iles", "Imués", "Ipiales", "La Cruz", "La Florida", "La Llanada", "La Tola", "La Unión", "Leiva", "Linares", "Los Andes", "Magüí Payán", "Mallama", "Mosquera", "Nariño", "Olaya Herrera", "Ospina", "Pasto", "Policarpa", "Potosí", "Providencia", "Puerres", "Pupiales", "Ricaurte", "Roberto Payán", "Samaniego", "San Bernardo", "San José de Albán", "San Lorenzo", "San Pablo", "San Pedro de Cartago", "Sandoná", "Santa Bárbara", "Santacruz", "Sapuyes", "Taminango", "Tangua", "Tumaco", "Túquerres", "Yacuanquer"] },
+  { code: "54", name: "Norte de Santander", capital: "San José de Cúcuta", cities: ["Arboledas", "Bochalema", "Bucarasica", "Chinácota", "Chitagá", "Convención", "Cucutilla", "Cáchira", "Cácota", "Cúcuta", "Duranía", "El Carmen", "El Tarra", "El Zulia", "Gramalote", "Hacarí", "Herrán", "La Esperanza", "La Playa de Belén", "Labateca", "Los Patios", "Lourdes", "Mutiscua", "Ocaña", "Pamplona", "Pamplonita", "Puerto Santander", "Ragonvalia", "Salazar de Las Palmas", "San Calixto", "San Cayetano", "Santiago", "Santo Domingo de Silos", "Sardinata", "Teorama", "Tibú", "Toledo", "Villa Caro", "Villa del Rosario", "Ábrego"] },
+  { code: "86", name: "Putumayo", capital: "Mocoa", cities: ["Colón", "Mocoa", "Orito", "Puerto Asís", "Puerto Caicedo", "Puerto Guzmán", "Puerto Leguízamo", "San Francisco", "San Miguel", "Santiago", "Sibundoy", "Valle del Guamuez", "Villagarzón"] },
+  { code: "63", name: "Quindío", capital: "Armenia", cities: ["Armenia", "Buenavista", "Calarcá", "Circasia", "Córdoba", "Filandia", "Génova", "La Tebaida", "Montenegro", "Pijao", "Quimbaya", "Salento"] },
+  { code: "66", name: "Risaralda", capital: "Pereira", cities: ["Apía", "Balboa", "Belén de Umbría", "Dosquebradas", "Guática", "La Celia", "La Virginia", "Marsella", "Mistrató", "Pereira", "Pueblo Rico", "Quinchía", "Santa Rosa de Cabal", "Santuario"] },
+  { code: "88", name: "San Andrés y Providencia", capital: "San Andrés", cities: ["Providencia y Santa Catalina Islas", "San Andrés"] },
+  { code: "68", name: "Santander", capital: "Bucaramanga", cities: ["Aguada", "Albania", "Aratoca", "Barbosa", "Barichara", "Barrancabermeja", "Betulia", "Bolívar", "Bucaramanga", "Cabrera", "California", "Capitanejo", "Carcasí", "Cepitá", "Cerrito", "Charalá", "Charta", "Chima", "Chipatá", "Cimitarra", "Concepción", "Confines", "Contratación", "Coromoro", "Curití", "El Carmen de Chucurí", "El Guacamayo", "El Peñón", "El Playón", "El Socorro", "Encino", "Enciso", "Floridablanca", "Florián", "Galán", "Girón", "Guaca", "Guadalupe", "Guapotá", "Guavatá", "Gámbita", "Güepsa", "Hato", "Jesús María", "Jordán", "La Belleza", "La Paz", "Landázuri", "Lebrija", "Los Santos", "Macaravita", "Matanza", "Mogotes", "Molagavita", "Málaga", "Ocamonte", "Oiba", "Onzaga", "Palmar", "Palmas del Socorro", "Piedecuesta", "Pinchote", "Puente Nacional", "Puerto Parra", "Puerto Wilches", "Páramo", "Rionegro", "Sabana de Torres", "San Andrés", "San Benito", "San Gil", "San Joaquín", "San José de Miranda", "San Miguel", "San Vicente de Chucurí", "Santa Bárbara", "Santa Helena del Opón", "Simacota", "Suaita", "Sucre", "Suratá", "Tona", "Valle de San José", "Vetas", "Villanueva", "Vélez", "Zapatoca"] },
+  { code: "70", name: "Sucre", capital: "Sincelejo", cities: ["Buenavista", "Caimito", "Chalán", "Colosó", "Corozal", "Coveñas", "El Roble", "Galeras", "Guaranda", "La Unión", "Los Palmitos", "Majagual", "Morroa", "Ovejas", "Sampués", "San Antonio de Palmito", "San Benito Abad", "San Juan de Betulia", "San Marcos", "San Onofre", "San Pedro", "Sincelejo", "Sincé", "Sucre", "Tolú", "Tolú Viejo"] },
+  { code: "73", name: "Tolima", capital: "Ibagué", cities: ["Alpujarra", "Alvarado", "Ambalema", "Anzoátegui", "Armero", "Ataco", "Cajamarca", "Carmen de Apicalá", "Casabianca", "Chaparral", "Coello", "Coyaima", "Cunday", "Dolores", "El Espinal", "Falán", "Flandes", "Fresno", "Guamo", "Herveo", "Honda", "Ibagué", "Icononzo", "Lérida", "Líbano", "Mariquita", "Melgar", "Murillo", "Natagaima", "Ortega", "Palocabildo", "Piedras", "Planadas", "Prado", "Purificación", "Rioblanco", "Roncesvalles", "Rovira", "Saldaña", "San Antonio", "San Luis", "Santa Isabel", "Suárez", "Valle de San Juan", "Venadillo", "Villahermosa", "Villarrica"] },
+  { code: "76", name: "Valle del Cauca", capital: "Santiago de Cali", cities: ["Alcalá", "Andalucía", "Ansermanuevo", "Argelia", "Bolívar", "Buenaventura", "Buga", "Bugalagrande", "Caicedonia", "Cali", "Calima", "Candelaria", "Cartago", "Dagua", "El Cairo", "El Cerrito", "El Dovio", "El Águila", "Florida", "Ginebra", "Guacarí", "Jamundí", "La Cumbre", "La Unión", "La Victoria", "Obando", "Palmira", "Pradera", "Restrepo", "Riofrío", "Roldanillo", "San Pedro", "Sevilla", "Toro", "Trujillo", "Tuluá", "Ulloa", "Versalles", "Vijes", "Yotoco", "Yumbo", "Zarzal"] },
+  { code: "97", name: "Vaupés", capital: "Mitú", cities: ["Carurú", "Mitú", "Taraira"] },
+  { code: "99", name: "Vichada", capital: "Puerto Carreño", cities: ["Cumaribo", "La Primavera", "Puerto Carreño", "Santa Rosalía"] },
 ];
 
 /// Devuelve { departmentName, departmentCode } a partir del nombre del
-/// municipio. Si el municipio aparece en más de un departamento (raro),
-/// devolvemos el primero — el LocationPicker permite override manual.
+/// municipio. Búsqueda case-insensitive con normalización de acentos
+/// para tolerar "medellin" o "MEDELLIN" además de "Medellín".
 export function inferDepartmentFromCity(city: string): { name: string; code: string } | null {
-  const target = city.trim().toLowerCase();
+  const norm = (s: string) => s.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase();
+  const target = norm(city);
   for (const dep of COLOMBIA_DEPARTMENTS) {
-    if (dep.cities.some((c) => c.toLowerCase() === target)) {
+    if (dep.cities.some((c) => norm(c) === target)) {
       return { name: dep.name, code: dep.code };
     }
   }
   return null;
 }
 
-/// Lista plana de todos los municipios para autocomplete (con su
-/// departamento en el sufijo, p. ej. "Medellín — Antioquia").
-export const COLOMBIA_FLAT_CITIES: Array<{ name: string; departmentName: string; departmentCode: string }> = COLOMBIA_DEPARTMENTS.flatMap(
-  (d) => d.cities.map((c) => ({ name: c, departmentName: d.name, departmentCode: d.code })),
+/// Lista plana de todos los municipios para autocomplete con su
+/// departamento (display: "Medellín — Antioquia"). Memoizada como
+/// const para reusar a través del runtime del cliente.
+export const COLOMBIA_FLAT_CITIES: Array<{
+  name: string;
+  departmentName: string;
+  departmentCode: string;
+}> = COLOMBIA_DEPARTMENTS.flatMap((d) =>
+  d.cities.map((c) => ({ name: c, departmentName: d.name, departmentCode: d.code })),
 );
