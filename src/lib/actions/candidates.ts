@@ -226,7 +226,12 @@ export async function sendBulkEmail(
   let sent = 0;
   let failed = 0;
   const errors: string[] = [];
-  for (const r of recipients) {
+  // Throttle: Resend admite ~10 req/seg. Espaciamos 120 ms entre envíos
+  // a partir del segundo para no agarrar 429 en lotes grandes.
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  for (let i = 0; i < recipients.length; i++) {
+    if (i > 0) await sleep(120);
+    const r = recipients[i];
     // Personalización mínima: {nombre}
     const personalBody = parsed.data.body.replace(/{nombre}/gi, r.firstName);
     const result = await sendEmail({

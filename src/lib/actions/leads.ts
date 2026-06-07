@@ -613,7 +613,13 @@ export async function sendBulkLeadEmail(args: {
   let failed = 0;
   const errors: string[] = [];
 
-  for (const l of leads) {
+  // Resend permite ~10 requests/segundo. Mantenemos al menos 120 ms
+  // entre envíos para no agarrar 429 en lotes grandes. El primer envío
+  // sale inmediato; el throttle aplica entre los siguientes.
+  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+  for (let i = 0; i < leads.length; i++) {
+    if (i > 0) await sleep(120);
+    const l = leads[i];
     const body = parsed.data.body.replace(/{nombre}/gi, l.fullName);
     const html = `<div style="font-family:Arial,sans-serif;white-space:pre-wrap;">${body
       .replace(/</g, "&lt;")

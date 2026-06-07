@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import { importLeadsBulk } from "@/lib/actions/leads";
 
 /**
@@ -89,16 +89,23 @@ export function LeadsImport({ onClose }: { onClose: () => void }) {
   const cols = headerRow?.length ?? parsed[0]?.length ?? 0;
 
   const [mapping, setMapping] = useState<Record<number, FieldKey>>({});
-  // Auto-detección del mapping cuando se pegan datos nuevos.
-  const initializedRef = useMemo(() => ({ key: "" }), []);
-  if (initializedRef.key !== text && cols > 0) {
-    initializedRef.key = text;
+
+  // Auto-detección del mapping cuando se pega/carga texto nuevo. Se
+  // dispara en useEffect (no en render) para evitar efectos secundarios
+  // durante el render — los warnings de React Strict Mode se enfadan.
+  // Las dependencias son `text` (cambio de fuente) y `cols`/`hasHeader`
+  // (cambio de estructura).
+  useEffect(() => {
+    if (cols === 0) return;
     const m: Record<number, FieldKey> = {};
     for (let i = 0; i < cols; i++) {
-      m[i] = headerRow ? guessField(headerRow[i] ?? "") : (i === 0 ? "fullName" : i === 1 ? "email" : "ignore");
+      m[i] = headerRow
+        ? guessField(headerRow[i] ?? "")
+        : i === 0 ? "fullName" : i === 1 ? "email" : "ignore";
     }
-    setTimeout(() => setMapping(m), 0);
-  }
+    setMapping(m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [text, cols, hasHeader]);
 
   function onFile(file: File) {
     const reader = new FileReader();
