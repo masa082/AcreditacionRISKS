@@ -183,7 +183,7 @@ const html = `<!DOCTYPE html>
   .cover-gold-bar {
     width: 80pt;
     height: 3pt;
-    background: var(--gold);
+    background: var(--navy-900);
     margin: 22pt 0;
   }
   .cover-title {
