@@ -8,9 +8,9 @@ export interface ReportTheme {
   /** Color de títulos de sección, nombre del titular y texto principal. */
   primary: string;       // navy
   /** Color de acento — líneas, separadores, badge "EN PROCESO DE…". */
-  accent: string;        // dorado
+  accent: string;        // navy (antes dorado — manual de marca RISKS no usa amarillo)
   /** Fondo de la franja del encabezado (claro para que cualquier logo se vea). */
-  headerBg: string;      // crema
+  headerBg: string;      // gris muy claro (antes crema)
   /** Fondo de la franja por sección (rect detrás del title). */
   sectionBg: string;     // azul muy claro
   /** Color del texto del title de sección. */
@@ -23,13 +23,15 @@ export interface ReportTheme {
   muted: string;
 }
 
-/// Paleta institucional CIOC por defecto: navy + dorado + crema.
-/// Se mantiene como fallback para que los suscriptores que aún no han
-/// personalizado su tema vean exactamente lo mismo que antes.
+/// Paleta institucional CIOC por defecto: navy + grises (sin dorado).
+/// Las líneas decorativas del PDF de Hoja de Vida (separadores,
+/// encabezado y franja izquierda de los títulos de sección) usan navy
+/// para alinearse con el manual de marca de RISKS y con los documentos
+/// oficiales del catálogo de /documentacion.
 export const DEFAULT_THEME: ReportTheme = {
   primary:     "#0b1d44",
-  accent:      "#c89a35",
-  headerBg:    "#fdfbf4",
+  accent:      "#0b1d44",   // antes "#c89a35" (dorado) — ahora navy
+  headerBg:    "#eaf0f6",   // antes "#fdfbf4" (crema) — ahora gris muy claro
   sectionBg:   "#f1f6ff",
   sectionText: "#0b1d44",
   rule:        "#d9dde6",

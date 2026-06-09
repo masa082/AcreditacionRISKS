@@ -10,7 +10,7 @@ const TOKENS: { key: TokenKey; label: string; hint: string }[] = [
   { key: "primary",     label: "Color primario",
     hint: "Títulos de sección, nombre del titular y datos principales del informe/diploma." },
   { key: "accent",      label: "Color de acento",
-    hint: "Líneas, franjas decorativas, dorado del diploma y badge ONAC." },
+    hint: "Líneas, franjas decorativas y badge ONAC. Por defecto: navy oscuro." },
   { key: "headerBg",    label: "Fondo del encabezado",
     hint: "Fondo de la franja superior del PDF. Use un tono CLARO para que cualquier logo se vea." },
   { key: "sectionBg",   label: "Fondo de sección",
@@ -29,8 +29,8 @@ type TokenKey = "primary" | "accent" | "headerBg" | "sectionBg" | "sectionText" 
 
 const DEFAULTS: Record<TokenKey, string> = {
   primary:     "#0b1d44",
-  accent:      "#c89a35",
-  headerBg:    "#fdfbf4",
+  accent:      "#0b1d44",   // navy (antes "#c89a35" dorado)
+  headerBg:    "#eaf0f6",   // gris muy claro (antes "#fdfbf4" crema)
   sectionBg:   "#f1f6ff",
   sectionText: "#0b1d44",
   rule:        "#d9dde6",
