@@ -329,6 +329,7 @@ model Subscriber {
   leads              Lead[]
   referrers          Referrer[]
   referrals          Referral[]
+  documentations     Documentation[]
 
   @@index([status])
 }
@@ -386,6 +387,7 @@ model User {
   notifications   Notification[]
   sessions        Session[]
   feedbackTickets FeedbackTicket[]
+  documentations  Documentation[]
 
   @@unique([email, subscriberId])
   @@index([subscriberId])
@@ -1447,4 +1449,56 @@ enum FeedbackStatus {
   IN_PROGRESS      // tomado, en desarrollo / atención
   RESOLVED         // resuelto (respondido)
   CLOSED           // cerrado sin acción
+}
+
+// ─── Documentation ─────────────────────────────────────────────────────
+//
+// Repositorio centralizado de documentos oficiales del proceso de
+// certificación (políticas, términos, manuales, plantillas, etc.) que
+// se publican en /documentacion para todos los roles.
+//
+// Reglas de visibilidad:
+//   - subscriberId = null  → documento GLOBAL administrado por SUPERADMIN.
+//                            Visible para todos los suscriptores y candidatos.
+//   - subscriberId = X     → documento PROPIO del suscriptor X. Visible
+//                            solo para usuarios y candidatos de ese tenant.
+//
+// La columna `seedSlug` permite identificar los documentos sembrados por
+// el sistema (no editables ni eliminables vía UI) — son el set base que
+// viene precargado al instalar la plataforma.
+model Documentation {
+  id            String   @id @default(cuid())
+  subscriberId  String?
+  subscriber    Subscriber? @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  slug          String   // identificador único dentro del scope (global o suscriptor)
+  title         String
+  description   String?
+  version       String?  // e.g. "v1.0", "Junio 2026"
+  category      String?  // "legal" | "proceso" | "manual" | "plantilla" | "otro"
+
+  pdfUrl        String?  // URL pública del PDF (/docs/x.pdf o S3 firmada)
+  pdfSizeKB     Int?
+  docxUrl       String?  // URL pública del Word
+  docxSizeKB    Int?
+
+  // Audiencia informativa (para mostrar chips). No es control de acceso —
+  // todo documento es público para los suscriptores autenticados que tengan
+  // el match de scope. Valores: "CANDIDATE", "SUBSCRIBER", "SUPERADMIN".
+  audience      String[] @default([])
+
+  visible       Boolean  @default(true)
+  seedSlug      String?  @unique // si está sembrado por el sistema (no editable)
+
+  uploadedById  String?
+  uploadedBy    User?    @relation(fields: [uploadedById], references: [id])
+
+  sortOrder     Int      @default(0)
+  publishedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([subscriberId, slug])
+  @@index([subscriberId])
+  @@index([visible])
 }

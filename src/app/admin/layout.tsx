@@ -13,8 +13,9 @@ const NAV: NavItem[] = [
   // PLATAFORMA ─ operación y trazabilidad global
   { href: "/admin/feedback", label: "Feedback de usuarios", group: "Plataforma", icon: "💬" },
   { href: "/admin/logs", label: "Logs globales", group: "Plataforma", icon: "🗂" },
-  // Documentación oficial del proceso de certificación — pública.
-  { href: "/documentacion", label: "Documentación", group: "Plataforma", icon: "📄" },
+  // Catálogo de documentos del SaaS. SUPERADMIN gestiona los globales
+  // y supervisa los publicados por cada tenant.
+  { href: "/admin/documentacion", label: "Documentación", group: "Plataforma", icon: "📄" },
 
   // CONFIGURACIÓN
   { href: "/admin/cuenta", label: "Mi cuenta", group: "Configuración", icon: "⚙" },

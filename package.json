@@ -8,7 +8,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && prisma migrate deploy && tsx prisma/seed-documentation.ts && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
@@ -18,6 +18,7 @@
     "prisma:studio": "prisma studio",
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:ocp": "tsx prisma/seed-ocp.ts",
+    "db:seed:docs": "tsx prisma/seed-documentation.ts",
     "db:reset": "prisma migrate reset --force"
   },
   "prisma": {
