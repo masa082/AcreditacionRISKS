@@ -15,6 +15,9 @@ const NAV: NavItem[] = [
   // Soporte y gestión de la cuenta
   { href: "/portal/apelaciones", label: "Apelaciones y solicitudes", group: "Soporte", icon: "📣" },
   { href: "/portal/perfil", label: "Mi perfil", group: "Soporte", icon: "⚙" },
+  // Documentación oficial — pública, abre en la sección pública
+  // /documentacion en una pestaña nueva para preservar la sesión.
+  { href: "/documentacion", label: "Documentación", group: "Soporte", icon: "📄" },
 ];
 
 export default async function PortalLayout({ children }: { children: ReactNode }) {

@@ -32,6 +32,9 @@ const NAV: NavItem[] = [
   { href: "/panel/apelaciones", label: "Apelaciones y quejas", group: "Gobierno", icon: "📣" },
   { href: "/panel/reportes", label: "Reportes", group: "Gobierno", icon: "📊" },
   { href: "/panel/auditoria", label: "Auditoría", group: "Gobierno", icon: "🔍" },
+  // Documentación pública del proceso de certificación (PDF/Word).
+  // Útil para auditorías ONAC y capacitación interna del equipo.
+  { href: "/documentacion", label: "Documentación", group: "Gobierno", icon: "📄" },
 
   // CONFIGURACIÓN ─ parametrización del suscriptor
   { href: "/panel/organizacion", label: "Organización", group: "Configuración", icon: "🏢" },

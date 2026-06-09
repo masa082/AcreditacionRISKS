@@ -1476,6 +1476,88 @@ const DICTIONARY: Dict = {
   "enroll.status.CERTIFIED": { es: "Certificado", en: "Certified", pt: "Certificado", fr: "Certifié", it: "Certificato", de: "Zertifiziert" },
   "enroll.status.EXPIRED": { es: "Vencido", en: "Expired", pt: "Expirado", fr: "Expiré", it: "Scaduto", de: "Abgelaufen" },
   "enroll.status.CANCELLED": { es: "Cancelado", en: "Cancelled", pt: "Cancelado", fr: "Annulé", it: "Annullato", de: "Storniert" },
+
+  // ─── /documentacion ───────────────────────────────────────────────
+  "docs.eyebrow": {
+    es: "Documentación oficial", en: "Official documentation", pt: "Documentação oficial",
+    fr: "Documentation officielle", it: "Documentazione ufficiale", de: "Offizielle Dokumentation",
+  },
+  "docs.title": {
+    es: "Documentación del proceso de certificación",
+    en: "Certification process documentation",
+    pt: "Documentação do processo de certificação",
+    fr: "Documentation du processus de certification",
+    it: "Documentazione del processo di certificazione",
+    de: "Dokumentation des Zertifizierungsprozesses",
+  },
+  "docs.subtitle": {
+    es: "Documentos oficiales que describen el proceso de certificación CIOC: los 4 pasos, los módulos por rol (candidato, suscriptor, administrador), cobertura multilenguaje, cumplimiento de habeas data, respaldo ONAC y verificación pública. Descárguelos en PDF o Word para imprimir, firmar o distribuir.",
+    en: "Official documents describing the CIOC certification process: the 4 steps, role-based modules (candidate, subscriber, admin), multi-language coverage, data-protection compliance, ONAC backing and public verification. Download as PDF or Word for printing, signing or sharing.",
+    pt: "Documentos oficiais que descrevem o processo de certificação CIOC: as 4 etapas, os módulos por função (candidato, assinante, admin), cobertura multilíngue, conformidade de proteção de dados, respaldo ONAC e verificação pública. Baixe em PDF ou Word para imprimir, assinar ou distribuir.",
+    fr: "Documents officiels décrivant le processus de certification CIOC : les 4 étapes, les modules par rôle (candidat, abonné, admin), la couverture multilingue, la conformité RGPD, l'appui ONAC et la vérification publique. Téléchargez en PDF ou Word pour imprimer, signer ou partager.",
+    it: "Documenti ufficiali che descrivono il processo di certificazione CIOC: i 4 passi, i moduli per ruolo (candidato, abbonato, admin), copertura multilingue, conformità sulla protezione dei dati, supporto ONAC e verifica pubblica. Scaricali in PDF o Word per stampare, firmare o distribuire.",
+    de: "Offizielle Dokumente zum CIOC-Zertifizierungsprozess: die 4 Schritte, rollenbasierte Module (Kandidat, Abonnent, Admin), mehrsprachige Abdeckung, Datenschutzkonformität, ONAC-Unterstützung und öffentliche Verifizierung. Als PDF oder Word zum Drucken, Unterschreiben oder Verteilen herunterladen.",
+  },
+  "docs.available": { es: "Documentos disponibles", en: "Available documents", pt: "Documentos disponíveis", fr: "Documents disponibles", it: "Documenti disponibili", de: "Verfügbare Dokumente" },
+  "docs.updated": { es: "Actualizado", en: "Updated", pt: "Atualizado", fr: "Mis à jour", it: "Aggiornato", de: "Aktualisiert" },
+  "docs.audience": { es: "Para", en: "For", pt: "Para", fr: "Pour", it: "Per", de: "Für" },
+  "docs.downloadPdf": { es: "Descargar PDF", en: "Download PDF", pt: "Baixar PDF", fr: "Télécharger PDF", it: "Scarica PDF", de: "PDF herunterladen" },
+  "docs.downloadDocx": { es: "Descargar Word", en: "Download Word", pt: "Baixar Word", fr: "Télécharger Word", it: "Scarica Word", de: "Word herunterladen" },
+  "docs.related": { es: "Enlaces relacionados", en: "Related links", pt: "Links relacionados", fr: "Liens connexes", it: "Link correlati", de: "Verwandte Links" },
+  "docs.related.faq": { es: "Preguntas frecuentes", en: "Frequently asked questions", pt: "Perguntas frequentes", fr: "Questions fréquentes", it: "Domande frequenti", de: "Häufig gestellte Fragen" },
+  "docs.related.verify": { es: "Verificar un certificado", en: "Verify a certificate", pt: "Verificar um certificado", fr: "Vérifier un certificat", it: "Verifica un certificato", de: "Zertifikat überprüfen" },
+  "docs.related.certs": { es: "Ver certificaciones", en: "View certifications", pt: "Ver certificações", fr: "Voir les certifications", it: "Vedi le certificazioni", de: "Zertifizierungen ansehen" },
+  "docs.related.privacy": { es: "Política de privacidad", en: "Privacy policy", pt: "Política de privacidade", fr: "Politique de confidentialité", it: "Informativa sulla privacy", de: "Datenschutzrichtlinie" },
+  "docs.footnote.prefix": { es: "¿Necesita una versión firmada por el organismo o un documento adicional?", en: "Need a signed version from the body or an additional document?", pt: "Precisa de uma versão assinada pelo organismo ou de um documento adicional?", fr: "Besoin d'une version signée par l'organisme ou d'un document supplémentaire ?", it: "Hai bisogno di una versione firmata dall'ente o di un documento aggiuntivo?", de: "Benötigen Sie eine vom Organ unterzeichnete Version oder ein zusätzliches Dokument?" },
+  "docs.footnote.contact": { es: "Contáctenos", en: "Contact us", pt: "Fale conosco", fr: "Contactez-nous", it: "Contattaci", de: "Kontaktieren Sie uns" },
+
+  "docs.cioc.title": {
+    es: "Proceso de Certificación CIOC — Documento descriptivo",
+    en: "CIOC Certification Process — Descriptive Document",
+    pt: "Processo de Certificação CIOC — Documento Descritivo",
+    fr: "Processus de Certification CIOC — Document Descriptif",
+    it: "Processo di Certificazione CIOC — Documento Descrittivo",
+    de: "CIOC-Zertifizierungsprozess — Beschreibendes Dokument",
+  },
+  "docs.cioc.desc": {
+    es: "Documento oficial que describe el ciclo completo del proceso de certificación de personas operado por RISKS INTERNATIONAL bajo la norma ISO/IEC 17024: los 4 pasos del candidato, módulos por rol, multilenguaje, habeas data, ONAC y verificación pública por QR.",
+    en: "Official document describing the full lifecycle of the person certification process operated by RISKS INTERNATIONAL under ISO/IEC 17024: the candidate's 4 steps, role modules, multi-language, data protection, ONAC and public QR verification.",
+    pt: "Documento oficial que descreve o ciclo completo do processo de certificação de pessoas operado pela RISKS INTERNATIONAL sob a norma ISO/IEC 17024: as 4 etapas do candidato, módulos por função, multilíngue, proteção de dados, ONAC e verificação pública por QR.",
+    fr: "Document officiel décrivant le cycle complet du processus de certification des personnes opéré par RISKS INTERNATIONAL selon la norme ISO/IEC 17024 : les 4 étapes du candidat, les modules par rôle, le multilingue, la protection des données, l'ONAC et la vérification publique par QR.",
+    it: "Documento ufficiale che descrive il ciclo completo del processo di certificazione delle persone gestito da RISKS INTERNATIONAL secondo la norma ISO/IEC 17024: i 4 passi del candidato, i moduli per ruolo, multilingue, protezione dei dati, ONAC e verifica pubblica con QR.",
+    de: "Offizielles Dokument zum vollständigen Lebenszyklus des Personenzertifizierungsprozesses von RISKS INTERNATIONAL nach ISO/IEC 17024: die 4 Schritte des Kandidaten, Rollenmodule, mehrsprachig, Datenschutz, ONAC und öffentliche QR-Überprüfung.",
+  },
+
+  "docs.tile.candidate.title": { es: "Para el candidato", en: "For the candidate", pt: "Para o candidato", fr: "Pour le candidat", it: "Per il candidato", de: "Für den Kandidaten" },
+  "docs.tile.candidate.body": {
+    es: "Conozca de antemano cada paso del proceso, los documentos requeridos, los métodos de pago y qué esperar en la evaluación.",
+    en: "Know every process step in advance, the required documents, payment methods and what to expect in the evaluation.",
+    pt: "Conheça antecipadamente cada etapa do processo, os documentos exigidos, os métodos de pagamento e o que esperar na avaliação.",
+    fr: "Connaissez à l'avance chaque étape du processus, les documents requis, les modes de paiement et ce qui vous attend à l'évaluation.",
+    it: "Conosci in anticipo ogni passo del processo, i documenti richiesti, i metodi di pagamento e cosa aspettarti dalla valutazione.",
+    de: "Lernen Sie im Voraus jeden Prozessschritt, erforderliche Dokumente, Zahlungsmethoden und Erwartungen an die Prüfung kennen.",
+  },
+  "docs.tile.subscriber.title": { es: "Para el organismo", en: "For the body", pt: "Para o organismo", fr: "Pour l'organisme", it: "Per l'organismo", de: "Für das Organ" },
+  "docs.tile.subscriber.body": {
+    es: "Documento maestro para auditorías ONAC, capacitación interna del equipo y soporte a esquemas de calidad ISO/IEC 17024.",
+    en: "Master document for ONAC audits, internal team training and support of ISO/IEC 17024 quality schemes.",
+    pt: "Documento mestre para auditorias ONAC, treinamento interno da equipe e suporte de esquemas de qualidade ISO/IEC 17024.",
+    fr: "Document maître pour les audits ONAC, la formation interne de l'équipe et le support des systèmes qualité ISO/IEC 17024.",
+    it: "Documento principale per audit ONAC, formazione interna del team e supporto degli schemi di qualità ISO/IEC 17024.",
+    de: "Hauptdokument für ONAC-Audits, interne Teamschulung und Unterstützung von ISO/IEC 17024-Qualitätssystemen.",
+  },
+  "docs.tile.admin.title": { es: "Para el administrador SaaS", en: "For the SaaS admin", pt: "Para o administrador SaaS", fr: "Pour l'admin SaaS", it: "Per l'admin SaaS", de: "Für den SaaS-Admin" },
+  "docs.tile.admin.body": {
+    es: "Referencia técnica de la arquitectura multitenant, integraciones (Rapyd, Resend, S3) y módulos administrativos de la plataforma.",
+    en: "Technical reference for the multi-tenant architecture, integrations (Rapyd, Resend, S3) and admin modules of the platform.",
+    pt: "Referência técnica da arquitetura multitenant, integrações (Rapyd, Resend, S3) e módulos administrativos da plataforma.",
+    fr: "Référence technique de l'architecture multitenant, des intégrations (Rapyd, Resend, S3) et des modules d'administration de la plateforme.",
+    it: "Riferimento tecnico dell'architettura multitenant, integrazioni (Rapyd, Resend, S3) e moduli amministrativi della piattaforma.",
+    de: "Technische Referenz für die Multi-Tenant-Architektur, Integrationen (Rapyd, Resend, S3) und Admin-Module der Plattform.",
+  },
+
+  // Item de navegación: "Documentación"
+  "nav.docs": { es: "Documentación", en: "Documentation", pt: "Documentação", fr: "Documentation", it: "Documentazione", de: "Dokumentation" },
 };
 
 /**

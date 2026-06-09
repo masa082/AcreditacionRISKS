@@ -18,6 +18,7 @@ export async function LandingHeader() {
     { href: "/verificar", label: t("nav.verify.long", locale) },
     { href: "/refiere-y-gana", label: t("nav.referrals", locale) },
     { href: "/preguntas-frecuentes", label: t("nav.faq", locale) },
+    { href: "/documentacion", label: t("nav.docs", locale) },
     { href: "/contacto", label: t("nav.contact", locale) },
   ];
   return (
