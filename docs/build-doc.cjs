@@ -36,9 +36,14 @@ const HEADING_FONT = "Figtree";  // misma fuente que usa risksint.com en titular
 const NAVY = "0B1F3A";       // brand-900
 const NAVY_MID = "1E3A5F";   // brand-800
 const NAVY_SOFT = "EAF0F6";  // brand-50
-const GOLD = "B58B2A";       // gold-600
+// Se conserva la constante GOLD por compatibilidad de referencias, pero
+// se reasigna a navy oscuro: el manual de marca de RISKS no usa dorado.
+const GOLD = NAVY;
+const SLATE_700 = "334155";
 const SLATE_500 = "64748B";
+const SLATE_300 = "CBD5E1";
 const SLATE_200 = "E2E8F0";
+const SLATE_100 = "F1F5F9";
 const EMERALD = "059669";
 const WHITE = "FFFFFF";
 
@@ -147,7 +152,7 @@ const callout = (title, body, color = GOLD) =>
         children: [
           new TableCell({
             width: { size: CONTENT_W, type: WidthType.DXA },
-            shading: { fill: "FFF8E6", type: ShadingType.CLEAR, color: "auto" },
+            shading: { fill: SLATE_100, type: ShadingType.CLEAR, color: "auto" },
             margins: { top: 200, bottom: 200, left: 240, right: 240 },
             borders: {
               top: { style: BorderStyle.SINGLE, size: 24, color },

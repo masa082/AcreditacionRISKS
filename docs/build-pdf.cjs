@@ -63,14 +63,20 @@ const html = `<!DOCTYPE html>
     font-stretch: normal;
   }
 
-  /* Paleta RISKS */
+  /* Paleta RISKS — sin dorado/amarillo (no va con el manual de marca).
+     Los acentos antes dorados ahora son navy (texto/líneas/bordes
+     decorativos) o slate (fondos suaves). Las variables --gold y
+     --gold-50 se conservan como alias para no tocar cada selector. */
   :root {
     --navy-900: #0B1F3A;
     --navy-800: #1E3A5F;
+    --navy-700: #2C4D7A;
     --navy-50:  #EAF0F6;
-    --gold:     #B58B2A;
-    --gold-50:  #FFF8E6;
+    --gold:     #0B1F3A;   /* antes #B58B2A — ahora navy-900 */
+    --gold-50:  #F1F5F9;   /* antes #FFF8E6 — ahora slate-100 (gris muy claro) */
+    --slate-700:#334155;
     --slate-500:#64748B;
+    --slate-400:#94A3B8;
     --slate-300:#CBD5E1;
     --slate-200:#E2E8F0;
     --slate-100:#F1F5F9;
