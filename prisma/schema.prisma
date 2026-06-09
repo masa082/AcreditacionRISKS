@@ -1481,6 +1481,10 @@ model Documentation {
   pdfSizeKB     Int?
   docxUrl       String?  // URL pública del Word
   docxSizeKB    Int?
+  // PNG de la primera página del PDF (480px de ancho aprox). Usado en
+  // /documentacion como tarjeta visual previa al "Ver PDF". Si es null,
+  // la UI muestra un placeholder neutral con el ícono de documento.
+  thumbnailUrl  String?
 
   // Audiencia informativa (para mostrar chips). No es control de acceso —
   // todo documento es público para los suscriptores autenticados que tengan

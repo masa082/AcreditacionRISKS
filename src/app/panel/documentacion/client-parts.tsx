@@ -153,27 +153,20 @@ export function DocFormDialog({ scope, doc }: { scope: Scope; doc?: DocLike }) {
 
               <fieldset className="rounded-lg border border-slate-200 p-3">
                 <legend className="px-1 text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                  Archivos
+                  Archivo PDF
                 </legend>
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <Field label="PDF (subir archivo)" htmlFor="pdf">
-                    <input id="pdf" name="pdf" type="file" accept=".pdf,application/pdf" className="text-sm" />
-                  </Field>
-                  <Field label="Word (subir archivo)" htmlFor="docx">
-                    <input id="docx" name="docx" type="file" accept=".docx" className="text-sm" />
-                  </Field>
-                </div>
-                <p className="mt-2 text-[11px] text-slate-500">
-                  O bien pegue URLs directas (útil para apuntar a documentos estáticos en /docs/...):
+                <p className="mb-2 text-[11px] text-slate-500">
+                  Los documentos de la plataforma se distribuyen únicamente en formato PDF.
                 </p>
-                <div className="mt-1 grid gap-3 sm:grid-cols-2">
-                  <Field label="URL PDF" htmlFor="pdfUrlRaw">
-                    <Input id="pdfUrlRaw" name="pdfUrlRaw" placeholder="/docs/Mi-Doc.pdf" defaultValue={doc?.pdfUrl ?? ""} maxLength={500} />
-                  </Field>
-                  <Field label="URL Word" htmlFor="docxUrlRaw">
-                    <Input id="docxUrlRaw" name="docxUrlRaw" placeholder="/docs/Mi-Doc.docx" defaultValue={doc?.docxUrl ?? ""} maxLength={500} />
-                  </Field>
-                </div>
+                <Field label="Subir PDF" htmlFor="pdf">
+                  <input id="pdf" name="pdf" type="file" accept=".pdf,application/pdf" className="text-sm" />
+                </Field>
+                <p className="mt-2 text-[11px] text-slate-500">
+                  O bien pegue una URL directa (útil para apuntar a un PDF estático en /docs/...):
+                </p>
+                <Field label="URL PDF" htmlFor="pdfUrlRaw">
+                  <Input id="pdfUrlRaw" name="pdfUrlRaw" placeholder="/docs/Mi-Doc.pdf" defaultValue={doc?.pdfUrl ?? ""} maxLength={500} />
+                </Field>
               </fieldset>
 
               <label className="flex items-center gap-2 text-sm">

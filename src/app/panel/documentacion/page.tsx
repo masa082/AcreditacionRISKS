@@ -97,105 +97,123 @@ interface DocRow {
   docxUrl: string | null;
   pdfSizeKB: number | null;
   docxSizeKB: number | null;
+  thumbnailUrl: string | null;
   publishedAt: Date;
   seedSlug: string | null;
 }
 
 function DocTable({ scope, docs }: { scope: "subscriber" | "platform"; docs: DocRow[] }) {
   return (
-    <ul className="divide-y divide-slate-100">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {docs.map((d) => (
-        <li key={d.id} className="grid grid-cols-1 gap-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-slate-800">{d.title}</span>
-              {d.version ? (
-                <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 ring-1 ring-brand-100">
-                  {d.version}
-                </span>
-              ) : null}
-              {!d.visible ? <Badge tone="amber">Oculto</Badge> : null}
-              {d.seedSlug ? <Badge tone="blue">Sistema</Badge> : null}
-            </div>
-            <div className="mt-0.5 text-[11px] text-slate-400">
-              slug: <span className="font-mono">{d.slug}</span> · {dateOnly(d.publishedAt)}
-            </div>
-            {d.description ? (
-              <p className="mt-1 text-[12px] text-slate-500 line-clamp-2">{d.description}</p>
-            ) : null}
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px]">
-              {d.pdfUrl ? (
-                <a
-                  href={d.pdfUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-md border border-slate-200 bg-white px-2 py-0.5 font-semibold text-brand-700 hover:bg-brand-50"
-                >
-                  📄 PDF{d.pdfSizeKB ? ` · ${d.pdfSizeKB} KB` : ""}
-                </a>
-              ) : null}
-              {d.docxUrl ? (
-                <a
-                  href={d.docxUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="rounded-md border border-slate-200 bg-white px-2 py-0.5 font-semibold text-brand-700 hover:bg-brand-50"
-                >
-                  📝 Word{d.docxSizeKB ? ` · ${d.docxSizeKB} KB` : ""}
-                </a>
-              ) : null}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 sm:flex-col sm:items-end">
-            {!d.seedSlug ? (
-              <>
-                <DocFormDialog scope={scope} doc={d} />
-                <DeleteDocButton id={d.id} scope={scope} title={d.title} />
-              </>
-            ) : (
-              <span className="text-[10px] text-slate-400">no editable</span>
-            )}
-          </div>
-        </li>
+        <AdminDocCard key={d.id} doc={d} scope={scope} editable />
       ))}
-    </ul>
+    </div>
   );
 }
 
 function ReadOnlyTable({ docs }: { docs: DocRow[] }) {
   return (
-    <ul className="divide-y divide-slate-100">
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {docs.map((d) => (
-        <li key={d.id} className="grid grid-cols-1 gap-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
-          <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="font-medium text-slate-800">{d.title}</span>
-              {d.version ? (
-                <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 ring-1 ring-brand-100">
-                  {d.version}
-                </span>
-              ) : null}
-              <Badge tone="blue">Global</Badge>
-            </div>
-            <div className="mt-0.5 text-[11px] text-slate-400">{dateOnly(d.publishedAt)}</div>
-            {d.description ? (
-              <p className="mt-1 text-[12px] text-slate-500 line-clamp-2">{d.description}</p>
-            ) : null}
-          </div>
-          <div className="flex gap-2">
-            {d.pdfUrl ? (
-              <a href={d.pdfUrl} target="_blank" rel="noopener noreferrer" className="rounded-md btn-grad-navy px-3 py-1 text-[11px] font-bold text-white">
-                PDF
-              </a>
-            ) : null}
-            {d.docxUrl ? (
-              <a href={d.docxUrl} target="_blank" rel="noopener noreferrer" className="rounded-md border border-slate-300 px-3 py-1 text-[11px] font-bold text-slate-700 hover:bg-slate-50">
-                Word
-              </a>
-            ) : null}
-          </div>
-        </li>
+        <AdminDocCard key={d.id} doc={d} scope="subscriber" editable={false} />
       ))}
-    </ul>
+    </div>
+  );
+}
+
+/**
+ * Tarjeta visual del catálogo en el panel administrativo. Muestra la
+ * miniatura del PDF, metadatos básicos y acciones (Ver PDF + Editar/
+ * Eliminar cuando corresponda). El Word queda oculto a propósito —
+ * los documentos solo se distribuyen como PDF.
+ */
+function AdminDocCard({
+  doc: d,
+  scope,
+  editable,
+}: {
+  doc: DocRow;
+  scope: "subscriber" | "platform";
+  editable: boolean;
+}) {
+  return (
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-premium">
+      <a
+        href={d.pdfUrl ?? "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Abrir PDF: ${d.title}`}
+        className="relative block aspect-[8.5/11] w-full overflow-hidden border-b border-slate-200 bg-slate-50"
+      >
+        {d.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={d.thumbnailUrl}
+            alt={`Vista previa: ${d.title}`}
+            className="h-full w-full object-cover object-top transition duration-300 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-50 to-slate-100 text-5xl">
+            📄
+          </div>
+        )}
+        <span className="absolute right-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 shadow-sm ring-1 ring-slate-200">
+          PDF
+        </span>
+        {!d.visible ? (
+          <span className="absolute left-3 top-3 rounded-md bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-amber-700 shadow-sm ring-1 ring-amber-200">
+            Oculto
+          </span>
+        ) : null}
+      </a>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          {d.version ? (
+            <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 ring-1 ring-brand-100">
+              {d.version}
+            </span>
+          ) : null}
+          {d.seedSlug ? <Badge tone="blue">Sistema</Badge> : null}
+        </div>
+        <h3 className="text-sm font-bold leading-tight text-brand-900">{d.title}</h3>
+        <div className="text-[11px] text-slate-400">
+          slug: <span className="font-mono">{d.slug}</span>
+        </div>
+        {d.description ? (
+          <p className="line-clamp-2 text-[12px] text-slate-500">{d.description}</p>
+        ) : null}
+        <div className="text-[10px] text-slate-400">
+          {dateOnly(d.publishedAt)}
+          {d.pdfSizeKB ? ` · ${d.pdfSizeKB} KB` : ""}
+        </div>
+        <div className="mt-auto flex items-center gap-2 pt-2">
+          {d.pdfUrl ? (
+            <a
+              href={d.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 rounded-md btn-grad-navy px-3 py-1.5 text-center text-[12px] font-bold text-white"
+            >
+              📄 Ver PDF
+            </a>
+          ) : (
+            <span className="flex-1 rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-center text-[12px] font-semibold text-slate-400">
+              Sin PDF
+            </span>
+          )}
+          {editable && !d.seedSlug ? (
+            <>
+              <DocFormDialog scope={scope} doc={d} />
+              <DeleteDocButton id={d.id} scope={scope} title={d.title} />
+            </>
+          ) : null}
+          {editable && d.seedSlug ? (
+            <span className="text-[10px] text-slate-400">no editable</span>
+          ) : null}
+        </div>
+      </div>
+    </article>
   );
 }

@@ -36,12 +36,6 @@ export const metadata: Metadata = {
   },
 };
 
-const AUDIENCE_LABEL: Record<string, string> = {
-  CANDIDATE: "Candidato",
-  SUBSCRIBER: "Suscriptor",
-  SUPERADMIN: "SUPERADMIN",
-};
-
 export default async function DocumentacionPage() {
   const locale = await getServerLocale();
   const tr = (k: string) => t(k, locale);
@@ -96,79 +90,13 @@ export default async function DocumentacionPage() {
             No hay documentos publicados todavía.
           </div>
         ) : (
-          <div className="space-y-4">
+          // Grid de tarjetas con miniatura tipo "estante de biblioteca":
+          // cada documento muestra una vista previa del PDF, sus metadatos
+          // y un único CTA "Ver PDF". El Word queda intencionalmente fuera
+          // — los documentos oficiales solo se distribuyen en PDF.
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {docs.map((d) => (
-              <article
-                key={d.id}
-                className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-premium"
-              >
-                <div className="grid gap-6 p-6 sm:grid-cols-[1fr_auto] sm:items-center">
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      {d.version ? (
-                        <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 ring-1 ring-brand-100">
-                          {d.version}
-                        </span>
-                      ) : null}
-                      {d.subscriberId ? (
-                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 ring-1 ring-slate-200">
-                          Propio del organismo
-                        </span>
-                      ) : (
-                        <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200">
-                          Oficial · sistema
-                        </span>
-                      )}
-                      <span className="text-[11px] text-slate-400">
-                        {tr("docs.updated")} ·{" "}
-                        {new Intl.DateTimeFormat("es-CO", { year: "numeric", month: "long" }).format(d.publishedAt)}
-                      </span>
-                    </div>
-                    <h3 className="mt-2 text-lg font-bold text-brand-900">{d.title}</h3>
-                    {d.description ? (
-                      <p className="mt-1 text-sm text-slate-600">{d.description}</p>
-                    ) : null}
-
-                    {d.audience?.length ? (
-                      <div className="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
-                        <span className="font-semibold uppercase tracking-wider text-slate-400">
-                          {tr("docs.audience")}:
-                        </span>
-                        {d.audience.map((a) => (
-                          <span key={a} className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-600">
-                            {AUDIENCE_LABEL[a] ?? a}
-                          </span>
-                        ))}
-                      </div>
-                    ) : null}
-                  </div>
-
-                  <div className="flex flex-col gap-2 sm:items-end">
-                    {d.pdfUrl ? (
-                      <a
-                        href={d.pdfUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-bold text-white shadow-sm transition hover:shadow-premium"
-                      >
-                        📄 {tr("docs.downloadPdf")}
-                        {d.pdfSizeKB ? <span className="text-[10px] opacity-70">{d.pdfSizeKB} KB</span> : null}
-                      </a>
-                    ) : null}
-                    {d.docxUrl ? (
-                      <a
-                        href={d.docxUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-brand-200 bg-white px-5 py-2 text-sm font-semibold text-brand-800 transition hover:bg-brand-50"
-                      >
-                        📝 {tr("docs.downloadDocx")}
-                        {d.docxSizeKB ? <span className="text-[10px] opacity-70">{d.docxSizeKB} KB</span> : null}
-                      </a>
-                    ) : null}
-                  </div>
-                </div>
-              </article>
+              <DocCard key={d.id} doc={d} tr={tr} />
             ))}
           </div>
         )}
@@ -202,6 +130,114 @@ export default async function DocumentacionPage() {
 
       <LandingFooter />
     </main>
+  );
+}
+
+/**
+ * Tarjeta visual de documento con miniatura PDF arriba y CTA único
+ * "Ver PDF". Mantiene aspect-ratio Letter (8.5×11 ≈ 1:1.29) y muestra
+ * sombra "papel" para sensación de catálogo físico.
+ */
+function DocCard({
+  doc: d,
+  tr,
+}: {
+  doc: {
+    id: string;
+    title: string;
+    description: string | null;
+    version: string | null;
+    pdfUrl: string | null;
+    pdfSizeKB: number | null;
+    thumbnailUrl: string | null;
+    subscriberId: string | null;
+    audience: string[];
+    publishedAt: Date;
+  };
+  tr: (k: string) => string;
+}) {
+  return (
+    <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:border-brand-300 hover:shadow-premium">
+      {/* Miniatura — relación de aspecto Letter, fondo navy si no hay thumb */}
+      <a
+        href={d.pdfUrl ?? "#"}
+        target="_blank"
+        rel="noopener noreferrer"
+        aria-label={`Abrir PDF: ${d.title}`}
+        className="relative block aspect-[8.5/11] w-full overflow-hidden border-b border-slate-200 bg-slate-50"
+      >
+        {d.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={d.thumbnailUrl}
+            alt={`Vista previa: ${d.title}`}
+            className="h-full w-full object-cover object-top transition duration-300 group-hover:scale-[1.02]"
+            loading="lazy"
+          />
+        ) : (
+          <div className="grid h-full w-full place-items-center bg-gradient-to-br from-brand-50 to-slate-100 text-5xl">
+            📄
+          </div>
+        )}
+        {/* Etiqueta esquina superior derecha */}
+        <span className="absolute right-3 top-3 rounded-md bg-white/95 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 shadow-sm ring-1 ring-slate-200">
+          PDF
+        </span>
+        {/* Overlay hover con "Abrir PDF" */}
+        <div className="absolute inset-0 flex items-end justify-center bg-gradient-to-t from-brand-900/70 via-brand-900/0 to-transparent opacity-0 transition group-hover:opacity-100">
+          <span className="mb-5 rounded-lg bg-white px-4 py-2 text-sm font-bold text-brand-900 shadow-sm">
+            🔍 Abrir documento
+          </span>
+        </div>
+      </a>
+
+      <div className="flex flex-1 flex-col gap-3 p-5">
+        <div className="flex flex-wrap items-center gap-2">
+          {d.version ? (
+            <span className="rounded-md bg-brand-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-brand-800 ring-1 ring-brand-100">
+              {d.version}
+            </span>
+          ) : null}
+          {d.subscriberId ? (
+            <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-slate-600 ring-1 ring-slate-200">
+              Organismo
+            </span>
+          ) : (
+            <span className="rounded-md bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 ring-1 ring-emerald-200">
+              Oficial
+            </span>
+          )}
+        </div>
+
+        <h3 className="text-base font-bold leading-tight text-brand-900">{d.title}</h3>
+        {d.description ? (
+          <p className="line-clamp-3 text-[12.5px] leading-relaxed text-slate-600">{d.description}</p>
+        ) : null}
+
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-[10px] text-slate-400">
+          <span>{new Intl.DateTimeFormat("es-CO", { year: "numeric", month: "long" }).format(d.publishedAt)}</span>
+          {d.pdfSizeKB ? <span>· {d.pdfSizeKB} KB</span> : null}
+        </div>
+
+        {/* CTA único — solo PDF, intencionalmente sin opción de Word. */}
+        <div className="mt-auto pt-2">
+          {d.pdfUrl ? (
+            <a
+              href={d.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block w-full rounded-lg btn-grad-navy px-4 py-2.5 text-center text-sm font-bold text-white shadow-sm transition hover:shadow-premium"
+            >
+              📄 {tr("docs.downloadPdf")}
+            </a>
+          ) : (
+            <span className="block w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-2.5 text-center text-sm font-semibold text-slate-400">
+              PDF no disponible
+            </span>
+          )}
+        </div>
+      </div>
+    </article>
   );
 }
 

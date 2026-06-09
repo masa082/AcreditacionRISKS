@@ -28,6 +28,7 @@ const DOCS: Array<{
   pdfSizeKB: number;
   docxUrl: string;
   docxSizeKB: number;
+  thumbnailUrl: string;
   sortOrder: number;
 }> = [
   {
@@ -43,6 +44,7 @@ const DOCS: Array<{
     pdfSizeKB: 739,
     docxUrl: "/docs/Proceso-Certificacion-okacreditado.docx",
     docxSizeKB: 72,
+    thumbnailUrl: "/docs/thumbs/Proceso-Certificacion-okacreditado.png",
     sortOrder: 10,
   },
   {
@@ -58,6 +60,7 @@ const DOCS: Array<{
     pdfSizeKB: 617,
     docxUrl: "/docs/Politica-Tratamiento-Datos.docx",
     docxSizeKB: 68,
+    thumbnailUrl: "/docs/thumbs/Politica-Tratamiento-Datos.png",
     sortOrder: 20,
   },
   {
@@ -73,6 +76,7 @@ const DOCS: Array<{
     pdfSizeKB: 568,
     docxUrl: "/docs/Terminos-Condiciones-Acreditacion.docx",
     docxSizeKB: 67,
+    thumbnailUrl: "/docs/thumbs/Terminos-Condiciones-Acreditacion.png",
     sortOrder: 30,
   },
 ];
@@ -95,6 +99,7 @@ async function main() {
           pdfSizeKB: d.pdfSizeKB,
           docxUrl: d.docxUrl,
           docxSizeKB: d.docxSizeKB,
+          thumbnailUrl: d.thumbnailUrl,
           sortOrder: d.sortOrder,
           visible: true,
         },
@@ -115,6 +120,7 @@ async function main() {
           pdfSizeKB: d.pdfSizeKB,
           docxUrl: d.docxUrl,
           docxSizeKB: d.docxSizeKB,
+          thumbnailUrl: d.thumbnailUrl,
           sortOrder: d.sortOrder,
           visible: true,
         },
