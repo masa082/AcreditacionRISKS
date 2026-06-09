@@ -21,6 +21,21 @@ const CHROME =
 const OUT_DIR = path.join(__dirname, "..", "public", "docs");
 const OUT_PDF = path.join(OUT_DIR, "Proceso-Certificacion-okacreditado.pdf");
 
+// ─── Assets de marca (embebidos en el HTML como data: URIs) ───────────
+// Logos: embebidos como base64 en el HTML para que Chrome los pinte sin
+// problemas de carga al imprimir. Fuentes Inter/Figtree (las mismas que
+// usa risksint.com) también como data: URIs vía @font-face — así el PDF
+// queda con la tipografía oficial sin depender de internet.
+const ASSETS = path.join(__dirname, "assets");
+const b64 = (file) => fs.readFileSync(path.join(ASSETS, file)).toString("base64");
+const LOGO_RISKS = `data:image/png;base64,${b64("risks-logo.png")}`;
+const FAVICON_RISKS = `data:image/png;base64,${b64("risks-favicon.png")}`;
+const ONAC_LOGO = `data:image/png;base64,${fs
+  .readFileSync(path.join(__dirname, "..", "public", "onac-logo.png"))
+  .toString("base64")}`;
+const FONT_INTER = `data:font/woff2;base64,${b64("Inter-Variable.woff2")}`;
+const FONT_FIGTREE = `data:font/woff2;base64,${b64("Figtree-Variable.woff2")}`;
+
 // ─── HTML del documento ───────────────────────────────────────────────
 const html = `<!DOCTYPE html>
 <html lang="es">
@@ -28,6 +43,26 @@ const html = `<!DOCTYPE html>
 <meta charset="utf-8" />
 <title>Proceso de Certificación CIOC — okacreditado.com</title>
 <style>
+  /* ── Fuentes oficiales de risksint.com (Inter + Figtree) ─────────
+     Embebidas como data: URIs para que Chrome las use al imprimir
+     sin depender de la red. */
+  @font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: block;
+    src: url('${FONT_INTER}') format('woff2');
+    font-stretch: normal;
+  }
+  @font-face {
+    font-family: 'Figtree';
+    font-style: normal;
+    font-weight: 300 900;
+    font-display: block;
+    src: url('${FONT_FIGTREE}') format('woff2');
+    font-stretch: normal;
+  }
+
   /* Paleta RISKS */
   :root {
     --navy-900: #0B1F3A;
@@ -44,23 +79,25 @@ const html = `<!DOCTYPE html>
   }
   @page {
     size: Letter;
-    margin: 22mm 18mm 24mm 18mm;
+    margin: 24mm 18mm 24mm 18mm;
     @top-left {
       content: "RISKS INTERNATIONAL · Proceso de Certificación CIOC";
-      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Figtree', 'Inter', sans-serif;
       font-size: 9pt;
       color: var(--navy-900);
-      font-weight: 600;
+      font-weight: 700;
+      letter-spacing: 0.2pt;
     }
     @top-right {
       content: "www.okacreditado.com";
-      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
       font-size: 9pt;
       color: var(--slate-500);
+      font-weight: 500;
     }
     @bottom-center {
       content: "Página " counter(page) " de " counter(pages) "  ·  Confidencial — Uso interno y de candidatos";
-      font-family: 'Helvetica Neue', Arial, sans-serif;
+      font-family: 'Inter', sans-serif;
       font-size: 8.5pt;
       color: var(--slate-500);
     }
@@ -75,16 +112,18 @@ const html = `<!DOCTYPE html>
     margin: 0;
     padding: 0;
     color: #1F2937;
-    font-family: 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+    font-family: 'Inter', 'Helvetica Neue', 'Arial', sans-serif;
     font-size: 10.5pt;
     line-height: 1.55;
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
   p { text-align: justify; margin: 0 0 10pt 0; }
   h1, h2, h3 {
-    font-family: 'Georgia', 'Times New Roman', serif;
+    font-family: 'Figtree', 'Inter', sans-serif;
     page-break-after: avoid;
+    letter-spacing: -0.2pt;
   }
   h1 {
     font-size: 20pt;
@@ -112,27 +151,34 @@ const html = `<!DOCTYPE html>
   .cover {
     page-break-after: always;
     text-align: center;
-    padding-top: 90pt;
-    height: 90vh;
+    padding-top: 60pt;
+    height: 95vh;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
   }
   .cover-top { display: flex; flex-direction: column; align-items: center; }
+  .cover-logo {
+    width: 150pt;
+    height: auto;
+    margin-bottom: 18pt;
+  }
   .cover-brand {
-    font-family: 'Georgia', serif;
-    font-size: 32pt;
-    font-weight: bold;
+    font-family: 'Figtree', sans-serif;
+    font-size: 30pt;
+    font-weight: 800;
     color: var(--navy-900);
-    letter-spacing: 1pt;
+    letter-spacing: -0.4pt;
   }
   .cover-norm {
-    margin-top: 8pt;
+    margin-top: 6pt;
     color: var(--gold);
-    font-weight: bold;
-    font-size: 12pt;
-    letter-spacing: 0.4pt;
+    font-weight: 700;
+    font-size: 11pt;
+    font-family: 'Figtree', sans-serif;
+    letter-spacing: 0.5pt;
+    text-transform: uppercase;
   }
   .cover-gold-bar {
     width: 80pt;
@@ -141,18 +187,20 @@ const html = `<!DOCTYPE html>
     margin: 22pt 0;
   }
   .cover-title {
-    font-family: 'Georgia', serif;
+    font-family: 'Figtree', sans-serif;
     font-size: 28pt;
     color: var(--navy-900);
-    font-weight: bold;
+    font-weight: 800;
     margin-top: 4pt;
+    letter-spacing: -0.5pt;
   }
   .cover-sub {
-    font-style: italic;
+    font-family: 'Inter', sans-serif;
     color: var(--slate-500);
     font-size: 13pt;
-    margin-top: 8pt;
+    margin-top: 10pt;
     max-width: 480pt;
+    font-weight: 400;
   }
   .cover-bottom { display: flex; flex-direction: column; align-items: center; }
   .cover-platform {
@@ -160,18 +208,46 @@ const html = `<!DOCTYPE html>
     text-transform: uppercase;
     letter-spacing: 1.5pt;
     color: var(--slate-500);
+    font-family: 'Figtree', sans-serif;
+    font-weight: 600;
   }
   .cover-url {
-    font-family: 'Georgia', serif;
+    font-family: 'Figtree', sans-serif;
     font-size: 18pt;
     color: var(--navy-900);
-    font-weight: bold;
+    font-weight: 800;
     margin-top: 4pt;
+    letter-spacing: -0.3pt;
   }
   .cover-meta {
     margin-top: 18pt;
     font-size: 9pt;
     color: var(--slate-500);
+  }
+  .cover-onac {
+    margin-top: 22pt;
+    display: flex;
+    align-items: center;
+    gap: 14pt;
+    padding: 10pt 16pt;
+    background: var(--slate-100);
+    border-radius: 6pt;
+  }
+  .cover-onac img { width: 70pt; height: auto; }
+  .cover-onac .t {
+    font-family: 'Figtree', sans-serif;
+    font-size: 8.5pt;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.8pt;
+    font-weight: 700;
+  }
+  .cover-onac .b {
+    font-family: 'Figtree', sans-serif;
+    font-size: 10pt;
+    color: var(--navy-900);
+    font-weight: 700;
+    margin-top: 2pt;
   }
 
   /* Índice */
@@ -297,6 +373,72 @@ const html = `<!DOCTYPE html>
   }
 
   .pagebreak { page-break-after: always; }
+
+  /* Franja de marca al inicio del cuerpo del documento */
+  .brand-strip {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10pt 14pt;
+    background: var(--navy-50);
+    border-radius: 4pt;
+    margin-bottom: 16pt;
+    border-left: 4pt solid var(--gold);
+  }
+  .brand-strip .left { display: flex; align-items: center; gap: 12pt; }
+  .brand-strip .left img { height: 30pt; width: auto; }
+  .brand-strip .left .who {
+    font-family: 'Figtree', sans-serif;
+    color: var(--navy-900);
+    font-weight: 800;
+    font-size: 12pt;
+    letter-spacing: -0.2pt;
+  }
+  .brand-strip .left .who small {
+    display: block;
+    font-weight: 600;
+    font-size: 8pt;
+    color: var(--slate-500);
+    letter-spacing: 0.4pt;
+    text-transform: uppercase;
+    margin-top: 1pt;
+  }
+  .brand-strip .right { display: flex; align-items: center; gap: 8pt; }
+  .brand-strip .right img { height: 26pt; width: auto; }
+  .brand-strip .right .label {
+    font-family: 'Figtree', sans-serif;
+    font-size: 7.5pt;
+    color: var(--slate-500);
+    text-transform: uppercase;
+    letter-spacing: 0.6pt;
+    font-weight: 700;
+    text-align: right;
+  }
+  .brand-strip .right .label strong {
+    color: var(--navy-900);
+    font-size: 8pt;
+    display: block;
+    margin-top: 1pt;
+  }
+
+  /* Dúo de logos cuando se quiere mostrar al final de la sección 6 */
+  .logo-duo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 28pt;
+    padding: 14pt;
+    background: var(--slate-100);
+    border-radius: 6pt;
+    margin: 8pt 0 12pt 0;
+  }
+  .logo-duo img { height: 44pt; width: auto; }
+  .logo-duo .x {
+    font-size: 14pt;
+    color: var(--slate-300);
+    font-family: 'Figtree', sans-serif;
+    font-weight: 700;
+  }
 </style>
 </head>
 <body>
@@ -304,6 +446,7 @@ const html = `<!DOCTYPE html>
 <!-- ═══════════════════ PORTADA ═══════════════════ -->
 <section class="cover">
   <div class="cover-top">
+    <img class="cover-logo" src="${LOGO_RISKS}" alt="RISKS INTERNATIONAL" />
     <div class="cover-brand">RISKS INTERNATIONAL</div>
     <div class="cover-norm">Organismo de Certificación de Personas · ISO/IEC 17024</div>
   </div>
@@ -318,6 +461,13 @@ const html = `<!DOCTYPE html>
     <div class="cover-url">www.okacreditado.com</div>
     <div class="cover-meta">
       Versión 1.0 · Bogotá D.C., Colombia · Junio de 2026
+    </div>
+    <div class="cover-onac">
+      <img src="${ONAC_LOGO}" alt="ONAC" />
+      <div>
+        <div class="t">Respaldo institucional</div>
+        <div class="b">En proceso de acreditación ante ONAC</div>
+      </div>
     </div>
   </div>
 </section>
@@ -341,6 +491,24 @@ const html = `<!DOCTYPE html>
     <li><span>9. Cierre y verificación del proceso</span><span>12</span></li>
   </ol>
 </section>
+
+<!-- Franja de marca: identifica al organismo y a ONAC en todas las copias impresas -->
+<div class="brand-strip">
+  <div class="left">
+    <img src="${LOGO_RISKS}" alt="RISKS INTERNATIONAL" />
+    <div class="who">
+      RISKS INTERNATIONAL S.A.S.
+      <small>Organismo de Certificación de Personas · ISO/IEC 17024</small>
+    </div>
+  </div>
+  <div class="right">
+    <div class="label">
+      Respaldo
+      <strong>ONAC · en acreditación</strong>
+    </div>
+    <img src="${ONAC_LOGO}" alt="ONAC" />
+  </div>
+</div>
 
 <!-- ═══════════════════ 1. INTRODUCCIÓN ═══════════════════ -->
 <h1>1. Introducción y alcance</h1>
@@ -581,6 +749,13 @@ const html = `<!DOCTYPE html>
 
 <!-- ═══════════════════ 6. ONAC ═══════════════════ -->
 <h1>6. Respaldo institucional — ONAC</h1>
+
+<div class="logo-duo">
+  <img src="${LOGO_RISKS}" alt="RISKS INTERNATIONAL" />
+  <span class="x">×</span>
+  <img src="${ONAC_LOGO}" alt="ONAC" />
+</div>
+
 <p>
   RISKS INTERNATIONAL está en proceso de acreditación ante el Organismo Nacional de
   Acreditación de Colombia (ONAC) como Organismo de Certificación de Personas bajo la

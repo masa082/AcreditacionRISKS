@@ -18,8 +18,19 @@ const {
   Header, Footer, AlignmentType, PageOrientation, LevelFormat,
   TabStopType, TabStopPosition, TableOfContents, HeadingLevel,
   BorderStyle, WidthType, ShadingType, VerticalAlign, PageNumber,
-  PageBreak,
+  PageBreak, ImageRun,
 } = require("docx");
+
+// ─── Assets de marca ──────────────────────────────────────────────────
+// Logos PNG embebidos directamente como buffers binarios; Word los
+// incrusta dentro del .docx. Para las fuentes, el .docx solo guarda el
+// NOMBRE — el lector (Word) busca la fuente instalada. Inter y Figtree
+// están en Google Fonts (gratuitas y comunes); Word ofrecerá descargarlas
+// si el lector no las tiene.
+const LOGO_RISKS = fs.readFileSync(path.join(__dirname, "assets", "risks-logo.png"));
+const LOGO_ONAC = fs.readFileSync(path.join(__dirname, "..", "public", "onac-logo.png"));
+const BODY_FONT = "Inter";       // misma fuente que usa risksint.com en el body
+const HEADING_FONT = "Figtree";  // misma fuente que usa risksint.com en titulares
 
 // ─── Paleta de marca RISKS ────────────────────────────────────────────
 const NAVY = "0B1F3A";       // brand-900
@@ -45,7 +56,7 @@ const p = (text, opts = {}) =>
     ...opts.paragraph,
     children: Array.isArray(text)
       ? text
-      : [new TextRun({ text, size: 22, font: "Calibri", color: "333333", ...opts.run })],
+      : [new TextRun({ text, size: 22, font: BODY_FONT, color: "333333", ...opts.run })],
   });
 
 const h = (text, level, opts = {}) =>
@@ -56,7 +67,7 @@ const h = (text, level, opts = {}) =>
       new TextRun({
         text,
         bold: true,
-        font: "Calibri",
+        font: BODY_FONT,
         color: opts.color ?? NAVY,
         size: opts.size,
       }),
@@ -67,7 +78,7 @@ const bullet = (text) =>
   new Paragraph({
     numbering: { reference: "bullets", level: 0 },
     spacing: { before: 40, after: 40 },
-    children: [new TextRun({ text, size: 22, font: "Calibri", color: "333333" })],
+    children: [new TextRun({ text, size: 22, font: BODY_FONT, color: "333333" })],
   });
 
 const bulletRich = (children) =>
@@ -81,7 +92,7 @@ const numbered = (text) =>
   new Paragraph({
     numbering: { reference: "numbers", level: 0 },
     spacing: { before: 40, after: 40 },
-    children: [new TextRun({ text, size: 22, font: "Calibri", color: "333333" })],
+    children: [new TextRun({ text, size: 22, font: BODY_FONT, color: "333333" })],
   });
 
 const blank = () => p("");
@@ -108,7 +119,7 @@ const cell = (text, opts = {}) =>
             children: [
               new TextRun({
                 text,
-                font: "Calibri",
+                font: BODY_FONT,
                 size: opts.bold ? 22 : 21,
                 bold: opts.bold,
                 color: opts.color ?? (opts.bold ? NAVY : "333333"),
@@ -153,7 +164,7 @@ const callout = (title, body, color = GOLD) =>
                     bold: true,
                     color: NAVY,
                     size: 24,
-                    font: "Calibri",
+                    font: BODY_FONT,
                   }),
                 ],
               }),
@@ -162,7 +173,7 @@ const callout = (title, body, color = GOLD) =>
                   new TextRun({
                     text: body,
                     size: 22,
-                    font: "Calibri",
+                    font: BODY_FONT,
                     color: "333333",
                   }),
                 ],
@@ -176,63 +187,110 @@ const callout = (title, body, color = GOLD) =>
 
 // ─── Sección: portada ─────────────────────────────────────────────────
 const cover = [
+  // Logo oficial RISKS — embebido en la portada
   new Paragraph({
-    spacing: { before: 3200, after: 200 },
+    spacing: { before: 1800, after: 200 },
+    alignment: AlignmentType.CENTER,
+    children: [
+      new ImageRun({
+        type: "png",
+        data: LOGO_RISKS,
+        transformation: { width: 200, height: 154 },
+        altText: {
+          title: "RISKS INTERNATIONAL",
+          description: "Logo oficial de RISKS INTERNATIONAL S.A.S.",
+          name: "risks-logo",
+        },
+      }),
+    ],
+  }),
+  new Paragraph({
+    spacing: { before: 100, after: 100 },
     alignment: AlignmentType.CENTER,
     children: [
       new TextRun({
         text: "RISKS INTERNATIONAL",
         bold: true,
         color: NAVY,
-        size: 48,
-        font: "Calibri",
+        size: 44,
+        font: HEADING_FONT,
       }),
     ],
   }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { after: 800 },
+    spacing: { after: 700 },
     children: [
       new TextRun({
         text: "Organismo de Certificación de Personas · ISO/IEC 17024",
         color: GOLD,
-        size: 24,
-        font: "Calibri",
+        size: 22,
+        font: HEADING_FONT,
         bold: true,
       }),
     ],
   }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { before: 600, after: 200 },
+    spacing: { before: 400, after: 200 },
     children: [
       new TextRun({
         text: "Documento Descriptivo",
         bold: true,
         color: NAVY,
         size: 36,
-        font: "Calibri",
+        font: HEADING_FONT,
       }),
     ],
   }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { after: 1600 },
+    spacing: { after: 1200 },
     children: [
       new TextRun({
         text: "Proceso de Certificación de Idoneidad como Oficial de Cumplimiento (CIOC)",
         italics: true,
         color: SLATE_500,
         size: 26,
-        font: "Calibri",
+        font: BODY_FONT,
       }),
     ],
   }),
   new Paragraph({
     alignment: AlignmentType.CENTER,
-    spacing: { before: 3200, after: 80 },
+    spacing: { before: 1600, after: 80 },
     children: [
-      new TextRun({ text: "Plataforma", color: SLATE_500, size: 20, font: "Calibri" }),
+      new TextRun({ text: "Plataforma", color: SLATE_500, size: 20, font: HEADING_FONT, bold: true }),
+    ],
+  }),
+  new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 200 },
+    children: [
+      new TextRun({
+        text: "www.okacreditado.com",
+        bold: true,
+        color: NAVY,
+        size: 28,
+        font: HEADING_FONT,
+      }),
+    ],
+  }),
+  // Logo ONAC con leyenda "en acreditación"
+  new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 200, after: 80 },
+    children: [
+      new ImageRun({
+        type: "png",
+        data: LOGO_ONAC,
+        transformation: { width: 70, height: 70 },
+        altText: {
+          title: "ONAC",
+          description: "Logo del Organismo Nacional de Acreditación de Colombia",
+          name: "onac-logo",
+        },
+      }),
     ],
   }),
   new Paragraph({
@@ -240,11 +298,11 @@ const cover = [
     spacing: { after: 400 },
     children: [
       new TextRun({
-        text: "www.okacreditado.com",
+        text: "En proceso de acreditación ante ONAC",
+        color: GOLD,
+        size: 16,
+        font: BODY_FONT,
         bold: true,
-        color: NAVY,
-        size: 28,
-        font: "Calibri",
       }),
     ],
   }),
@@ -252,7 +310,7 @@ const cover = [
     alignment: AlignmentType.CENTER,
     spacing: { after: 60 },
     children: [
-      new TextRun({ text: "Versión 1.0", color: SLATE_500, size: 18, font: "Calibri" }),
+      new TextRun({ text: "Versión 1.0", color: SLATE_500, size: 18, font: BODY_FONT }),
     ],
   }),
   new Paragraph({
@@ -262,7 +320,7 @@ const cover = [
         text: "Bogotá D.C., Colombia · Junio de 2026",
         color: SLATE_500,
         size: 18,
-        font: "Calibri",
+        font: BODY_FONT,
       }),
     ],
   }),
@@ -279,8 +337,127 @@ const tocSection = [
   new Paragraph({ children: [new PageBreak()] }),
 ];
 
+// ─── Franja de marca al inicio del cuerpo (después del TOC) ───────────
+// Identifica al organismo certificador y al respaldo ONAC en cada copia
+// impresa, sin importar de qué página se parta.
+const brandStrip = new Table({
+  width: { size: CONTENT_W, type: WidthType.DXA },
+  columnWidths: [Math.floor(CONTENT_W * 0.6), Math.floor(CONTENT_W * 0.4)],
+  rows: [
+    new TableRow({
+      children: [
+        new TableCell({
+          width: { size: Math.floor(CONTENT_W * 0.6), type: WidthType.DXA },
+          shading: { fill: NAVY_SOFT, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 200, bottom: 200, left: 240, right: 200 },
+          verticalAlign: VerticalAlign.CENTER,
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            left: { style: BorderStyle.SINGLE, size: 32, color: GOLD },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
+          children: [
+            new Paragraph({
+              children: [
+                new ImageRun({
+                  type: "png",
+                  data: LOGO_RISKS,
+                  transformation: { width: 60, height: 46 },
+                  altText: { title: "RISKS", description: "RISKS INTERNATIONAL", name: "risks" },
+                }),
+                new TextRun({
+                  text: "   RISKS INTERNATIONAL S.A.S.",
+                  bold: true,
+                  font: HEADING_FONT,
+                  color: NAVY,
+                  size: 24,
+                }),
+              ],
+            }),
+            new Paragraph({
+              spacing: { before: 60 },
+              children: [
+                new TextRun({
+                  text: "Organismo de Certificación de Personas · ISO/IEC 17024",
+                  font: BODY_FONT,
+                  color: SLATE_500,
+                  size: 16,
+                }),
+              ],
+            }),
+          ],
+        }),
+        new TableCell({
+          width: { size: Math.floor(CONTENT_W * 0.4), type: WidthType.DXA },
+          shading: { fill: NAVY_SOFT, type: ShadingType.CLEAR, color: "auto" },
+          margins: { top: 200, bottom: 200, left: 200, right: 240 },
+          verticalAlign: VerticalAlign.CENTER,
+          borders: {
+            top: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            bottom: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            left: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+            right: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" },
+          },
+          children: [
+            new Paragraph({
+              alignment: AlignmentType.RIGHT,
+              children: [
+                new TextRun({
+                  text: "Respaldo institucional",
+                  font: HEADING_FONT,
+                  color: SLATE_500,
+                  size: 16,
+                  bold: true,
+                  allCaps: true,
+                }),
+              ],
+            }),
+            new Paragraph({
+              alignment: AlignmentType.RIGHT,
+              spacing: { before: 80 },
+              children: [
+                new ImageRun({
+                  type: "png",
+                  data: LOGO_ONAC,
+                  transformation: { width: 42, height: 42 },
+                  altText: { title: "ONAC", description: "ONAC", name: "onac" },
+                }),
+                new TextRun({
+                  text: "  ONAC",
+                  bold: true,
+                  font: HEADING_FONT,
+                  color: NAVY,
+                  size: 22,
+                }),
+              ],
+            }),
+            new Paragraph({
+              alignment: AlignmentType.RIGHT,
+              children: [
+                new TextRun({
+                  text: "en proceso de acreditación",
+                  font: BODY_FONT,
+                  color: SLATE_500,
+                  size: 14,
+                  italics: true,
+                }),
+              ],
+            }),
+          ],
+        }),
+      ],
+    }),
+  ],
+});
+
 // ─── 1. Introducción ──────────────────────────────────────────────────
 const intro = [
+  // Franja de marca antes del primer título — solo aparece una vez.
+  new Paragraph({ children: [], spacing: { after: 60 } }),
+  brandStrip,
+  new Paragraph({ children: [], spacing: { after: 240 } }),
+
   h("1. Introducción y alcance", HeadingLevel.HEADING_1),
   p(
     "El presente documento describe el proceso de certificación de personas operado por RISKS INTERNATIONAL S.A.S. a través de la plataforma SaaS multitenant okacreditado.com. La plataforma soporta el ciclo completo —desde la captación del candidato hasta la emisión y verificación pública del certificado— bajo los principios de la norma ISO/IEC 17024 y los requisitos del Organismo Nacional de Acreditación de Colombia (ONAC)."
@@ -525,6 +702,33 @@ const habeasData = [
 // ─── 6. ONAC ──────────────────────────────────────────────────────────
 const onac = [
   h("6. Respaldo institucional — ONAC", HeadingLevel.HEADING_1),
+  // Duo visual de logos: RISKS × ONAC, como aparece en el diploma y en
+  // los headers públicos de la plataforma.
+  new Paragraph({
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 100, after: 200 },
+    children: [
+      new ImageRun({
+        type: "png",
+        data: LOGO_RISKS,
+        transformation: { width: 80, height: 62 },
+        altText: { title: "RISKS", description: "RISKS INTERNATIONAL", name: "risks-onac-duo-1" },
+      }),
+      new TextRun({
+        text: "     ×     ",
+        color: SLATE_500,
+        size: 28,
+        font: HEADING_FONT,
+        bold: true,
+      }),
+      new ImageRun({
+        type: "png",
+        data: LOGO_ONAC,
+        transformation: { width: 56, height: 56 },
+        altText: { title: "ONAC", description: "ONAC", name: "risks-onac-duo-2" },
+      }),
+    ],
+  }),
   p(
     "RISKS INTERNATIONAL está en proceso de acreditación ante el Organismo Nacional de Acreditación de Colombia (ONAC) como Organismo de Certificación de Personas bajo la norma ISO/IEC 17024."
   ),
@@ -605,7 +809,7 @@ const doc = new Document({
   description: "Documento descriptivo del proceso de certificación okacreditado.com",
   styles: {
     default: {
-      document: { run: { font: "Calibri", size: 22 } },
+      document: { run: { font: BODY_FONT, size: 22 } },
     },
     paragraphStyles: [
       {
@@ -614,7 +818,7 @@ const doc = new Document({
         basedOn: "Normal",
         next: "Normal",
         quickFormat: true,
-        run: { size: 36, bold: true, font: "Calibri", color: NAVY },
+        run: { size: 36, bold: true, font: HEADING_FONT, color: NAVY },
         paragraph: { spacing: { before: 360, after: 200 }, outlineLevel: 0 },
       },
       {
@@ -623,7 +827,7 @@ const doc = new Document({
         basedOn: "Normal",
         next: "Normal",
         quickFormat: true,
-        run: { size: 28, bold: true, font: "Calibri", color: NAVY_MID },
+        run: { size: 28, bold: true, font: HEADING_FONT, color: NAVY_MID },
         paragraph: { spacing: { before: 280, after: 160 }, outlineLevel: 1 },
       },
       {
@@ -632,7 +836,7 @@ const doc = new Document({
         basedOn: "Normal",
         next: "Normal",
         quickFormat: true,
-        run: { size: 24, bold: true, font: "Calibri", color: GOLD },
+        run: { size: 24, bold: true, font: HEADING_FONT, color: GOLD },
         paragraph: { spacing: { before: 220, after: 120 }, outlineLevel: 2 },
       },
     ],
@@ -690,20 +894,30 @@ const doc = new Document({
             new Paragraph({
               alignment: AlignmentType.LEFT,
               border: {
-                bottom: { style: BorderStyle.SINGLE, size: 6, color: GOLD, space: 4 },
+                bottom: { style: BorderStyle.SINGLE, size: 6, color: GOLD, space: 6 },
               },
               children: [
+                new ImageRun({
+                  type: "png",
+                  data: LOGO_RISKS,
+                  transformation: { width: 32, height: 25 },
+                  altText: {
+                    title: "RISKS",
+                    description: "RISKS INTERNATIONAL",
+                    name: "risks-mini",
+                  },
+                }),
                 new TextRun({
-                  text: "RISKS INTERNATIONAL · Proceso de Certificación CIOC",
+                  text: "  RISKS INTERNATIONAL · Proceso de Certificación CIOC",
                   size: 18,
-                  font: "Calibri",
+                  font: HEADING_FONT,
                   color: NAVY,
                   bold: true,
                 }),
                 new TextRun({
                   text: "\twww.okacreditado.com",
                   size: 18,
-                  font: "Calibri",
+                  font: BODY_FONT,
                   color: SLATE_500,
                 }),
               ],
@@ -726,33 +940,33 @@ const doc = new Document({
                 new TextRun({
                   text: "Página ",
                   size: 18,
-                  font: "Calibri",
+                  font: BODY_FONT,
                   color: SLATE_500,
                 }),
                 new TextRun({
                   children: [PageNumber.CURRENT],
                   size: 18,
-                  font: "Calibri",
+                  font: BODY_FONT,
                   color: NAVY,
                   bold: true,
                 }),
                 new TextRun({
                   text: " de ",
                   size: 18,
-                  font: "Calibri",
+                  font: BODY_FONT,
                   color: SLATE_500,
                 }),
                 new TextRun({
                   children: [PageNumber.TOTAL_PAGES],
                   size: 18,
-                  font: "Calibri",
+                  font: BODY_FONT,
                   color: NAVY,
                   bold: true,
                 }),
                 new TextRun({
                   text: "  ·  Confidencial — Uso interno y de candidatos",
                   size: 18,
-                  font: "Calibri",
+                  font: BODY_FONT,
                   color: SLATE_500,
                 }),
               ],
