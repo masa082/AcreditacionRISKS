@@ -340,7 +340,8 @@ const HABEAS_BODY = `
 </p>
 <ul>
   <li><strong>Dirección de notificaciones:</strong> Bogotá D.C., Colombia.</li>
-  <li><strong>Correo electrónico:</strong> gerencia@risksint.com · formacion@risksint.com</li>
+  <li><strong>Correo para asuntos de habeas data:</strong> habeasdata@risksint.com</li>
+  <li><strong>Correos institucionales:</strong> gerencia@risksint.com · formacion@risksint.com</li>
   <li><strong>Sitio web:</strong> www.okacreditado.com · www.risksint.com</li>
 </ul>
 
@@ -418,7 +419,7 @@ const HABEAS_BODY = `
   canales oficiales de RISKS INTERNATIONAL:
 </p>
 <ul>
-  <li><strong>Correo electrónico:</strong> gerencia@risksint.com (con copia obligatoria a formacion@risksint.com).</li>
+  <li><strong>Correo electrónico:</strong> habeasdata@risksint.com (canal oficial para ejercer derechos de habeas data), con copia opcional a gerencia@risksint.com.</li>
   <li><strong>Portal del candidato:</strong> sección “Mi perfil” → edición de datos personales y solicitudes/apelaciones.</li>
   <li><strong>Sitio web público:</strong> formulario de contacto en <strong>okacreditado.com/contacto</strong>.</li>
 </ul>
