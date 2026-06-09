@@ -333,7 +333,7 @@ const HABEAS_BODY = `
 <h1>1. Identificación del responsable</h1>
 <p>
   <strong>RISKS INTERNATIONAL S.A.S.</strong>, sociedad legalmente constituida bajo
-  las leyes de la República de Colombia, identificada con NIT 901.XXX.XXX-X y con
+  las leyes de la República de Colombia, identificada con NIT 900.352.786-5 y con
   domicilio principal en la ciudad de Bogotá D.C., actúa como
   <strong>Responsable del Tratamiento</strong> de los datos personales que recopila
   a través de la plataforma <strong>okacreditado.com</strong>.
