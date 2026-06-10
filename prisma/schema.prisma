@@ -330,6 +330,7 @@ model Subscriber {
   referrers          Referrer[]
   referrals          Referral[]
   documentations     Documentation[]
+  scheduledEmails    ScheduledEmail[]
 
   @@index([status])
 }
@@ -388,6 +389,7 @@ model User {
   sessions        Session[]
   feedbackTickets FeedbackTicket[]
   documentations  Documentation[]
+  scheduledEmails ScheduledEmail[]
 
   @@unique([email, subscriberId])
   @@index([subscriberId])
@@ -1505,4 +1507,49 @@ model Documentation {
   @@unique([subscriberId, slug])
   @@index([subscriberId])
   @@index([visible])
+}
+
+// ─── ScheduledEmail ───────────────────────────────────────────────────
+//
+// Cola de correos programados desde /panel/candidatos. Cada fila
+// representa un envío diferido que será procesado por el cron job
+// /api/cron/scheduled-emails (ejecutado cada minuto en Vercel).
+//
+// status:
+//   PENDING   → aún no se envía; el cron lo tomará cuando scheduledFor ≤ now
+//   SENDING   → el worker lo tomó; previene doble-envío si dos crons
+//               coinciden
+//   SENT      → procesado (puede tener fallas parciales en `errorLog`)
+//   CANCELLED → cancelado por el usuario antes de procesarse
+//
+// `bodyHtml` lleva el HTML del editor enriquecido (sanitizado).
+// `attachments` es un array de { filename, contentBase64, contentType }.
+// `recipientIds` es la lista de Candidate.id a procesar (filtrados por
+// subscriberId para multitenant).
+model ScheduledEmail {
+  id            String   @id @default(cuid())
+  subscriberId  String
+  subscriber    Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  createdById   String
+  createdBy     User       @relation(fields: [createdById], references: [id])
+
+  subject       String
+  bodyHtml      String   @db.Text
+  bodyText      String   @db.Text
+  recipientIds  String[]
+  attachments   Json     @default("[]")
+
+  scheduledFor  DateTime
+  status        String   @default("PENDING")
+  // Resultados de ejecución
+  sentCount     Int      @default(0)
+  failedCount   Int      @default(0)
+  processedAt   DateTime?
+  errorLog      String?  @db.Text
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([status, scheduledFor])
+  @@index([subscriberId])
 }

@@ -1,9 +1,8 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { sendBulkEmail } from "@/lib/actions/candidates";
-import type { ActionResult } from "@/lib/actions/schemes";
+import { BulkEmailComposer } from "@/components/bulk-email-composer";
 
 const STATUS_OPTS = [
   { v: "", l: "Todos los estados" },
@@ -131,58 +130,7 @@ export function CandidatesToolbar({ selected, allInView }: { selected: string[];
         </div>
       </div>
 
-      {openBulk ? <BulkEmailDialog selected={selected} onClose={() => setOpenBulk(false)} /> : null}
-    </div>
-  );
-}
-
-function BulkEmailDialog({ selected, onClose }: { selected: string[]; onClose: () => void }) {
-  const [state, action, pending] = useActionState<ActionResult, FormData>(sendBulkEmail, { ok: false });
-  return (
-    <div className="fixed inset-0 z-50 grid place-items-center bg-slate-900/50 p-4">
-      <form
-        action={action}
-        className="w-full max-w-xl rounded-2xl bg-white p-6 shadow-xl ring-1 ring-slate-200"
-      >
-        <h3 className="text-lg font-bold text-slate-900">Enviar correo a {selected.length} candidato(s)</h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Use <code className="rounded bg-slate-100 px-1">{`{nombre}`}</code> para personalizar el saludo con el nombre de cada candidato.
-        </p>
-        <input type="hidden" name="candidateIds" value={selected.join(",")} />
-        <div className="mt-4 space-y-3">
-          <label className="block">
-            <span className="text-xs font-semibold text-slate-700">Asunto *</span>
-            <input
-              name="subject"
-              required
-              maxLength={160}
-              placeholder="Ej. Recordatorio de su inscripción"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
-            />
-          </label>
-          <label className="block">
-            <span className="text-xs font-semibold text-slate-700">Mensaje *</span>
-            <textarea
-              name="body"
-              required
-              rows={8}
-              maxLength={8000}
-              placeholder="Hola {nombre}, le escribimos para…"
-              className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
-            />
-          </label>
-        </div>
-        {state.error ? <p className="mt-2 text-xs text-rose-600">{state.error}</p> : null}
-        {state.ok ? <p className="mt-2 text-xs text-emerald-700">{state.message ?? "Enviado."}</p> : null}
-        <div className="mt-4 flex items-center justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-slate-300 px-3 py-1.5 text-xs text-slate-700 hover:bg-slate-50">
-            Cerrar
-          </button>
-          <button type="submit" disabled={pending} className="rounded-lg btn-grad-navy px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-60">
-            {pending ? "Enviando…" : "Enviar"}
-          </button>
-        </div>
-      </form>
+      <BulkEmailComposer open={openBulk} selected={selected} onClose={() => setOpenBulk(false)} />
     </div>
   );
 }

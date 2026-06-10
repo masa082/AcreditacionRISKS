@@ -7,6 +7,7 @@ import { requireSubscriberAction } from "@/lib/guards";
 import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { sendEmail } from "@/lib/email";
+import { runBulkEmail, sanitizeEditorHtml, type BulkAttachment } from "@/lib/email/bulk";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 function clean(v: FormDataEntryValue | null): string | null {
@@ -187,14 +188,28 @@ export async function removeCandidateEmailByAdmin(
   return { ok: true, message: "Correo alterno eliminado." };
 }
 
+// Esquema del editor enriquecido. Acepta HTML del editor y attachments en
+// base64. Si scheduledFor es un ISO válido y > now, se encola sin enviar.
 const bulkEmailSchema = z.object({
   subject: z.string().min(3, "Indique un asunto").max(160),
-  body: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(8000),
+  bodyHtml: z.string().min(10, "El mensaje debe tener al menos 10 caracteres").max(50_000),
   candidateIds: z.string().min(1, "Seleccione al menos un candidato"),
+  scheduledFor: z.string().optional().nullable(),
+  attachments: z.string().optional().nullable(), // JSON string de BulkAttachment[]
 });
 
-/// Envío de correo masivo a candidatos seleccionados. Limita a 100 destinatarios
-/// por seguridad y registra cada envío en el AuditLog.
+const MAX_RECIPIENTS = 200;
+const MAX_TOTAL_ATTACHMENTS_BYTES = 12 * 1024 * 1024; // 12 MB
+
+/// Envío de correo masivo a candidatos seleccionados.
+///
+/// Soporta:
+///   - HTML enriquecido (editor WYSIWYG en el cliente, sanitizado server-side).
+///   - Variables {nombre}, {apellido}, {nombre_completo}, {correo},
+///     {documento}, {organismo}, {fecha} en asunto y cuerpo.
+///   - Imágenes adjuntas (input file en el cliente → base64 → Resend).
+///   - Programación: si scheduledFor está en el futuro, guarda en
+///     ScheduledEmail (status PENDING) y el cron lo procesa cuando toque.
 export async function sendBulkEmail(
   _prev: ActionResult,
   formData: FormData,
@@ -202,72 +217,127 @@ export async function sendBulkEmail(
   const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.CANDIDATE_MANAGE);
   const parsed = bulkEmailSchema.safeParse({
     subject: formData.get("subject"),
-    body: formData.get("body"),
+    bodyHtml: formData.get("bodyHtml"),
     candidateIds: formData.get("candidateIds"),
+    scheduledFor: formData.get("scheduledFor"),
+    attachments: formData.get("attachments"),
   });
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
 
   const ids = parsed.data.candidateIds.split(",").map((s) => s.trim()).filter(Boolean);
   if (ids.length === 0) return { ok: false, error: "Seleccione al menos un candidato." };
-  if (ids.length > 100) return { ok: false, error: "Máximo 100 destinatarios por envío." };
+  if (ids.length > MAX_RECIPIENTS) return { ok: false, error: `Máximo ${MAX_RECIPIENTS} destinatarios por envío.` };
 
-  const recipients = await prisma.candidate.findMany({
+  // Verifica que los IDs pertenecen al subscriber actual (defensa multitenant).
+  const found = await prisma.candidate.count({
     where: { id: { in: ids }, subscriberId },
-    select: { id: true, email: true, firstName: true, lastName: true },
   });
-  if (recipients.length === 0) return { ok: false, error: "No se encontraron destinatarios válidos." };
+  if (found === 0) return { ok: false, error: "No se encontraron destinatarios válidos." };
 
-  const sub = await prisma.subscriber.findUnique({
-    where: { id: subscriberId },
-    select: { tradeName: true, legalName: true },
-  });
-  const orgName = sub?.tradeName ?? sub?.legalName ?? "CIOC";
+  // Sanitiza el HTML del editor.
+  const safeHtml = sanitizeEditorHtml(parsed.data.bodyHtml);
 
-  let sent = 0;
-  let failed = 0;
-  const errors: string[] = [];
-  // Throttle: Resend admite ~10 req/seg. Espaciamos 120 ms entre envíos
-  // a partir del segundo para no agarrar 429 en lotes grandes.
-  const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  for (let i = 0; i < recipients.length; i++) {
-    if (i > 0) await sleep(120);
-    const r = recipients[i];
-    // Personalización mínima: {nombre}
-    const personalBody = parsed.data.body.replace(/{nombre}/gi, r.firstName);
-    const result = await sendEmail({
-      subscriberId,
-      to: r.email,
-      subject: parsed.data.subject,
-      text: personalBody,
-      html: `<div style="font-family:Arial,sans-serif;white-space:pre-wrap;">${personalBody.replace(/</g, "&lt;").replace(/\n/g, "<br>")}<hr><small>Mensaje enviado por ${orgName}</small></div>`,
-    }).catch((e) => ({ ok: false, provider: "exception", error: e instanceof Error ? e.message : String(e) }));
-    if (result.ok) {
-      sent++;
-      // Si el provider devolvió un warning (auto-fallback a sandbox) lo
-      // anotamos sin marcar como falla.
-      if ("error" in result && result.error) errors.push(`${r.email}: ${result.error}`);
-    } else {
-      failed++;
-      errors.push(`${r.email}: ${"error" in result && result.error ? result.error : "fallo sin detalle"}`);
+  // Decodifica attachments (JSON con base64). Valida tamaño total.
+  let attachments: BulkAttachment[] = [];
+  if (parsed.data.attachments) {
+    try {
+      const raw = JSON.parse(parsed.data.attachments) as BulkAttachment[];
+      if (!Array.isArray(raw)) throw new Error("formato inválido");
+      let totalBytes = 0;
+      for (const a of raw) {
+        if (!a.filename || !a.contentBase64) continue;
+        const bytes = Math.ceil((a.contentBase64.length * 3) / 4);
+        totalBytes += bytes;
+        if (totalBytes > MAX_TOTAL_ATTACHMENTS_BYTES) {
+          return { ok: false, error: `Adjuntos exceden ${Math.round(MAX_TOTAL_ATTACHMENTS_BYTES / 1024 / 1024)} MB.` };
+        }
+        attachments.push({
+          filename: a.filename.slice(0, 200),
+          contentType: a.contentType,
+          contentBase64: a.contentBase64,
+        });
+      }
+    } catch {
+      return { ok: false, error: "Adjuntos en formato inválido." };
     }
   }
+
+  // Si está programado, encola y termina rápido.
+  const scheduledFor = parsed.data.scheduledFor ? new Date(parsed.data.scheduledFor) : null;
+  if (scheduledFor && !isNaN(scheduledFor.getTime()) && scheduledFor.getTime() > Date.now() + 30_000) {
+    const sched = await prisma.scheduledEmail.create({
+      data: {
+        subscriberId,
+        createdById: ctx.userId,
+        subject: parsed.data.subject,
+        bodyHtml: safeHtml,
+        bodyText: "",
+        recipientIds: ids,
+        attachments: attachments as unknown as object,
+        scheduledFor,
+        status: "PENDING",
+      },
+    });
+    await audit(ctx, {
+      action: "candidate.bulk_email.scheduled",
+      entity: "ScheduledEmail",
+      entityId: sched.id,
+      subscriberId,
+      after: {
+        subject: parsed.data.subject,
+        recipients: ids.length,
+        scheduledFor: scheduledFor.toISOString(),
+      },
+    });
+    const when = new Intl.DateTimeFormat("es-CO", { dateStyle: "medium", timeStyle: "short" }).format(scheduledFor);
+    return { ok: true, message: `Programado · ${ids.length} destinatario(s) · ${when}.` };
+  }
+
+  // Envío inmediato.
+  const result = await runBulkEmail({
+    subscriberId,
+    candidateIds: ids,
+    subject: parsed.data.subject,
+    bodyHtml: safeHtml,
+    attachments,
+  });
 
   await audit(ctx, {
     action: "candidate.bulk_email",
     entity: "Candidate",
     subscriberId,
-    after: { subject: parsed.data.subject, recipients: recipients.length, sent, failed, errors: errors.slice(0, 5) },
+    after: {
+      subject: parsed.data.subject,
+      recipients: result.total,
+      sent: result.sent,
+      failed: result.failed,
+      errors: result.errors.slice(0, 5),
+    },
   });
 
-  if (failed > 0) {
-    const firstError = errors[0] ?? "Motivo no disponible";
+  if (result.failed > 0) {
     return {
       ok: false,
-      error: `Correos enviados: ${sent} · Fallaron: ${failed}. Motivo: ${firstError}`,
+      error: `Correos enviados: ${result.sent} · Fallaron: ${result.failed}. Motivo: ${result.errors[0] ?? "—"}`,
     };
   }
   return {
     ok: true,
-    message: `Correos enviados: ${sent}${errors.length ? ` (con aviso: ${errors[0]})` : ""}.`,
+    message: `Correos enviados: ${result.sent}${result.errors.length ? ` (aviso: ${result.errors[0]})` : ""}.`,
   };
+}
+
+// Cancela un correo programado (solo si aún está PENDING y pertenece al
+// suscriptor del usuario actual).
+export async function cancelScheduledEmail(id: string): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.CANDIDATE_MANAGE);
+  const sched = await prisma.scheduledEmail.findFirst({ where: { id, subscriberId } });
+  if (!sched) return { ok: false, error: "No encontrado" };
+  if (sched.status !== "PENDING") return { ok: false, error: "Ya no es cancelable." };
+  await prisma.scheduledEmail.update({
+    where: { id },
+    data: { status: "CANCELLED" },
+  });
+  await audit(ctx, { action: "candidate.bulk_email.cancelled", entity: "ScheduledEmail", entityId: id, subscriberId });
+  return { ok: true, message: "Programación cancelada." };
 }
