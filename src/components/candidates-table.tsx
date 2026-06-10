@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CandidatesToolbar } from "@/components/candidates-toolbar";
+import { EmailLogDialog } from "@/components/email-log-dialog";
 
 export interface CandidateRow {
   id: string;
@@ -27,6 +28,8 @@ export interface CandidateRow {
   loginCount: number;
   /** True si el candidato tiene una sesión activa (no revocada, no expirada). */
   isOnline: boolean;
+  /** Conteo de correos en la bitácora (EmailLog) para este candidato. */
+  emailsCount: number;
 }
 
 const PAYMENT_BADGE: Record<CandidateRow["paymentLabel"], { label: string; cls: string }> = {
@@ -39,7 +42,7 @@ const PAYMENT_BADGE: Record<CandidateRow["paymentLabel"], { label: string; cls: 
 // Llaves de columnas ordenables. El orden por defecto es "fullName asc".
 type SortKey =
   | "online" | "fullName" | "documentLabel" | "enrollments" | "lastStatus"
-  | "payment" | "consent" | "docs" | "lastLogin" | "loginCount";
+  | "payment" | "consent" | "docs" | "lastLogin" | "loginCount" | "emailsCount";
 type SortDir = "asc" | "desc";
 
 const SORTERS: Record<SortKey, (r: CandidateRow) => number | string> = {
@@ -53,6 +56,7 @@ const SORTERS: Record<SortKey, (r: CandidateRow) => number | string> = {
   docs:          (r) => -(r.docsApproved * 100 + r.docsPending * 10 + r.docsRejected),
   lastLogin:     (r) => r.lastLoginLabel ?? "",
   loginCount:    (r) => r.loginCount,
+  emailsCount:   (r) => -r.emailsCount, // primero los que tienen más correos
 };
 
 function SortHeader({
@@ -80,6 +84,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [sort, setSort] = useState<{ key: SortKey; dir: SortDir }>({ key: "fullName", dir: "asc" });
   const [onlyOnline, setOnlyOnline] = useState(false);
+  // Modal abierto para ver bitácora de correos de un candidato concreto.
+  const [emailFor, setEmailFor] = useState<CandidateRow | null>(null);
 
   function onSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -160,6 +166,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                 <th className="px-3 py-2"><SortHeader label="Pago" sortKey="payment" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Autoriz." sortKey="consent" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Archivos" sortKey="docs" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2"><SortHeader label="📧 Email" sortKey="emailsCount" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Último ingreso" sortKey="lastLogin" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">IP</span></th>
                 <th className="px-3 py-2 text-center"><SortHeader label="Logins" sortKey="loginCount" current={sort} onSort={onSort} /></th>
@@ -242,6 +249,20 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                         </div>
                       </div>
                     </td>
+                    <td className="px-3 py-2 align-top">
+                      <button
+                        type="button"
+                        onClick={() => setEmailFor(c)}
+                        className={`inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] font-semibold transition ${
+                          c.emailsCount > 0
+                            ? "border-brand-300 bg-brand-50 text-brand-800 hover:bg-brand-100"
+                            : "border-slate-200 bg-white text-slate-500 hover:bg-slate-50"
+                        }`}
+                        title={c.emailsCount > 0 ? "Ver bitácora de correos enviados" : "Sin correos registrados"}
+                      >
+                        📧 <span className="font-bold">{c.emailsCount}</span>
+                      </button>
+                    </td>
                     <td className="px-3 py-2 align-top text-[11px] text-slate-600">
                       {c.lastLoginLabel ?? <span className="text-slate-300">Nunca</span>}
                     </td>
@@ -254,6 +275,15 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           </table>
         </div>
       )}
+      {emailFor ? (
+        <EmailLogDialog
+          open={!!emailFor}
+          candidateId={emailFor.id}
+          candidateName={emailFor.fullName}
+          candidateEmail={emailFor.email}
+          onClose={() => setEmailFor(null)}
+        />
+      ) : null}
     </div>
   );
 }

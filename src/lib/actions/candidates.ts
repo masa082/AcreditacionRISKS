@@ -300,6 +300,8 @@ export async function sendBulkEmail(
     subject: parsed.data.subject,
     bodyHtml: safeHtml,
     attachments,
+    sentById: ctx.userId,
+    kind: "BULK",
   });
 
   await audit(ctx, {

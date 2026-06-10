@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendEmail, type EmailAttachment } from "@/lib/email";
 
@@ -27,6 +28,12 @@ export interface BulkRunOpts {
   bodyHtml: string;
   bodyText?: string;
   attachments?: BulkAttachment[];
+  /** UserId del admin que originó el envío (null para envíos sin actor). */
+  sentById?: string | null;
+  /** kind para la bitácora EmailLog. */
+  kind?: "BULK" | "SCHEDULED" | "TRANSACTIONAL";
+  /** Si vino de un ScheduledEmail, su id. */
+  scheduledEmailId?: string | null;
 }
 
 export interface BulkRunResult {
@@ -94,6 +101,11 @@ export async function runBulkEmail(opts: BulkRunOpts): Promise<BulkRunResult> {
   let failed = 0;
   const errors: string[] = [];
 
+  // Agrupador para que todas las filas de EmailLog del mismo envío
+  // compartan un identificador y se pueda recuperar "el envío completo".
+  const groupId = randomUUID();
+  const kind = opts.kind ?? "BULK";
+
   for (let i = 0; i < recipients.length; i++) {
     if (i > 0) await sleep(120);
     const r = recipients[i];
@@ -112,6 +124,11 @@ export async function runBulkEmail(opts: BulkRunOpts): Promise<BulkRunResult> {
     const personalText = applyVars(opts.bodyText ?? htmlToText(opts.bodyHtml), vars);
 
     const wrappedHtml = wrapEmailHtml(personalHtml, orgName);
+    const preview = personalText.slice(0, 600);
+
+    let logStatus: "SENT" | "FAILED" = "SENT";
+    let logError: string | null = null;
+    let logProviderId: string | null = null;
 
     try {
       const result = await sendEmail({
@@ -124,14 +141,43 @@ export async function runBulkEmail(opts: BulkRunOpts): Promise<BulkRunResult> {
       });
       if (result.ok) {
         sent++;
+        logProviderId = result.id ?? null;
         if ("error" in result && result.error) errors.push(`${r.email}: ${result.error}`);
       } else {
         failed++;
-        errors.push(`${r.email}: ${"error" in result && result.error ? result.error : "fallo sin detalle"}`);
+        logStatus = "FAILED";
+        logError = "error" in result && result.error ? result.error : "fallo sin detalle";
+        errors.push(`${r.email}: ${logError}`);
       }
     } catch (e) {
       failed++;
-      errors.push(`${r.email}: ${e instanceof Error ? e.message : String(e)}`);
+      logStatus = "FAILED";
+      logError = e instanceof Error ? e.message : String(e);
+      errors.push(`${r.email}: ${logError}`);
+    }
+
+    // Persistimos cada envío en la bitácora. Errores aquí NO deben tirar
+    // el lote (envío ya ocurrió); los registramos en el array de errors.
+    try {
+      await prisma.emailLog.create({
+        data: {
+          subscriberId: opts.subscriberId,
+          candidateId: r.id,
+          toEmail: r.email,
+          subject: personalSubject,
+          bodyPreview: preview,
+          bodyHtml: personalHtml,
+          kind,
+          status: logStatus,
+          providerId: logProviderId,
+          errorMessage: logError,
+          sentById: opts.sentById ?? null,
+          groupId,
+          scheduledEmailId: opts.scheduledEmailId ?? null,
+        },
+      });
+    } catch (e) {
+      errors.push(`emailLog ${r.email}: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 

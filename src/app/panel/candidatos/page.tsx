@@ -103,6 +103,19 @@ export default async function CandidatesListPage({
     prisma.candidate.count({ where: { subscriberId } }),
   ]);
 
+  // Conteo de correos enviados a cada candidato (bitácora EmailLog).
+  const candidateIds = candidates.map((c) => c.id);
+  const emailsAgg = candidateIds.length
+    ? await prisma.emailLog.groupBy({
+        by: ["candidateId"],
+        where: { subscriberId, candidateId: { in: candidateIds } },
+        _count: { _all: true },
+      })
+    : [];
+  const emailsByCandidate = new Map<string, number>(
+    emailsAgg.map((r) => [r.candidateId as string, r._count._all]),
+  );
+
   // Para conteo de logins agregamos AuditLog por actorId.
   const userIds = candidates.map((c) => c.user?.id).filter(Boolean) as string[];
   const [loginAgg, activeSessions] = await Promise.all([
@@ -162,6 +175,7 @@ export default async function CandidatesListPage({
       lastLoginIp: c.user?.lastLoginIp ?? null,
       loginCount: c.user?.id ? loginsByUser.get(c.user.id) ?? 0 : 0,
       isOnline: c.user?.id ? onlineUsers.has(c.user.id) : false,
+      emailsCount: emailsByCandidate.get(c.id) ?? 0,
     };
   });
 

@@ -331,6 +331,7 @@ model Subscriber {
   referrals          Referral[]
   documentations     Documentation[]
   scheduledEmails    ScheduledEmail[]
+  emailLogs          EmailLog[]
 
   @@index([status])
 }
@@ -390,6 +391,7 @@ model User {
   feedbackTickets FeedbackTicket[]
   documentations  Documentation[]
   scheduledEmails ScheduledEmail[]
+  emailLogs       EmailLog[]
 
   @@unique([email, subscriberId])
   @@index([subscriberId])
@@ -519,6 +521,7 @@ model Candidate {
   attempts     ExamAttempt[]
   appeals      Appeal[]
   referrals    Referral[]
+  emailLogs    EmailLog[]
 
   @@unique([subscriberId, documentNumber])
   @@index([subscriberId])
@@ -1552,4 +1555,65 @@ model ScheduledEmail {
 
   @@index([status, scheduledFor])
   @@index([subscriberId])
+}
+
+// ─── EmailLog ─────────────────────────────────────────────────────────
+//
+// Bitácora de TODOS los correos enviados por el sistema a candidatos.
+// Se usa para que el suscriptor pueda auditar qué correos ha recibido
+// cada candidato (botón "📧 N" en la tabla de /panel/candidatos).
+//
+// Se escribe una fila por DESTINATARIO. Para un envío masivo a N
+// candidatos quedan N filas (todas comparten el mismo `groupId`).
+//
+// kind:
+//   BULK            → envío masivo manual desde /panel/candidatos
+//   SCHEDULED       → envío masivo programado (ScheduledEmail)
+//   TRANSACTIONAL   → envío automático del sistema (habeas, password reset, certificado emitido, etc.)
+//
+// status:
+//   SENT   → Resend confirmó la recepción
+//   FAILED → falló el envío; `errorMessage` indica el motivo
+model EmailLog {
+  id              String   @id @default(cuid())
+  subscriberId    String
+  subscriber      Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  // El candidato destinatario (cuando aplica — algunos correos transaccionales
+  // pueden ir a no-candidatos en el futuro).
+  candidateId     String?
+  candidate       Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  // Dirección efectiva de envío (puede diferir de Candidate.email si el
+  // candidato tiene correos secundarios)
+  toEmail         String
+  subject         String
+  // Recorte del cuerpo para vista previa rápida en la bitácora (max 600 chars).
+  bodyPreview     String   @db.Text
+  // HTML completo para reabrir el correo en un modal.
+  bodyHtml        String?  @db.Text
+
+  kind            String   @default("BULK")
+  template        String?  // "habeas" | "password-reset" | "certificate" | ...
+  status          String   @default("SENT")
+  providerId      String?  // ID que devuelve Resend
+  errorMessage    String?  @db.Text
+
+  // Usuario que originó el envío (el admin para BULK / SCHEDULED, null
+  // para TRANSACTIONAL del sistema)
+  sentById        String?
+  sentBy          User?    @relation(fields: [sentById], references: [id], onDelete: SetNull)
+
+  // Agrupador para envíos masivos: todos los EmailLog de un mismo grupo
+  // (BULK o SCHEDULED) comparten este UUID. Permite "ver el envío
+  // completo" desde un solo correo del log.
+  groupId         String?
+  // Si vino de un ScheduledEmail, su id (para auditoría cruzada).
+  scheduledEmailId String?
+
+  sentAt          DateTime @default(now())
+
+  @@index([subscriberId, sentAt])
+  @@index([candidateId, sentAt])
+  @@index([groupId])
 }

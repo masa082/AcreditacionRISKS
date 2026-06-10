@@ -59,6 +59,9 @@ async function handle(req: Request): Promise<Response> {
         subject: job.subject,
         bodyHtml: job.bodyHtml,
         attachments: (job.attachments as unknown as BulkAttachment[]) ?? [],
+        sentById: job.createdById,
+        kind: "SCHEDULED",
+        scheduledEmailId: job.id,
       });
       await prisma.scheduledEmail.update({
         where: { id: job.id },
