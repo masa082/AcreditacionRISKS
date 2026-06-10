@@ -277,13 +277,26 @@ export default async function HomePage() {
               <div className="animate-float-soft">
                 <CertificateMock />
               </div>
-              <div className="absolute -left-3 bottom-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 xl:block">
+
+              {/* Badge flotante inferior izquierdo — "Estado: Verificado".
+                  Delay en la entrada para que aparezca después del certificado;
+                  hover sutil que sube el badge. */}
+              <div className="absolute -left-3 bottom-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(11,31,58,0.18)] xl:block animate-float-soft" style={{ animationDelay: "1.2s" }}>
                 <div className="text-[10px] uppercase tracking-wider text-slate-400">{tr("land.hero.mock.status")}</div>
-                <div className="text-sm font-bold text-emerald-700">{tr("land.hero.mock.statusValue")}</div>
+                <div className="flex items-center gap-1.5 text-sm font-bold text-emerald-700">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                  </span>
+                  {tr("land.hero.mock.statusValue")}
+                </div>
               </div>
-              <div className="absolute -right-2 top-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 xl:block">
+
+              {/* Badge flotante superior derecho — "Vigencia 3 años".
+                  Color del valor pasó de brand-800 a brand-900 (más consistencia). */}
+              <div className="absolute -right-2 top-4 hidden rounded-xl bg-white p-3 shadow-premium ring-1 ring-slate-200 transition-transform duration-300 hover:-translate-y-0.5 hover:shadow-[0_16px_40px_rgba(11,31,58,0.18)] xl:block animate-float-soft" style={{ animationDelay: "0.4s" }}>
                 <div className="text-[10px] uppercase tracking-wider text-slate-400">{tr("land.hero.mock.validity")}</div>
-                <div className="text-sm font-bold text-brand-800">{tr("land.hero.mock.validityValue")}</div>
+                <div className="text-sm font-bold text-brand-900">{tr("land.hero.mock.validityValue")}</div>
               </div>
             </div>
             <HeroMicroForm locale={locale} />

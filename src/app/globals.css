@@ -27,19 +27,60 @@
   --color-cyan-600: #0891b2;
 }
 
-/* Animaciones suaves para la landing */
+/* ─────────── Animaciones de la landing ─────────── */
+
+/* Flotación continua para el certificado del hero */
 @keyframes float-soft {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
 }
 .animate-float-soft { animation: float-soft 6s ease-in-out infinite; }
 
-/* Fondo "premium light": blanco con un sutil tinte navy en grilla decorativa. */
+/* Reveal-in del certificado: aparece, sube y se inclina sutilmente.
+   Usado al cargar la página (sin esperar interacción). */
+@keyframes cert-reveal {
+  0%   { opacity: 0; transform: translateY(18px) scale(0.96); }
+  60%  { opacity: 1; }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+.certificate-mock { animation: cert-reveal 900ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Shimmer diagonal — usado en el chip "Certificado de Competencias"
+   y en el sello "Verificable" para evocar metálico/luz reflejada. */
+@keyframes shimmer {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.animate-shimmer { animation: shimmer 2.6s ease-in-out infinite; }
+
+/* Ping suavizado — ring atrás del QR que llama la atención sin ser molesto.
+   Más lento que el ping de Tailwind por defecto (1s) para no saturar. */
+@keyframes ping-soft {
+  0%   { transform: scale(1);   opacity: 0.45; }
+  75%  { transform: scale(1.5); opacity: 0;    }
+  100% { transform: scale(1.5); opacity: 0;    }
+}
+.animate-ping-soft { animation: ping-soft 3s cubic-bezier(0, 0, 0.2, 1) infinite; }
+
+/* Respect del usuario: si pide "reduce motion", paramos las animaciones
+   continuas (el reveal de entrada sí se mantiene rápido y discreto). */
+@media (prefers-reduced-motion: reduce) {
+  .animate-float-soft,
+  .animate-shimmer,
+  .animate-ping-soft {
+    animation: none !important;
+  }
+  .certificate-mock { animation-duration: 1ms !important; }
+}
+
+/* Fondo "premium light": blanco con dos haces radiales navy muy suaves.
+   El dorado (rgba(200,154,53,...)) se reemplazó por un segundo halo navy
+   para mantener consistencia con el manual de marca de RISKS. */
 .bg-premium-light {
   background-color: #ffffff;
   background-image:
-    radial-gradient(circle at 90% 0%, rgba(11, 29, 68, 0.05), transparent 50%),
-    radial-gradient(circle at 0% 100%, rgba(200, 154, 53, 0.06), transparent 45%);
+    radial-gradient(circle at 90% 0%, rgba(11, 29, 68, 0.06), transparent 50%),
+    radial-gradient(circle at 0% 100%, rgba(30, 58, 95, 0.05), transparent 45%);
 }
 .bg-premium-grid {
   background-color: #fafbfd;
