@@ -6,6 +6,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge } from "@/components/ui";
 import { dateTime } from "@/lib/format";
+import { PdfThumb } from "@/components/pdf-thumb";
 
 export const metadata = { title: "Carpeta del candidato" };
 
@@ -143,6 +144,7 @@ export default async function CandidateFolderPage({
                     {allItems.map((it) => {
                       const ic = ICONS[it.ext] ?? { icon: "📄", cls: "bg-slate-50 ring-slate-200 text-slate-700" };
                       const isImage = ["jpg", "jpeg", "png"].includes(it.ext);
+                      const isPdf = it.ext === "pdf";
                       return (
                         <li key={it.key}>
                           <a
@@ -150,13 +152,35 @@ export default async function CandidateFolderPage({
                             target="_blank"
                             rel="noopener noreferrer"
                             className={`group flex h-full flex-col rounded-xl border bg-white p-3 shadow-sm ring-1 transition hover:shadow-md ${ic.cls}`}
+                            title="Abrir en pestaña nueva"
                           >
-                            <div className="flex h-24 w-full items-center justify-center overflow-hidden rounded-md bg-white/60">
+                            {/* Área de preview: altura mayor (160px) para que
+                                la miniatura del PDF sea legible. Hover scale
+                                muy ligero para feedback visual. */}
+                            <div className="relative h-40 w-full overflow-hidden rounded-md bg-white/60 ring-1 ring-slate-200">
                               {isImage && it.href ? (
                                 // eslint-disable-next-line @next/next/no-img-element
-                                <img src={it.href} alt={it.name} className="h-full w-full object-cover" />
+                                <img
+                                  src={it.href}
+                                  alt={it.name}
+                                  className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.02]"
+                                />
+                              ) : isPdf && it.href ? (
+                                <>
+                                  <PdfThumb url={it.href} alt={it.name} />
+                                  <span className="absolute right-1.5 top-1.5 rounded-md bg-white/95 px-1.5 py-0.5 text-[8.5px] font-bold uppercase tracking-wider text-rose-700 shadow-sm ring-1 ring-rose-200">
+                                    PDF
+                                  </span>
+                                  <div className="pointer-events-none absolute inset-0 flex items-end justify-center bg-gradient-to-t from-brand-900/60 via-transparent to-transparent opacity-0 transition group-hover:opacity-100">
+                                    <span className="mb-2 rounded-md bg-white px-2 py-1 text-[10px] font-bold text-brand-900 shadow">
+                                      🔍 Abrir
+                                    </span>
+                                  </div>
+                                </>
                               ) : (
-                                <span className="text-5xl" aria-hidden>{ic.icon}</span>
+                                <div className="grid h-full w-full place-items-center text-5xl">
+                                  <span aria-hidden>{ic.icon}</span>
+                                </div>
                               )}
                             </div>
                             <div className="mt-2 min-w-0 flex-1">
