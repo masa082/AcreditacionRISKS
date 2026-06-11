@@ -62,12 +62,15 @@ export function PdfThumb({ url, alt }: { url: string; alt?: string }) {
         <iframe
           src={src}
           title={alt ?? "Vista previa"}
-          loading="lazy"
           className="pointer-events-none absolute inset-0 h-full w-full"
-          // El sandbox impide scripts y popups del PDF, pero permite el
-          // render. allow-same-origin se necesita para que el visor de
-          // PDF integrado pueda servirlo cuando la URL es local.
-          sandbox="allow-same-origin"
+          // NOTA: NO se pone sandbox. El visor de PDF integrado de Chrome
+          // (PDFium) necesita ejecutar sus propios scripts internos para
+          // renderizar el documento; un sandbox restrictivo lo bloquea y
+          // muestra el ícono ⚠ de "no se pudo cargar".
+          // La seguridad se mantiene porque el archivo viene de nuestro
+          // mismo origen (X-Frame-Options: SAMEORIGIN en /api/files/*),
+          // y el pointer-events:none del wrapper impide interacción del
+          // visor mientras el clic en la tarjeta abre el PDF en pestaña.
         />
       ) : null}
     </div>
