@@ -8,7 +8,13 @@ import { PageHeader, Card, Badge, EmptyState } from "@/components/ui";
 import { DocumentReview } from "@/components/document-review";
 import { CandidateEditForm } from "@/components/candidate-edit-form";
 import { CandidateEmailsAdmin } from "@/components/candidate-emails-admin";
+import { PdfThumb } from "@/components/pdf-thumb";
 import { money, dateOnly, dateTime } from "@/lib/format";
+
+function isPdfName(name: string | null): boolean {
+  if (!name) return false;
+  return /\.pdf$/i.test(name);
+}
 
 export const metadata = { title: "Detalle de candidato" };
 
@@ -193,14 +199,37 @@ export default async function CandidateDetailPage({
                           const st = DOC_STATUS[d.status] ?? DOC_STATUS.PENDING;
                           return (
                             <li key={d.id} className="rounded-lg border border-slate-200 p-3">
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex min-w-0 items-center gap-3">
-                                  {isImageName(d.fileName) ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img src={`/api/files/${d.id}`} alt={d.fileName ?? "documento"} className="h-12 w-12 shrink-0 rounded border border-slate-200 object-cover" />
-                                  ) : (
-                                    <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded border border-slate-200 bg-slate-50 text-xl">📄</span>
-                                  )}
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="flex min-w-0 items-start gap-3">
+                                  {/* Miniatura tipo "tarjeta": imagen real para
+                                      jpg/png, render del visor nativo para PDF,
+                                      icono fallback para otros. Mismo
+                                      comportamiento que /panel/candidatos/[id]/documentos. */}
+                                  <a
+                                    href={`/api/files/${d.id}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    title="Abrir en pestaña nueva"
+                                    className="group relative block h-20 w-20 shrink-0 overflow-hidden rounded-md border border-slate-200 bg-slate-50"
+                                  >
+                                    {isImageName(d.fileName) ? (
+                                      /* eslint-disable-next-line @next/next/no-img-element */
+                                      <img
+                                        src={`/api/files/${d.id}`}
+                                        alt={d.fileName ?? "documento"}
+                                        className="h-full w-full object-cover transition duration-300 group-hover:scale-[1.04]"
+                                      />
+                                    ) : isPdfName(d.fileName) ? (
+                                      <>
+                                        <PdfThumb url={`/api/files/${d.id}`} alt={d.fileName ?? "documento"} />
+                                        <span className="absolute right-1 top-1 rounded bg-white/95 px-1 text-[8px] font-bold uppercase tracking-wider text-rose-700 shadow-sm ring-1 ring-rose-200">
+                                          PDF
+                                        </span>
+                                      </>
+                                    ) : (
+                                      <div className="grid h-full w-full place-items-center text-xl">📄</div>
+                                    )}
+                                  </a>
                                   <div className="min-w-0">
                                     <div className="text-sm font-medium text-slate-800">{d.requiredDocument?.name ?? d.fileName ?? "Documento"}</div>
                                     <a href={`/api/files/${d.id}`} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-brand-700 hover:underline">{d.fileName ?? "Ver documento"}</a>
