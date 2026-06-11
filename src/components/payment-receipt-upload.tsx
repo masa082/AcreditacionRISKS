@@ -89,8 +89,26 @@ export function PaymentReceiptUpload({
         setMessage(res.message ?? "Soporte cargado.");
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error inesperado.");
+        const msg = err instanceof Error ? err.message : "Error inesperado.";
+        setError(msg);
         setProgress(null);
+        // Reporta la incidencia al servidor para que el admin la vea
+        // como alerta en /panel/candidatos.
+        void fetch("/api/incidents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category: "PAYMENT",
+            severity: "ERROR",
+            message: msg,
+            context: {
+              paymentId,
+              fileSize: fileRef.current?.files?.[0]?.size,
+              fileType: fileRef.current?.files?.[0]?.type,
+              userAgent: navigator.userAgent.slice(0, 200),
+            },
+          }),
+        }).catch(() => {});
       }
     });
   }

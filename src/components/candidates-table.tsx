@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 import { CandidatesToolbar } from "@/components/candidates-toolbar";
 import { EmailLogDialog } from "@/components/email-log-dialog";
+import { IncidentsDialog } from "@/components/incidents-dialog";
 
 export interface CandidateRow {
   id: string;
@@ -30,6 +31,9 @@ export interface CandidateRow {
   isOnline: boolean;
   /** Conteo de correos en la bitácora (EmailLog) para este candidato. */
   emailsCount: number;
+  /** Conteo de incidencias PENDIENTES (sin resolver). Cuando > 0, se
+   *  muestra un badge rojo con el número en la columna "Alertas". */
+  incidentsCount: number;
 }
 
 const PAYMENT_BADGE: Record<CandidateRow["paymentLabel"], { label: string; cls: string }> = {
@@ -42,7 +46,7 @@ const PAYMENT_BADGE: Record<CandidateRow["paymentLabel"], { label: string; cls: 
 // Llaves de columnas ordenables. El orden por defecto es "fullName asc".
 type SortKey =
   | "online" | "fullName" | "documentLabel" | "enrollments" | "lastStatus"
-  | "payment" | "consent" | "docs" | "lastLogin" | "loginCount" | "emailsCount";
+  | "payment" | "consent" | "docs" | "lastLogin" | "loginCount" | "emailsCount" | "incidentsCount";
 type SortDir = "asc" | "desc";
 
 const SORTERS: Record<SortKey, (r: CandidateRow) => number | string> = {
@@ -57,6 +61,7 @@ const SORTERS: Record<SortKey, (r: CandidateRow) => number | string> = {
   lastLogin:     (r) => r.lastLoginLabel ?? "",
   loginCount:    (r) => r.loginCount,
   emailsCount:   (r) => -r.emailsCount, // primero los que tienen más correos
+  incidentsCount:(r) => -r.incidentsCount, // primero los que tienen alertas
 };
 
 function SortHeader({
@@ -86,6 +91,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [onlyOnline, setOnlyOnline] = useState(false);
   // Modal abierto para ver bitácora de correos de un candidato concreto.
   const [emailFor, setEmailFor] = useState<CandidateRow | null>(null);
+  // Modal abierto para ver incidencias del proceso del candidato.
+  const [incidentsFor, setIncidentsFor] = useState<CandidateRow | null>(null);
 
   function onSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -159,6 +166,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                 <th className="px-3 py-2">
                   <SortHeader label="● En línea" sortKey="online" current={sort} onSort={onSort} />
                 </th>
+                <th className="px-3 py-2"><SortHeader label="⚠ Alertas" sortKey="incidentsCount" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Candidato" sortKey="fullName" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Documento" sortKey="documentLabel" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Insc." sortKey="enrollments" current={sort} onSort={onSort} /></th>
@@ -188,6 +196,31 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                         </span>
                       ) : (
                         <span className="inline-block h-3 w-3 rounded-full bg-slate-300 ring-2 ring-slate-100" aria-label="Desconectado" />
+                      )}
+                    </td>
+                    <td className="px-3 py-2 align-top">
+                      {c.incidentsCount > 0 ? (
+                        <button
+                          type="button"
+                          onClick={() => setIncidentsFor(c)}
+                          className="group relative inline-flex items-center gap-1 rounded-md border border-rose-300 bg-rose-50 px-2 py-1 text-[11px] font-bold text-rose-700 shadow-sm hover:bg-rose-100"
+                          title={`${c.incidentsCount} incidencia(s) pendiente(s) — clic para ver detalle`}
+                        >
+                          <span aria-hidden className="relative flex h-2 w-2">
+                            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-rose-400 opacity-75" />
+                            <span className="relative inline-flex h-2 w-2 rounded-full bg-rose-500" />
+                          </span>
+                          ⚠ {c.incidentsCount}
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => setIncidentsFor(c)}
+                          className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-400 hover:bg-slate-50"
+                          title="Sin incidencias — clic para ver el historial"
+                        >
+                          ✓ 0
+                        </button>
                       )}
                     </td>
                     <td className="px-3 py-2 align-top">
@@ -282,6 +315,15 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           candidateName={emailFor.fullName}
           candidateEmail={emailFor.email}
           onClose={() => setEmailFor(null)}
+        />
+      ) : null}
+      {incidentsFor ? (
+        <IncidentsDialog
+          open={!!incidentsFor}
+          candidateId={incidentsFor.id}
+          candidateName={incidentsFor.fullName}
+          candidateEmail={incidentsFor.email}
+          onClose={() => setIncidentsFor(null)}
         />
       ) : null}
     </div>

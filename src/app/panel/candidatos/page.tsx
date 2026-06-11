@@ -116,6 +116,22 @@ export default async function CandidatesListPage({
     emailsAgg.map((r) => [r.candidateId as string, r._count._all]),
   );
 
+  // Conteo de incidencias PENDIENTES (no resueltas) por candidato.
+  const incidentsAgg = candidateIds.length
+    ? await prisma.processIncident.groupBy({
+        by: ["candidateId"],
+        where: {
+          subscriberId,
+          candidateId: { in: candidateIds },
+          resolvedAt: null,
+        },
+        _count: { _all: true },
+      })
+    : [];
+  const incidentsByCandidate = new Map<string, number>(
+    incidentsAgg.map((r) => [r.candidateId as string, r._count._all]),
+  );
+
   // Para conteo de logins agregamos AuditLog por actorId.
   const userIds = candidates.map((c) => c.user?.id).filter(Boolean) as string[];
   const [loginAgg, activeSessions] = await Promise.all([
@@ -176,6 +192,7 @@ export default async function CandidatesListPage({
       loginCount: c.user?.id ? loginsByUser.get(c.user.id) ?? 0 : 0,
       isOnline: c.user?.id ? onlineUsers.has(c.user.id) : false,
       emailsCount: emailsByCandidate.get(c.id) ?? 0,
+      incidentsCount: incidentsByCandidate.get(c.id) ?? 0,
     };
   });
 

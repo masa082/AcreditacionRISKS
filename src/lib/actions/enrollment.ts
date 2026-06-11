@@ -14,6 +14,7 @@ import {
   computeEnrollmentFees,
 } from "@/lib/enrollment";
 import { saveUpload, deleteByKey, extFromName, MAX_UPLOAD_BYTES, presignedPutUrl, buildUploadKey, assertObjectExists, EXT_TO_MIME } from "@/lib/storage";
+import { logIncident, resolveIncidentsFor } from "@/lib/incidents";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 async function loadOwnedEnrollment(candidateId: string, enrollmentId: string) {
@@ -733,7 +734,21 @@ export async function confirmDocumentUpload(
 
   // Verifica que el objeto realmente exista en el bucket antes de registrar.
   const exists = await assertObjectExists(key);
-  if (!exists) return { ok: false, error: "El archivo no llegó al almacenamiento. Intente de nuevo." };
+  if (!exists) {
+    // Registramos la incidencia: el cliente "subió" pero el objeto no
+    // está en el bucket — probable fallo de CORS, red, o que el PUT
+    // devolvió 200 pero el objeto realmente no quedó (raro pero ocurre).
+    await logIncident({
+      subscriberId,
+      candidateId,
+      enrollmentId,
+      category: "DOCUMENT_UPLOAD",
+      severity: "ERROR",
+      message: `El archivo "${fileName}" no llegó al almacenamiento tras la subida directa.`,
+      context: { key, requiredDocumentId: reqDoc.id, requiredDocumentName: reqDoc.name },
+    });
+    return { ok: false, error: "El archivo no llegó al almacenamiento. Intente de nuevo." };
+  }
 
   // Reemplaza entregas previas del mismo requisito
   const prev = await prisma.candidateDocument.findMany({
@@ -762,6 +777,8 @@ export async function confirmDocumentUpload(
     subscriberId,
     after: { requiredDocumentId: reqDoc.id, fileName, method: "presigned" },
   });
+  // Si había incidencias previas de subida sin resolver, se cierran solas.
+  await resolveIncidentsFor({ subscriberId, candidateId, category: "DOCUMENT_UPLOAD" });
   revalidatePath(`/portal/inscripcion/${enrollmentId}`);
   return { ok: true };
 }
@@ -828,7 +845,18 @@ export async function confirmPaymentReceiptUpload(
   if (!key.startsWith(expectedPrefix)) return { ok: false, error: "Clave de archivo inválida." };
 
   const exists = await assertObjectExists(key);
-  if (!exists) return { ok: false, error: "El archivo no llegó al almacenamiento. Intente de nuevo." };
+  if (!exists) {
+    await logIncident({
+      subscriberId,
+      candidateId,
+      enrollmentId: payment.enrollmentId,
+      category: "PAYMENT",
+      severity: "ERROR",
+      message: `El soporte de pago "${fileName}" no llegó al almacenamiento.`,
+      context: { key, paymentId },
+    });
+    return { ok: false, error: "El archivo no llegó al almacenamiento. Intente de nuevo." };
+  }
 
   await prisma.payment.update({
     where: { id: paymentId },
@@ -852,6 +880,9 @@ export async function confirmPaymentReceiptUpload(
     subscriberId,
     after: { fileName, note: note || null, method: "presigned" },
   });
+  // Cierra incidencias previas de PAYMENT del candidato (si el problema
+  // ya se resolvió al subir el soporte correctamente).
+  await resolveIncidentsFor({ subscriberId, candidateId, category: "PAYMENT" });
   revalidatePath(`/portal/inscripcion/${payment.enrollmentId}`);
   revalidatePath("/portal/pagos");
   revalidatePath("/panel/pagos");

@@ -130,8 +130,28 @@ export function DocumentUpload({
         }
         router.refresh();
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error inesperado.");
+        const msg = err instanceof Error ? err.message : "Error inesperado.";
+        setError(msg);
         setProgress(null);
+        // Reporta la incidencia al servidor para que el admin lo vea en
+        // /panel/candidatos. Fire-and-forget — no bloquea el flujo del
+        // candidato si /api/incidents está caído.
+        void fetch("/api/incidents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category: "DOCUMENT_UPLOAD",
+            severity: "ERROR",
+            message: msg,
+            enrollmentId,
+            context: {
+              docName: doc.name,
+              fileSize: fileRef.current?.files?.[0]?.size,
+              fileType: fileRef.current?.files?.[0]?.type,
+              userAgent: navigator.userAgent.slice(0, 200),
+            },
+          }),
+        }).catch(() => {});
       }
     });
   }

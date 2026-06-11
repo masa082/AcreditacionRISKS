@@ -332,6 +332,7 @@ model Subscriber {
   documentations     Documentation[]
   scheduledEmails    ScheduledEmail[]
   emailLogs          EmailLog[]
+  processIncidents   ProcessIncident[]
 
   @@index([status])
 }
@@ -392,6 +393,7 @@ model User {
   documentations  Documentation[]
   scheduledEmails ScheduledEmail[]
   emailLogs       EmailLog[]
+  resolvedIncidents ProcessIncident[] @relation("ResolvedIncidents")
 
   @@unique([email, subscriberId])
   @@index([subscriberId])
@@ -522,6 +524,7 @@ model Candidate {
   appeals      Appeal[]
   referrals    Referral[]
   emailLogs    EmailLog[]
+  processIncidents ProcessIncident[]
 
   @@unique([subscriberId, documentNumber])
   @@index([subscriberId])
@@ -1616,4 +1619,54 @@ model EmailLog {
   @@index([subscriberId, sentAt])
   @@index([candidateId, sentAt])
   @@index([groupId])
+}
+
+// ─── ProcessIncident ──────────────────────────────────────────────────
+//
+// Registro de incidencias del proceso del candidato: errores de subida
+// de documentos, fallos de pago, problemas de almacenamiento, timeouts,
+// validaciones rechazadas, etc.
+//
+// Se muestra en /panel/candidatos como badge "⚠ N" en una columna
+// dedicada. El admin del organismo abre el modal, ve el detalle y
+// puede marcar como resuelta cuando ya contactó al candidato o el
+// problema desapareció.
+//
+// category:
+//   DOCUMENT_UPLOAD  → fallo al subir un documento (red, CORS, S3, validación)
+//   PAYMENT          → fallo de pasarela, soporte rechazado, cobro pendiente
+//   CONSENT          → fallo en la autorización de habeas data
+//   EXAM             → problema durante la presentación del examen
+//   OTHER            → cualquier otro
+//
+// severity:
+//   ERROR  → bloquea el proceso, el candidato no puede avanzar
+//   WARN   → el candidato pudo continuar pero hay un problema a revisar
+//
+// La columna `context` lleva detalles técnicos en JSON (mensaje del
+// proveedor, código HTTP, nombre del archivo, IP, etc.).
+model ProcessIncident {
+  id            String   @id @default(cuid())
+  subscriberId  String
+  subscriber    Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+
+  candidateId   String?
+  candidate     Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+  enrollmentId  String?
+
+  category      String   @default("OTHER")
+  severity      String   @default("ERROR")
+  message       String   @db.Text
+  context       Json     @default("{}")
+
+  resolvedAt    DateTime?
+  resolvedById  String?
+  resolvedBy    User?    @relation("ResolvedIncidents", fields: [resolvedById], references: [id], onDelete: SetNull)
+  resolution    String?  @db.Text
+
+  createdAt     DateTime @default(now())
+
+  @@index([subscriberId, resolvedAt])
+  @@index([candidateId, resolvedAt])
+  @@index([enrollmentId])
 }
