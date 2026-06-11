@@ -11,9 +11,11 @@ import { appBaseUrl } from "@/lib/app-url";
 export interface ForgotState {
   ok: boolean;
   error?: string;
-  /// En desarrollo (sin SMTP) se devuelve el token para mostrar el enlace.
-  resetToken?: string;
   message?: string;
+  // NOTA: NO devolver el resetToken al cliente. Hacerlo permite que
+  // cualquiera con acceso al correo de un usuario active el reset desde
+  // el navegador sin pasar por el inbox real — bypass de propiedad del
+  // email. El token viaja SOLO por email a la dirección registrada.
 }
 
 const RESET_TTL_MS = 60 * 60 * 1000; // 1 hora
@@ -38,8 +40,16 @@ export async function requestPasswordReset(
 
   let subscriberId: string | null | undefined = undefined;
   if (parsed.data.org) {
-    const sub = await prisma.subscriber.findUnique({ where: { slug: parsed.data.org }, select: { id: true } });
-    if (!sub) return { ok: false, error: "Organización no encontrada." };
+    // Aceptamos tanto slug como ID — el form ahora envía el ID directamente
+    // desde el selector de suscriptores activos (más robusto que un texto libre).
+    const sub = await prisma.subscriber.findFirst({
+      where: { OR: [{ slug: parsed.data.org }, { id: parsed.data.org }] },
+      select: { id: true },
+    });
+    if (!sub) {
+      // No revelamos si la org existe o no — respuesta genérica.
+      return { ok: true, message: GENERIC_OK };
+    }
     subscriberId = sub.id;
   }
 
@@ -52,19 +62,17 @@ export async function requestPasswordReset(
     select: { id: true, subscriberId: true, status: true, email: true },
   });
 
-  const generic = "Si existe una cuenta con ese correo, enviamos las instrucciones para restablecer la contraseña.";
-
   if (users.length > 1) {
-    return { ok: false, error: "Hay varias cuentas con ese correo. Indique el identificador de su organización." };
+    return { ok: false, error: "Hay varias cuentas con ese correo. Indique su organización." };
   }
   if (users.length === 0) {
     // No revelar inexistencia.
-    return { ok: true, message: generic };
+    return { ok: true, message: GENERIC_OK };
   }
 
   const user = users[0];
   if (user.status === "SUSPENDED") {
-    return { ok: true, message: generic };
+    return { ok: true, message: GENERIC_OK };
   }
 
   const resetToken = newToken(24);
@@ -78,9 +86,13 @@ export async function requestPasswordReset(
     entityId: user.id,
     subscriberId: user.subscriberId,
   });
+  // El token SIEMPRE viaja solo por email — nunca en la respuesta del action.
   await sendPasswordResetEmail(user.subscriberId, email, `${appBaseUrl()}/restablecer/${resetToken}`);
-  return { ok: true, message: generic, resetToken };
+  return { ok: true, message: GENERIC_OK };
 }
+
+const GENERIC_OK =
+  "Si existe una cuenta con ese correo, enviamos las instrucciones a su bandeja de entrada. Revise también la carpeta de spam.";
 
 export interface ResetState {
   ok: boolean;
