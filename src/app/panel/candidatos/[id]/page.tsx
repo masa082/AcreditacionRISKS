@@ -209,7 +209,13 @@ export default async function CandidateDetailPage({
                                 <Badge tone={st.tone}>{st.label}</Badge>
                               </div>
                               {d.reviewNotes ? <p className="mt-1 text-xs text-rose-600">Observación: {d.reviewNotes}</p> : null}
-                              {canReview && d.status === "SUBMITTED" ? <DocumentReview documentId={d.id} /> : null}
+                              {canReview && d.status === "SUBMITTED" ? (
+                                <DocumentReview
+                                  documentId={d.id}
+                                  fileUrl={`/api/files/${d.id}`}
+                                  fileName={d.fileName}
+                                />
+                              ) : null}
                             </li>
                           );
                         })}
