@@ -3,37 +3,35 @@
 import { useEffect, useRef, useState } from "react";
 
 /**
- * Miniatura de un PDF que se renderiza dentro de un <iframe> con el
- * visor nativo del navegador (PDFium en Chrome/Edge, Preview en Safari).
+ * Miniatura de un PDF — renderiza la primera página a un <canvas>
+ * usando pdf.js (Mozilla) y la muestra como imagen estática.
  *
- * IMPORTANTE — por qué se usa CSS transform:scale en vez de un iframe
- * directamente al tamaño deseado:
- *   PDFium se rehúsa a renderizar correctamente cuando el iframe es
- *   muy pequeño (menos de ~300 px de ancho). Para sortearlo, dibujamos
- *   el iframe a tamaño "natural" de PDF (595 px de ancho) y lo
- *   escalamos con transform al tamaño del contenedor padre. Así PDFium
- *   ve un viewport "normal" y rinde la primera página sin problemas.
+ * Por qué pdf.js y NO iframe + visor nativo:
+ *  - PDFium (Chrome) no rinde bien iframes pequeños y rechaza varias
+ *    configuraciones (sandbox, headers, etc.). Ya probamos dos
+ *    workarounds y ninguno dio una miniatura confiable.
+ *  - pdf.js es JavaScript puro sobre canvas: funciona igual en todos
+ *    los navegadores, sin depender de plugins del browser, sin
+ *    restricciones de tamaño mínimo y sin issues de headers de seguridad.
  *
- * El tamaño del padre se mide con ResizeObserver y se reescala en vivo
- * si el layout cambia (responsivo).
+ * Costo: hay que descargar el PDF al cliente para renderizarlo. Para
+ * mitigarlo:
+ *  - Lazy-load por IntersectionObserver (rootMargin 200 px).
+ *  - Solo se rinde la primera página y a baja resolución (escala 1.0).
+ *  - El bundle de pdf.js se carga por dynamic import — no pesa en SSR
+ *    ni en el primer paint de la página.
  *
- * Lazy-loaded por IntersectionObserver con rootMargin 200 px para no
- * descargar todos los PDFs al abrir la página.
- *
- * El placeholder 📕 queda detrás del iframe — si el visor falla o el
- * browser bloquea la incrustación, el usuario sigue viendo algo
- * significativo en lugar de un cuadro blanco.
+ * Si la carga o el render fallan (PDF corrupto, red caída, archivo
+ * inválido), queda el placeholder 📕 visible — nunca cuadro blanco.
  */
-const NATURAL_W = 595;  // ancho "carta/A4" en px que PDFium acepta cómodo
-const NATURAL_H = 770;  // alto proporcional para fit-height
-
 export function PdfThumb({ url, alt }: { url: string; alt?: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const [visible, setVisible] = useState(false);
-  const [size, setSize] = useState<{ w: number; h: number } | null>(null);
+  const [status, setStatus] = useState<"idle" | "loading" | "ready" | "failed">("idle");
 
-  // Lazy-load: solo creamos el iframe cuando el contenedor entra (o se
-  // aproxima a) el viewport.
+  // Lazy-load: solo iniciamos la descarga + render cuando el contenedor
+  // entra (o se aproxima a) el viewport.
   useEffect(() => {
     if (!containerRef.current || visible) return;
     const el = containerRef.current;
@@ -53,25 +51,70 @@ export function PdfThumb({ url, alt }: { url: string; alt?: string }) {
     return () => io.disconnect();
   }, [visible]);
 
-  // Medimos el tamaño del contenedor para calcular el factor de escala.
+  // Cuando es visible, descargamos pdf.js (dynamic import) + el PDF y
+  // pintamos la primera página al canvas.
   useEffect(() => {
-    if (!containerRef.current) return;
-    const ro = new ResizeObserver((entries) => {
-      for (const e of entries) {
-        const { width, height } = e.contentRect;
-        if (width > 0 && height > 0) setSize({ w: width, h: height });
+    if (!visible || !canvasRef.current) return;
+    let cancelled = false;
+    setStatus("loading");
+
+    (async () => {
+      try {
+        // Dynamic import: pdf.js es pesado y solo se necesita aquí.
+        const pdfjsLib = await import("pdfjs-dist");
+
+        // Configurar el worker. El archivo fue copiado a /public en
+        // tiempo de build desde node_modules/pdfjs-dist/build/. Es la
+        // forma más confiable en Next.js: un asset estático servido por
+        // el mismo origen, sin depender de loaders del bundler.
+        if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
+          pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
+        }
+
+        const loadingTask = pdfjsLib.getDocument({ url, withCredentials: true });
+        const pdf = await loadingTask.promise;
+        if (cancelled) return;
+
+        const page = await pdf.getPage(1);
+        if (cancelled) return;
+
+        // Tamaño de render: el canvas tiene el tamaño del contenedor
+        // pero internamente renderizamos a 2x para pantalla retina.
+        const container = containerRef.current!;
+        const cssW = container.clientWidth || 160;
+        const cssH = container.clientHeight || 200;
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+        // Escala que hace caber la página completa en el contenedor.
+        const viewport1 = page.getViewport({ scale: 1 });
+        const scale = Math.min(cssW / viewport1.width, cssH / viewport1.height);
+        const viewport = page.getViewport({ scale: scale * dpr });
+
+        const canvas = canvasRef.current!;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("no canvas 2d context");
+
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        canvas.style.width = `${viewport.width / dpr}px`;
+        canvas.style.height = `${viewport.height / dpr}px`;
+
+        await page.render({ canvasContext: ctx, viewport }).promise;
+        if (cancelled) return;
+        setStatus("ready");
+      } catch (err) {
+        if (!cancelled) {
+          // Falla silenciosa: el placeholder queda visible.
+          console.warn("PdfThumb render failed:", err);
+          setStatus("failed");
+        }
       }
-    });
-    ro.observe(containerRef.current);
-    return () => ro.disconnect();
-  }, []);
+    })();
 
-  // Parámetros del visor PDF nativo: oculta toolbar y barras, fit-width.
-  const src = `${url}#toolbar=0&navpanes=0&scrollbar=0&view=FitH&page=1`;
-
-  // Escala = min(ancho_contenedor/ancho_natural, alto_contenedor/alto_natural)
-  // para que la página completa quepa sin overflow visible.
-  const scale = size ? Math.min(size.w / NATURAL_W, size.h / NATURAL_H) : 0.25;
+    return () => {
+      cancelled = true;
+    };
+  }, [visible, url]);
 
   return (
     <div
@@ -79,25 +122,21 @@ export function PdfThumb({ url, alt }: { url: string; alt?: string }) {
       className="relative h-full w-full overflow-hidden bg-slate-50"
       aria-label={alt}
     >
-      {/* Placeholder de fondo — siempre visible. Si el iframe falla, no
-          queda un cuadro blanco. */}
-      <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-rose-50 to-rose-100/40 text-4xl">
-        📕
+      {/* Placeholder de fondo: visible mientras carga o si falla. */}
+      <div
+        className={`absolute inset-0 grid place-items-center bg-gradient-to-br from-rose-50 to-rose-100/40 text-4xl transition-opacity ${
+          status === "ready" ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        <span aria-hidden>📕</span>
       </div>
 
-      {visible ? (
-        <iframe
-          src={src}
-          title={alt ?? "Vista previa"}
-          className="pointer-events-none absolute left-0 top-0 border-0 bg-white"
-          style={{
-            width: NATURAL_W,
-            height: NATURAL_H,
-            transform: `scale(${scale})`,
-            transformOrigin: "top left",
-          }}
-        />
-      ) : null}
+      <canvas
+        ref={canvasRef}
+        className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 transition-opacity ${
+          status === "ready" ? "opacity-100" : "opacity-0"
+        }`}
+      />
     </div>
   );
 }
