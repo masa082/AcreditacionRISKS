@@ -3,6 +3,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { randomBytes } from "node:crypto";
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 // ============================================================================
 //  Almacenamiento de archivos (documentos/evidencias de candidatos).
@@ -125,5 +126,65 @@ export async function deleteByKey(key: string): Promise<void> {
     }
   } catch {
     /* archivo ya no existe */
+  }
+}
+
+/**
+ * URL prefirmada PUT para subir un archivo DIRECTAMENTE al bucket desde
+ * el navegador del candidato, sin pasar por el serverless de Vercel.
+ *
+ * Necesario porque el plan Hobby de Vercel limita el body de las
+ * funciones serverless a ~4.5 MB. La pasarela "presigned URL" permite
+ * subir archivos del tamaño que acepte el bucket (varios GB) saltándose
+ * por completo a Vercel.
+ *
+ * Modo dev (sin S3 configurado): devolvemos un sentinel para que el
+ * cliente caiga al método antiguo (POST a server action con FormData).
+ */
+export async function presignedPutUrl(
+  key: string,
+  contentType: string,
+  expiresInSeconds = 300,
+): Promise<{ url: string; key: string; direct: true } | { direct: false; key: string }> {
+  if (!useS3) return { direct: false, key };
+  const cmd = new PutObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: key,
+    ContentType: contentType,
+  });
+  const url = await getSignedUrl(s3(), cmd, { expiresIn: expiresInSeconds });
+  return { url, key, direct: true };
+}
+
+/**
+ * Construye una clave única dentro de una carpeta jerárquica, con el
+ * mismo esquema que usa `saveUpload` (subscriber/candidates/...) pero
+ * sin escribir nada — solo devuelve la `key` para que el cliente la
+ * envíe junto con el archivo al bucket.
+ */
+export function buildUploadKey(filename: string, parts: string[]): { key: string; ext: string } {
+  const ext = extFromName(filename) || "bin";
+  const safeName = sanitize(filename).slice(-80) || `archivo.${ext}`;
+  const id = randomBytes(8).toString("hex");
+  const key = [...parts.map(sanitize), `${id}-${safeName}`].join("/");
+  return { key, ext };
+}
+
+/// Registra archivo previamente subido por presigned URL — verifica que
+/// el objeto realmente existe en el bucket antes de aceptar la clave.
+export async function assertObjectExists(key: string): Promise<boolean> {
+  if (!useS3) {
+    try {
+      await fs.stat(resolveKey(key));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  try {
+    await s3().send(new GetObjectCommand({ Bucket: S3_BUCKET, Key: key }));
+    return true;
+  } catch {
+    return false;
   }
 }

@@ -1,13 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
-import { uploadPaymentReceipt } from "@/lib/actions/enrollment";
-import type { ActionResult } from "@/lib/actions/schemes";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import {
+  uploadPaymentReceipt,
+  requestPaymentReceiptUploadUrl,
+  confirmPaymentReceiptUpload,
+} from "@/lib/actions/enrollment";
 
 /// Carga del SOPORTE de pago para un Payment PENDING (consignación).
-/// El candidato adjunta su comprobante (PDF o imagen JPG/PNG) y opcional
-/// una nota. Mientras esté pendiente de verificación, el botón principal
-/// para avanzar al examen permanece bloqueado en la inscripción.
+///
+/// Flujo presigned URL para bypassear el límite de body de Vercel:
+///   1. Pide URL prefirmada PUT al bucket.
+///   2. PUT directo al S3 desde el navegador (con barra de progreso).
+///   3. Confirma al servidor (registra metadata + nota).
+///
+/// Fallback a POST clásico si el backend no tiene S3 (dev local).
 export function PaymentReceiptUpload({
   paymentId,
   hasReceipt,
@@ -23,8 +31,69 @@ export function PaymentReceiptUpload({
   amount: string;
   currency: string;
 }) {
-  const bound = uploadPaymentReceipt.bind(null, paymentId);
-  const [state, action, pending] = useActionState<ActionResult, FormData>(bound, { ok: false });
+  const router = useRouter();
+  const fileRef = useRef<HTMLInputElement>(null);
+  const noteRef = useRef<HTMLInputElement>(null);
+  const [pending, startTransition] = useTransition();
+  const [progress, setProgress] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError(null);
+    setMessage(null);
+    const file = fileRef.current?.files?.[0];
+    const note = noteRef.current?.value ?? null;
+    if (!file) {
+      setError("Adjunte el comprobante de pago.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      setError("El comprobante supera el tamaño máximo de 10 MB.");
+      return;
+    }
+
+    startTransition(async () => {
+      try {
+        // 1. URL prefirmada.
+        const req = await requestPaymentReceiptUploadUrl(paymentId, file.name, file.type, file.size);
+        if (!req.ok) {
+          setError(req.error ?? "No se pudo iniciar la subida.");
+          return;
+        }
+
+        // 2a. Subida directa si hay URL.
+        if (req.url && req.key && req.contentType) {
+          await putToS3({ url: req.url, contentType: req.contentType, file, onProgress: setProgress });
+          const confirm = await confirmPaymentReceiptUpload(paymentId, req.key, file.name, note);
+          if (!confirm.ok) {
+            setError(confirm.error ?? "Error al confirmar la subida.");
+            return;
+          }
+          setMessage(confirm.message ?? "Soporte cargado.");
+          setProgress(null);
+          router.refresh();
+          return;
+        }
+
+        // 2b. Fallback FormData.
+        const fd = new FormData();
+        fd.set("file", file);
+        if (note) fd.set("note", note);
+        const res = await uploadPaymentReceipt(paymentId, { ok: false }, fd);
+        if (!res.ok) {
+          setError(res.error ?? "No se pudo subir el comprobante.");
+          return;
+        }
+        setMessage(res.message ?? "Soporte cargado.");
+        router.refresh();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Error inesperado.");
+        setProgress(null);
+      }
+    });
+  }
 
   return (
     <div className="rounded-xl border-2 border-amber-300 bg-amber-50/40 p-5">
@@ -65,41 +134,57 @@ export function PaymentReceiptUpload({
             </div>
           ) : null}
 
-          <form action={action} className="mt-4 space-y-2">
+          <form onSubmit={handleSubmit} className="mt-4 space-y-2">
             <label className="block text-xs">
               <span className="font-semibold text-slate-700">Comprobante de pago (PDF/JPG/PNG) *</span>
               <input
+                ref={fileRef}
                 type="file"
                 name="file"
                 required
                 accept=".pdf,.jpg,.jpeg,.png"
-                className="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100"
+                disabled={pending}
+                className="mt-1 block w-full text-sm text-slate-700 file:mr-3 file:rounded-lg file:border-0 file:bg-brand-50 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-brand-800 hover:file:bg-brand-100 disabled:opacity-50"
               />
             </label>
             <label className="block text-xs">
               <span className="font-semibold text-slate-700">Notas para el organismo (opcional)</span>
               <input
+                ref={noteRef}
                 type="text"
                 name="note"
                 placeholder="Ej. transferencia desde Bancolombia · ref. interna 12345"
-                className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
+                disabled={pending}
+                className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-50"
               />
             </label>
+            {progress !== null ? (
+              <div className="space-y-1">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-200">
+                  <div className="h-full rounded-full bg-amber-700 transition-all" style={{ width: `${progress}%` }} />
+                </div>
+                <p className="text-[11px] text-amber-900">Subiendo… {progress}%</p>
+              </div>
+            ) : null}
             <button
               type="submit"
               disabled={pending}
               className="w-full rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-800 disabled:opacity-60"
             >
-              {pending ? "Cargando…" : hasReceipt ? "Reemplazar soporte" : "⬆ Subir soporte de pago"}
+              {pending
+                ? progress !== null
+                  ? "Subiendo…"
+                  : "Procesando…"
+                : hasReceipt
+                ? "Reemplazar soporte"
+                : "⬆ Subir soporte de pago"}
             </button>
-            {state.error ? (
-              <p className="rounded bg-rose-50 px-2 py-1 text-[11px] text-rose-700 ring-1 ring-rose-200">
-                {state.error}
-              </p>
+            {error ? (
+              <p className="rounded bg-rose-50 px-2 py-1 text-[11px] text-rose-700 ring-1 ring-rose-200">{error}</p>
             ) : null}
-            {state.ok ? (
+            {message ? (
               <p className="rounded bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700 ring-1 ring-emerald-200">
-                {state.message ?? "Soporte cargado."}
+                {message}
               </p>
             ) : null}
           </form>
@@ -107,4 +192,32 @@ export function PaymentReceiptUpload({
       </div>
     </div>
   );
+}
+
+/// PUT del archivo directo al bucket S3 con la URL prefirmada (XHR para progreso).
+function putToS3({
+  url,
+  contentType,
+  file,
+  onProgress,
+}: {
+  url: string;
+  contentType: string;
+  file: File;
+  onProgress: (pct: number) => void;
+}): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("PUT", url, true);
+    xhr.setRequestHeader("Content-Type", contentType);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) resolve();
+      else reject(new Error(`Subida fallida: HTTP ${xhr.status}`));
+    };
+    xhr.onerror = () => reject(new Error("Error de red durante la subida."));
+    xhr.send(file);
+  });
 }

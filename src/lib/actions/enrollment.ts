@@ -13,7 +13,7 @@ import {
   syncEnrollmentStatus,
   computeEnrollmentFees,
 } from "@/lib/enrollment";
-import { saveUpload, deleteByKey, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
+import { saveUpload, deleteByKey, extFromName, MAX_UPLOAD_BYTES, presignedPutUrl, buildUploadKey, assertObjectExists, EXT_TO_MIME } from "@/lib/storage";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 async function loadOwnedEnrollment(candidateId: string, enrollmentId: string) {
@@ -630,4 +630,230 @@ export async function cancelEnrollment(enrollmentId: string): Promise<void> {
   });
   revalidatePath("/portal");
   redirect("/portal");
+}
+
+// ─── Subida DIRECTA de documentos a S3 vía URL prefirmada ─────────────
+//
+// Patrón para sortear el límite de body de Vercel (~4.5 MB en Hobby):
+//
+//   1. requestDocumentUploadUrl(enrollmentId, requiredDocumentId, fileName, fileType, fileSize)
+//      → Valida ownership + tipo + tamaño. Devuelve { url, key } prefirmados.
+//
+//   2. Cliente sube el archivo con fetch PUT a la URL devuelta. El archivo
+//      NO pasa por el serverless de Vercel.
+//
+//   3. confirmDocumentUpload(enrollmentId, requiredDocumentId, key, fileName)
+//      → Verifica que el objeto exista en el bucket, registra metadata en
+//        CandidateDocument, sincroniza estado e invalida la página.
+
+interface UploadUrlResult {
+  ok: boolean;
+  error?: string;
+  /** URL prefirmada PUT al bucket. */
+  url?: string;
+  /** Clave final del objeto en el bucket. */
+  key?: string;
+  /** Tipo MIME esperado por el bucket (debe enviarse como Content-Type). */
+  contentType?: string;
+  /** Cuando true, el backend NO tiene S3 configurado y el cliente debe
+   *  caer al método antiguo (POST a submitDocument con FormData). */
+  fallback?: boolean;
+}
+
+export async function requestDocumentUploadUrl(
+  enrollmentId: string,
+  requiredDocumentId: string,
+  fileName: string,
+  fileType: string,
+  fileSize: number,
+): Promise<UploadUrlResult> {
+  const { candidateId, subscriberId } = await requireCandidateAction();
+  const enrollment = await loadOwnedEnrollment(candidateId, enrollmentId);
+
+  if (!fileName || fileSize <= 0) return { ok: false, error: "Adjunte un archivo." };
+  if (fileSize > MAX_UPLOAD_BYTES) {
+    return { ok: false, error: "El archivo supera el tamaño máximo de 10 MB." };
+  }
+
+  const reqDoc = await prisma.requiredDocument.findFirst({
+    where: { id: requiredDocumentId, subscriberId, schemeId: enrollment.schemeId ?? undefined },
+    select: { id: true, name: true, acceptedTypes: true },
+  });
+  if (!reqDoc) return { ok: false, error: "El documento no corresponde a este proceso." };
+
+  const ext = extFromName(fileName);
+  const normalized = ext === "jpeg" ? "jpg" : ext;
+  const accepted = (reqDoc.acceptedTypes.length ? reqDoc.acceptedTypes : ["pdf", "jpg", "png"]).map((t) => t.toLowerCase());
+  if (!accepted.includes(ext) && !accepted.includes(normalized)) {
+    return { ok: false, error: `Formato no permitido. Use: ${accepted.join(", ")}.` };
+  }
+
+  const { key } = buildUploadKey(fileName, [
+    subscriberId,
+    "candidates",
+    candidateId,
+    "enrollments",
+    enrollmentId,
+    reqDoc.id,
+  ]);
+
+  // Forzamos el Content-Type real del archivo al firmar — debe coincidir
+  // con el que envíe el cliente en el PUT o S3 rechazará el upload.
+  const contentType = fileType || EXT_TO_MIME[ext] || "application/octet-stream";
+  const signed = await presignedPutUrl(key, contentType, 300);
+
+  if (!signed.direct) {
+    // Dev/local: no hay S3 — el cliente debe caer al POST clásico.
+    return { ok: true, fallback: true, key };
+  }
+  return { ok: true, url: signed.url, key: signed.key, contentType };
+}
+
+export async function confirmDocumentUpload(
+  enrollmentId: string,
+  requiredDocumentId: string,
+  key: string,
+  fileName: string,
+): Promise<ActionResult> {
+  const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+  const enrollment = await loadOwnedEnrollment(candidateId, enrollmentId);
+
+  const reqDoc = await prisma.requiredDocument.findFirst({
+    where: { id: requiredDocumentId, subscriberId, schemeId: enrollment.schemeId ?? undefined },
+    select: { id: true, name: true },
+  });
+  if (!reqDoc) return { ok: false, error: "El documento no corresponde a este proceso." };
+
+  // Defensa: la clave debe estar dentro de la carpeta del candidato — evita
+  // que un cliente malicioso confirme una clave de otro tenant/usuario.
+  const expectedPrefix = `${subscriberId}/candidates/${candidateId}/enrollments/${enrollmentId}/${reqDoc.id}/`;
+  if (!key.startsWith(expectedPrefix)) {
+    return { ok: false, error: "Clave de archivo inválida." };
+  }
+
+  // Verifica que el objeto realmente exista en el bucket antes de registrar.
+  const exists = await assertObjectExists(key);
+  if (!exists) return { ok: false, error: "El archivo no llegó al almacenamiento. Intente de nuevo." };
+
+  // Reemplaza entregas previas del mismo requisito
+  const prev = await prisma.candidateDocument.findMany({
+    where: { enrollmentId, requiredDocumentId: reqDoc.id },
+    select: { fileUrl: true },
+  });
+  await prisma.candidateDocument.deleteMany({ where: { enrollmentId, requiredDocumentId: reqDoc.id } });
+  for (const p of prev) {
+    if (!/^https?:\/\//i.test(p.fileUrl)) await deleteByKey(p.fileUrl);
+  }
+  await prisma.candidateDocument.create({
+    data: {
+      enrollmentId,
+      requiredDocumentId: reqDoc.id,
+      fileUrl: key,
+      fileName,
+      status: "SUBMITTED",
+    },
+  });
+
+  await syncEnrollmentStatus(enrollmentId);
+  await audit(ctx, {
+    action: "document.submit",
+    entity: "CandidateDocument",
+    entityId: enrollmentId,
+    subscriberId,
+    after: { requiredDocumentId: reqDoc.id, fileName, method: "presigned" },
+  });
+  revalidatePath(`/portal/inscripcion/${enrollmentId}`);
+  return { ok: true };
+}
+
+// ─── Subida DIRECTA del soporte de pago (presigned URL) ───────────────
+// Mismo patrón que requestDocumentUploadUrl/confirmDocumentUpload pero
+// para el comprobante de transferencia/consignación de un Payment.
+export async function requestPaymentReceiptUploadUrl(
+  paymentId: string,
+  fileName: string,
+  fileType: string,
+  fileSize: number,
+): Promise<UploadUrlResult> {
+  const { candidateId, subscriberId } = await requireCandidateAction();
+
+  const payment = await prisma.payment.findFirst({
+    where: { id: paymentId, subscriberId, enrollment: { candidateId } },
+    select: { id: true, status: true },
+  });
+  if (!payment) return { ok: false, error: "Pago no encontrado." };
+  if (payment.status === "APPROVED") return { ok: false, error: "Este pago ya fue aprobado." };
+  if (payment.status === "REJECTED") return { ok: false, error: "Este pago fue rechazado." };
+
+  if (!fileName || fileSize <= 0) return { ok: false, error: "Adjunte el comprobante." };
+  if (fileSize > MAX_UPLOAD_BYTES) {
+    return { ok: false, error: "El comprobante supera el tamaño máximo de 10 MB." };
+  }
+
+  const ext = extFromName(fileName);
+  const allowed = ["pdf", "jpg", "jpeg", "png"];
+  if (!allowed.includes(ext)) {
+    return { ok: false, error: `Formato no permitido. Use ${allowed.join(", ")}.` };
+  }
+
+  const { key } = buildUploadKey(fileName, [
+    subscriberId,
+    "candidates",
+    candidateId,
+    "payments",
+    paymentId,
+  ]);
+  const contentType = fileType || EXT_TO_MIME[ext] || "application/octet-stream";
+  const signed = await presignedPutUrl(key, contentType, 300);
+  if (!signed.direct) return { ok: true, fallback: true, key };
+  return { ok: true, url: signed.url, key: signed.key, contentType };
+}
+
+export async function confirmPaymentReceiptUpload(
+  paymentId: string,
+  key: string,
+  fileName: string,
+  note: string | null,
+): Promise<ActionResult> {
+  const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+
+  const payment = await prisma.payment.findFirst({
+    where: { id: paymentId, subscriberId, enrollment: { candidateId } },
+    select: { id: true, status: true, enrollmentId: true, metadata: true },
+  });
+  if (!payment) return { ok: false, error: "Pago no encontrado." };
+  if (payment.status === "APPROVED") return { ok: false, error: "Este pago ya fue aprobado." };
+
+  const expectedPrefix = `${subscriberId}/candidates/${candidateId}/payments/${paymentId}/`;
+  if (!key.startsWith(expectedPrefix)) return { ok: false, error: "Clave de archivo inválida." };
+
+  const exists = await assertObjectExists(key);
+  if (!exists) return { ok: false, error: "El archivo no llegó al almacenamiento. Intente de nuevo." };
+
+  await prisma.payment.update({
+    where: { id: paymentId },
+    data: {
+      receiptUrl: key,
+      metadata: {
+        ...((payment.metadata as Prisma.JsonObject | null) ?? {}),
+        receipt: {
+          fileName,
+          uploadedAt: new Date().toISOString(),
+          note: note || null,
+        },
+      } as Prisma.InputJsonValue,
+    },
+  });
+
+  await audit(ctx, {
+    action: "payment.receipt.upload",
+    entity: "Payment",
+    entityId: paymentId,
+    subscriberId,
+    after: { fileName, note: note || null, method: "presigned" },
+  });
+  revalidatePath(`/portal/inscripcion/${payment.enrollmentId}`);
+  revalidatePath("/portal/pagos");
+  revalidatePath("/panel/pagos");
+  return { ok: true, message: "Soporte de pago cargado. El organismo lo revisará pronto." };
 }
