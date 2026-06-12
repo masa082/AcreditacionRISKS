@@ -20,6 +20,7 @@ const NAV: NavItem[] = [
 
   // COMERCIAL ─ captación, cobros y referidos
   { href: "/panel/leads", label: "Leads comerciales", group: "Comercial", icon: "🎯" },
+  { href: "/panel/invitaciones", label: "Invitar a certificarse", group: "Comercial", icon: "📣" },
   { href: "/panel/referidos", label: "Programa de referidos", group: "Comercial", icon: "🤝" },
   { href: "/panel/pagos", label: "Pagos recibidos", group: "Comercial", icon: "💳" },
   { href: "/panel/tarifas", label: "Tarifas y precios", group: "Comercial", icon: "💲" },
