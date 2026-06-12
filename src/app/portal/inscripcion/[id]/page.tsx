@@ -123,7 +123,57 @@ export default async function EnrollmentProcessPage({
     }),
   ]);
 
-  const submissionByDoc = new Map(submissions.map((s) => [s.requiredDocumentId, s]));
+  // Documentos APROBADOS por el organismo en inscripciones ANTERIORES
+  // del mismo candidato y mismo esquema. Se reutilizan en esta inscripción
+  // para no obligarlo a re-cargar archivos ya validados (anti-reproceso).
+  // Se marcan con `inheritedFromEnrollmentId` para que la UI sepa que el
+  // archivo vive en otra inscripción y NO mostrar formulario de subida.
+  const inheritedDocs = enrollment.schemeId
+    ? await prisma.candidateDocument.findMany({
+        where: {
+          requiredDocumentId: { in: requiredDocs.map((d) => d.id) },
+          status: "APPROVED",
+          enrollment: {
+            candidateId,
+            schemeId: enrollment.schemeId,
+            NOT: { id: enrollment.id },
+          },
+        },
+        orderBy: { uploadedAt: "desc" },
+        include: { enrollment: { select: { code: true } } },
+      })
+    : [];
+
+  // Map por requiredDocumentId. Priorizamos las submissions de ESTA
+  // inscripción; solo si no existe una local, usamos la heredada.
+  const submissionByDoc = new Map<string, {
+    id: string;
+    fileName: string | null;
+    status: string;
+    reviewNotes: string | null;
+    inheritedFromEnrollmentCode?: string;
+  }>();
+  for (const s of submissions) {
+    if (!s.requiredDocumentId) continue;
+    submissionByDoc.set(s.requiredDocumentId, {
+      id: s.id,
+      fileName: s.fileName,
+      status: s.status,
+      reviewNotes: s.reviewNotes,
+    });
+  }
+  for (const d of inheritedDocs) {
+    if (!d.requiredDocumentId) continue;
+    if (submissionByDoc.has(d.requiredDocumentId)) continue;
+    submissionByDoc.set(d.requiredDocumentId, {
+      id: d.id,
+      fileName: d.fileName,
+      status: "APPROVED",
+      reviewNotes: d.reviewNotes,
+      inheritedFromEnrollmentCode: d.enrollment?.code ?? undefined,
+    });
+  }
+
   const fees = await computeEnrollmentFees(subscriberId, enrollment.schemeId);
 
   const { getMarketingConfig } = await import("@/lib/marketing-config");
@@ -257,7 +307,13 @@ export default async function EnrollmentProcessPage({
                     key={doc.id}
                     enrollmentId={enrollment.id}
                     doc={{ id: doc.id, name: doc.name, description: doc.description, required: doc.required, acceptedTypes: doc.acceptedTypes }}
-                    submission={sub ? { id: sub.id, fileName: sub.fileName, status: sub.status, reviewNotes: sub.reviewNotes } : undefined}
+                    submission={sub ? {
+                      id: sub.id,
+                      fileName: sub.fileName,
+                      status: sub.status,
+                      reviewNotes: sub.reviewNotes,
+                      inheritedFromEnrollmentCode: sub.inheritedFromEnrollmentCode,
+                    } : undefined}
                   />
                 );
               })}

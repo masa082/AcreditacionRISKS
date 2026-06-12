@@ -96,15 +96,42 @@ export async function computeJourney(input: JourneyInput): Promise<EnrollmentJou
     : [];
   let docsDone = true;
   if (requiredDocs.length > 0) {
+    const reqIds = requiredDocs.map((d) => d.id);
+
+    // 2.a) Documentos cargados en ESTA inscripción y que no fueron rechazados.
     const submitted = await prisma.candidateDocument.findMany({
       where: {
         enrollmentId,
-        requiredDocumentId: { in: requiredDocs.map((d) => d.id) },
+        requiredDocumentId: { in: reqIds },
         status: { not: "REJECTED" },
       },
       select: { requiredDocumentId: true },
     });
-    const ok = new Set(submitted.map((d) => d.requiredDocumentId));
+
+    // 2.b) Documentos APROBADOS por el organismo en CUALQUIER OTRA
+    //      inscripción del mismo candidato y mismo esquema. Se reutilizan
+    //      automáticamente — el candidato no debe volver a cargar archivos
+    //      ya validados por el organismo (regla anti-reproceso). Solo
+    //      consideramos APPROVED (no SUBMITTED) porque un documento solo
+    //      "salta" la subida si tiene firma de revisor previa.
+    const inherited = schemeId
+      ? await prisma.candidateDocument.findMany({
+          where: {
+            requiredDocumentId: { in: reqIds },
+            status: "APPROVED",
+            enrollment: {
+              candidateId,
+              schemeId,
+              NOT: { id: enrollmentId },
+            },
+          },
+          select: { requiredDocumentId: true },
+        })
+      : [];
+
+    const ok = new Set<string>();
+    for (const d of submitted) if (d.requiredDocumentId) ok.add(d.requiredDocumentId);
+    for (const d of inherited) if (d.requiredDocumentId) ok.add(d.requiredDocumentId);
     docsDone = requiredDocs.every((d) => ok.has(d.id));
   }
 

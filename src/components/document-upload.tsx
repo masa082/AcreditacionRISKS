@@ -53,6 +53,16 @@ interface Submission {
   fileName: string | null;
   status: string;
   reviewNotes: string | null;
+  /**
+   * Si está definido, este documento NO pertenece a la inscripción
+   * actual: fue APROBADO en una inscripción anterior del mismo
+   * candidato y mismo esquema, y se REUTILIZA aquí automáticamente
+   * para evitar reproceso. La UI debe mostrar el estado pero NO un
+   * formulario de subida (el archivo vive en el otro enrollment).
+   * El valor es el `code` del enrollment de origen, para mostrarlo
+   * al candidato como contexto.
+   */
+  inheritedFromEnrollmentCode?: string;
 }
 
 interface CompressInfo {
@@ -80,7 +90,11 @@ export function DocumentUpload({
   const [error, setError] = useState<string | null>(null);
 
   const badge = STATUS_ES[submission?.status ?? "PENDING"] ?? STATUS_ES.PENDING;
-  const locked = submission?.status === "APPROVED";
+  // Bloqueamos la subida cuando el documento ya está APROBADO en esta
+  // inscripción O cuando se está reutilizando uno aprobado en otra
+  // inscripción del mismo programa (anti-reproceso).
+  const isInherited = !!submission?.inheritedFromEnrollmentCode;
+  const locked = submission?.status === "APPROVED" || isInherited;
   const accept = doc.acceptedTypes.length
     ? doc.acceptedTypes.map((t) => `.${t}`).join(",")
     : ".pdf,.jpg,.jpeg,.png";
@@ -218,20 +232,33 @@ export function DocumentUpload({
       </div>
 
       {submission && fileUrl ? (
-        <div className="mt-3 flex items-center gap-3">
-          {isImage(submission.fileName) ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={fileUrl} alt={doc.name} className="h-16 w-16 rounded border border-slate-200 object-cover" />
-          ) : (
-            <span className="flex h-16 w-16 items-center justify-center rounded border border-slate-200 bg-slate-50 text-2xl">📄</span>
-          )}
-          <div className="min-w-0 text-xs">
-            <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="break-all font-medium text-brand-700 hover:underline">
-              {submission.fileName ?? "Ver documento"}
-            </a>
-            {submission.reviewNotes ? (
-              <p className="mt-1 text-rose-600">Observación: {submission.reviewNotes}</p>
-            ) : null}
+        <div className="mt-3 space-y-2">
+          {/* Aviso especial: documento reutilizado de inscripción anterior
+              — el candidato no necesita volver a subirlo. */}
+          {isInherited ? (
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+              ♻ <strong>Reutilizado de su inscripción anterior</strong>
+              {submission.inheritedFromEnrollmentCode ? (
+                <> (Folio <code className="font-mono">{submission.inheritedFromEnrollmentCode}</code>)</>
+              ) : null}
+              . Este documento ya fue aprobado por el organismo; <strong>no es necesario volver a cargarlo</strong>.
+            </div>
+          ) : null}
+          <div className="flex items-center gap-3">
+            {isImage(submission.fileName) ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={fileUrl} alt={doc.name} className="h-16 w-16 rounded border border-slate-200 object-cover" />
+            ) : (
+              <span className="flex h-16 w-16 items-center justify-center rounded border border-slate-200 bg-slate-50 text-2xl">📄</span>
+            )}
+            <div className="min-w-0 text-xs">
+              <a href={fileUrl} target="_blank" rel="noopener noreferrer" className="break-all font-medium text-brand-700 hover:underline">
+                {submission.fileName ?? "Ver documento"}
+              </a>
+              {submission.reviewNotes ? (
+                <p className="mt-1 text-rose-600">Observación: {submission.reviewNotes}</p>
+              ) : null}
+            </div>
           </div>
         </div>
       ) : null}
