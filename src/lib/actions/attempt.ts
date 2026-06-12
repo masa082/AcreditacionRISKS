@@ -180,7 +180,7 @@ export async function uploadAnswerFile(
 
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) return { ok: false, error: "Adjunte un archivo." };
-  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: "El archivo supera el tamaño máximo de 10 MB." };
+  if (file.size > MAX_UPLOAD_BYTES) return { ok: false, error: "El archivo supera el tamaño máximo de 100 MB." };
   const ext = extFromName(file.name);
   if (!["pdf", "jpg", "jpeg", "png"].includes(ext)) return { ok: false, error: "Formato no permitido (PDF/JPG/PNG)." };
 

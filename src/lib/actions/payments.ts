@@ -175,7 +175,7 @@ export async function attachPaymentReceiptByAdmin(
   }
   const { saveUpload, extFromName, MAX_UPLOAD_BYTES } = await import("@/lib/storage");
   if (file.size > MAX_UPLOAD_BYTES) {
-    return { ok: false, error: "El archivo supera el tamaño máximo de 10 MB." };
+    return { ok: false, error: "El archivo supera el tamaño máximo de 100 MB." };
   }
   const ext = extFromName(file.name);
   const allowed = ["pdf", "jpg", "jpeg", "png"];

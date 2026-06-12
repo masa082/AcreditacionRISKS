@@ -247,7 +247,7 @@ export default async function EnrollmentProcessPage({
             <p className="mb-3 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-500 ring-1 ring-slate-200">
               Adjunte copia de su documento de identidad, fotografía y los soportes de los datos
               consignados (último nivel de estudios, experiencia laboral y antecedentes). La
-              información se trata de forma confidencial. Formatos PDF/JPG/PNG, máx. 10 MB por archivo.
+              información se trata de forma confidencial. Formatos PDF/JPG/PNG, máx. 100 MB por archivo (se comprime automáticamente sin perder calidad).
             </p>
             <div className="space-y-3">
               {requiredDocs.map((doc) => {

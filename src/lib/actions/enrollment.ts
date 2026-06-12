@@ -181,7 +181,7 @@ export async function submitDocument(
     return { ok: false, error: "Adjunte un archivo." };
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return { ok: false, error: "El archivo supera el tamaño máximo de 10 MB." };
+    return { ok: false, error: "El archivo supera el tamaño máximo de 100 MB." };
   }
 
   const reqDoc = await prisma.requiredDocument.findFirst({
@@ -517,7 +517,7 @@ export async function uploadPaymentReceipt(
     return { ok: false, error: "Adjunte el comprobante de pago." };
   }
   if (file.size > MAX_UPLOAD_BYTES) {
-    return { ok: false, error: "El comprobante supera el tamaño máximo de 10 MB." };
+    return { ok: false, error: "El comprobante supera el tamaño máximo de 100 MB." };
   }
   const ext = extFromName(file.name);
   const allowed = ["pdf", "jpg", "jpeg", "png"];
@@ -673,7 +673,7 @@ export async function requestDocumentUploadUrl(
 
   if (!fileName || fileSize <= 0) return { ok: false, error: "Adjunte un archivo." };
   if (fileSize > MAX_UPLOAD_BYTES) {
-    return { ok: false, error: "El archivo supera el tamaño máximo de 10 MB." };
+    return { ok: false, error: "El archivo supera el tamaño máximo de 100 MB." };
   }
 
   const reqDoc = await prisma.requiredDocument.findFirst({
@@ -804,7 +804,7 @@ export async function requestPaymentReceiptUploadUrl(
 
   if (!fileName || fileSize <= 0) return { ok: false, error: "Adjunte el comprobante." };
   if (fileSize > MAX_UPLOAD_BYTES) {
-    return { ok: false, error: "El comprobante supera el tamaño máximo de 10 MB." };
+    return { ok: false, error: "El comprobante supera el tamaño máximo de 100 MB." };
   }
 
   const ext = extFromName(fileName);

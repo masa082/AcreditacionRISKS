@@ -7,6 +7,10 @@ import {
   requestPaymentReceiptUploadUrl,
   confirmPaymentReceiptUpload,
 } from "@/lib/actions/enrollment";
+import { compressFileForUpload, formatBytes } from "@/lib/client/compress";
+
+// 100 MB — tope crudo del servidor. El cliente comprime antes de subir.
+const MAX_BYTES = 100 * 1024 * 1024;
 
 /// Carga del SOPORTE de pago para un Payment PENDING (consignación).
 ///
@@ -36,6 +40,8 @@ export function PaymentReceiptUpload({
   const noteRef = useRef<HTMLInputElement>(null);
   const [pending, startTransition] = useTransition();
   const [progress, setProgress] = useState<number | null>(null);
+  const [compressing, setCompressing] = useState(false);
+  const [compressInfo, setCompressInfo] = useState<{ originalBytes: number; finalBytes: number; savedPct: number; compressed: boolean } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -43,19 +49,38 @@ export function PaymentReceiptUpload({
     e.preventDefault();
     setError(null);
     setMessage(null);
-    const file = fileRef.current?.files?.[0];
+    setCompressInfo(null);
+    const original = fileRef.current?.files?.[0];
     const note = noteRef.current?.value ?? null;
-    if (!file) {
+    if (!original) {
       setError("Adjunte el comprobante de pago.");
       return;
     }
-    if (file.size > 10 * 1024 * 1024) {
-      setError("El comprobante supera el tamaño máximo de 10 MB.");
+    if (original.size > MAX_BYTES) {
+      setError("El comprobante supera el tamaño máximo de 100 MB.");
       return;
     }
 
     startTransition(async () => {
       try {
+        // 0. Compresión client-side (visualmente sin pérdida).
+        setCompressing(true);
+        const result = await compressFileForUpload(original);
+        setCompressing(false);
+        setCompressInfo({
+          originalBytes: result.originalBytes,
+          finalBytes: result.finalBytes,
+          savedPct: result.savedPct,
+          compressed: result.compressed,
+        });
+        if (result.file.size > MAX_BYTES) {
+          setError(
+            `Aún comprimido el archivo pesa ${formatBytes(result.file.size)}, supera el tope de 100 MB.`,
+          );
+          return;
+        }
+        const file = result.file;
+
         // 1. URL prefirmada.
         const req = await requestPaymentReceiptUploadUrl(paymentId, file.name, file.type, file.size);
         if (!req.ok) {
@@ -92,6 +117,7 @@ export function PaymentReceiptUpload({
         const msg = err instanceof Error ? err.message : "Error inesperado.";
         setError(msg);
         setProgress(null);
+        setCompressing(false);
         // Reporta la incidencia al servidor para que el admin la vea
         // como alerta en /panel/candidatos.
         void fetch("/api/incidents", {
@@ -141,7 +167,7 @@ export function PaymentReceiptUpload({
           <ol className="mt-4 ml-4 list-decimal space-y-1 text-xs text-amber-900">
             <li>Realice la transferencia o consignación a la cuenta indicada.</li>
             <li>Tome foto/captura del comprobante (o descargue el PDF que da su banco).</li>
-            <li>Adjúntelo aquí abajo. <strong>Formatos:</strong> PDF, JPG o PNG · <strong>máx 10 MB</strong>.</li>
+            <li>Adjúntelo aquí abajo. <strong>Formatos:</strong> PDF, JPG o PNG · <strong>máx 100 MB</strong> (se comprime automáticamente sin perder calidad).</li>
             <li>El organismo lo verificará y le notificará por correo cuando esté aprobado.</li>
           </ol>
 
@@ -176,6 +202,25 @@ export function PaymentReceiptUpload({
                 className="mt-1 w-full rounded-lg border border-slate-300 px-2 py-1.5 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100 disabled:opacity-50"
               />
             </label>
+            {compressing ? (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                ⚙ Optimizando comprobante… (sin perder calidad visual)
+              </div>
+            ) : null}
+            {compressInfo && !compressing ? (
+              <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+                {compressInfo.compressed ? (
+                  <>
+                    ✓ Comprobante optimizado:{" "}
+                    <strong>{formatBytes(compressInfo.originalBytes)}</strong> →{" "}
+                    <strong>{formatBytes(compressInfo.finalBytes)}</strong>{" "}
+                    <span className="text-emerald-700">(−{compressInfo.savedPct}%)</span>
+                  </>
+                ) : (
+                  <>✓ El comprobante ya está optimizado ({formatBytes(compressInfo.originalBytes)}).</>
+                )}
+              </div>
+            ) : null}
             {progress !== null ? (
               <div className="space-y-1">
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-amber-200">
@@ -190,7 +235,9 @@ export function PaymentReceiptUpload({
               className="w-full rounded-lg bg-amber-700 px-4 py-2.5 text-sm font-bold text-white hover:bg-amber-800 disabled:opacity-60"
             >
               {pending
-                ? progress !== null
+                ? compressing
+                  ? "Optimizando…"
+                  : progress !== null
                   ? "Subiendo…"
                   : "Procesando…"
                 : hasReceipt

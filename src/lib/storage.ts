@@ -17,7 +17,12 @@ const BASE = process.env.STORAGE_DIR
   ? path.resolve(process.env.STORAGE_DIR)
   : path.join(process.cwd(), "storage", "uploads");
 
-export const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10 MB (Anexo A)
+// Tope crudo: 100 MB. El cliente comprime imágenes y PDFs antes de
+// subir (ver src/lib/client/compress.ts), por lo que en la práctica
+// los archivos llegan muy por debajo de este tope. Se mantiene un
+// margen amplio para escaneos en alta resolución antes de la
+// compresión y para PDFs grandes con muchas firmas/sellos.
+export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024; // 100 MB
 
 const MIME_TO_EXT: Record<string, string> = {
   "application/pdf": "pdf",
