@@ -20,7 +20,8 @@
     "db:seed": "tsx prisma/seed.ts",
     "db:seed:ocp": "tsx prisma/seed-ocp.ts",
     "db:seed:docs": "tsx prisma/seed-documentation.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "add:uiaf-doc": "tsx prisma/scripts/add-uiaf-required-doc.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

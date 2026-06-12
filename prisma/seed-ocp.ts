@@ -309,6 +309,10 @@ async function main() {
       ["TIT", "Soporte del último nivel de estudios (títulos académicos)", true, ["pdf", "jpg", "png"]],
       ["EXP", "Soportes de experiencia laboral", true, ["pdf", "jpg", "png"]],
       ["CUR", "Certificados de cursos o diplomados en cumplimiento (mín. 90 horas)", true, ["pdf"]],
+      // Requisito explícito de la UIAF (Unidad de Información y Análisis
+      // Financiero): los Oficiales de Cumplimiento deben acreditar el
+      // curso oficial de la UIAF sobre LAFT y Gestión de Riesgos.
+      ["UIAF", "Certificado del Curso UIAF sobre LAFT y Gestión de Riesgos", true, ["pdf"]],
       ["DIS", "Certificado de antecedentes disciplinarios", true, ["pdf", "jpg", "png"]],
       ["FIS", "Certificado de antecedentes fiscales", false, ["pdf", "jpg", "png"]],
       ["OTR", "Otros documentos de soporte", false, ["pdf", "jpg", "png"]],
