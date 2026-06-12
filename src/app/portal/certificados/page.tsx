@@ -1,61 +1,92 @@
-import Link from "next/link";
 import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
-import { PageHeader, Card, EmptyState, Badge } from "@/components/ui";
-import { dateOnly } from "@/lib/format";
+import { PageHeader, EmptyState } from "@/components/ui";
+import { CertificateCard, type CertificateRow } from "@/components/certificate-card";
 
 export const metadata = { title: "Mis certificados" };
 
-const STATUS: Record<string, { label: string; tone: "green" | "amber" | "red" | "slate" }> = {
-  VALID: { label: "Vigente", tone: "green" },
-  EXPIRED: { label: "Vencido", tone: "amber" },
-  SUSPENDED: { label: "Suspendido", tone: "red" },
-  WITHDRAWN: { label: "Anulado", tone: "red" },
-  CANCELLED: { label: "Anulado", tone: "slate" },
-};
-
+/**
+ * Pantalla "Mis certificados" del portal del candidato.
+ *
+ * Cambios respecto a la versión anterior:
+ *  - Se muestra cada certificado como una TARJETA con preview embebido
+ *    del PDF (iframe del visor nativo del navegador).
+ *  - Se agrega un CHIP con el "Puntaje obtenido" cuando el certificado
+ *    está vinculado a un ExamAttempt — esa información SOLO aparece en
+ *    esta pantalla, NUNCA en el PDF del certificado (el certificado
+ *    sigue siendo un documento formal sin la nota).
+ *  - Se preserva el flujo de descarga (botón con atributo `download=`)
+ *    y un botón a la vista completa del diploma HTML para imprimir.
+ *
+ * NOTA — Por qué la información del puntaje SÓLO va en pantalla:
+ *  El certificado/constancia es un documento formal verificable. Una
+ *  vez emitido, su contenido es invariable y queda con la firma del
+ *  organismo. El puntaje es información operativa del proceso del
+ *  candidato (pertenece al expediente interno) y no se imprime para
+ *  no condicionar al lector externo del certificado.
+ */
 export default async function CandidateCertificatesPage() {
   const { candidateId } = await requireCandidatePage();
   const certs = await prisma.certificate.findMany({
     where: { candidateId },
     orderBy: { issuedAt: "desc" },
+    include: {
+      // Solo lo necesario para mostrar el puntaje: el intento vinculado.
+      // Si el certificado no tiene attemptId, simplemente no mostramos
+      // chip de puntaje.
+      attempt: {
+        select: {
+          rawScore: true,
+          maxScore: true,
+          scorePercent: true,
+          passed: true,
+          submittedAt: true,
+        },
+      },
+    },
   });
-  const now = new Date();
+
+  const rows: CertificateRow[] = certs.map((c) => ({
+    id: c.id,
+    code: c.code,
+    title: c.title,
+    issuedAtIso: c.issuedAt.toISOString(),
+    expiresAtIso: c.expiresAt ? c.expiresAt.toISOString() : null,
+    status: c.status,
+    // El verifyToken se usa para el iframe y la descarga. La URL pública
+    // del PDF es /api/certificate/{verifyToken}/pdf y NO requiere sesión
+    // (verifica por token de 192 bits).
+    pdfUrl: `/api/certificate/${c.verifyToken}/pdf`,
+    publicViewUrl: `/verificar/${c.code}`,
+    // Puntaje — solo en pantalla.
+    score: c.attempt
+      ? {
+          rawScore: c.attempt.rawScore?.toString() ?? null,
+          maxScore: c.attempt.maxScore?.toString() ?? null,
+          scorePercent: c.attempt.scorePercent?.toString() ?? null,
+          passed: c.attempt.passed,
+        }
+      : null,
+  }));
 
   return (
     <>
-      <PageHeader title="Mis certificados" subtitle="Descargue y comparta sus certificados; cada uno es verificable por QR." />
-      <Card>
-        <div className="p-5">
-          {certs.length === 0 ? (
-            <EmptyState>Todavía no tiene certificados emitidos.</EmptyState>
-          ) : (
-            <ul className="divide-y divide-slate-100">
-              {certs.map((c) => {
-                const expired = c.status === "VALID" && c.expiresAt && c.expiresAt < now;
-                const st = STATUS[expired ? "EXPIRED" : c.status] ?? STATUS.VALID;
-                return (
-                  <li key={c.id} className="flex items-center justify-between gap-3 py-3">
-                    <div>
-                      <div className="font-medium text-slate-800">{c.title}</div>
-                      <div className="text-xs text-slate-400">
-                        Código {c.code} · emitido {dateOnly(c.issuedAt)}
-                        {c.expiresAt ? ` · vence ${dateOnly(c.expiresAt)}` : ""}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Badge tone={st.tone}>{st.label}</Badge>
-                      <Link href={`/certificado/${c.id}`} className="rounded-lg border border-brand-300 px-4 py-1.5 text-sm font-semibold text-brand-800 hover:bg-brand-50">
-                        Ver / Descargar
-                      </Link>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          )}
+      <PageHeader
+        title="Mis certificados"
+        subtitle="Revise el certificado con la vista previa, vea el puntaje que obtuvo y descárguelo. Cada documento es verificable por QR."
+      />
+
+      {rows.length === 0 ? (
+        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-slate-200">
+          <EmptyState>Todavía no tiene certificados emitidos.</EmptyState>
         </div>
-      </Card>
+      ) : (
+        <div className="space-y-5">
+          {rows.map((r) => (
+            <CertificateCard key={r.id} row={r} />
+          ))}
+        </div>
+      )}
     </>
   );
 }

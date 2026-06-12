@@ -33,10 +33,12 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       // Las rutas que sirven archivos del candidato necesitan permitir
-      // iframe same-origin para las miniaturas en /panel/candidatos.
+      // iframe same-origin para las miniaturas en /panel/candidatos y
+      // la vista previa del certificado en /portal/certificados.
       { source: "/api/files/:path*", headers: filesHeaders },
       { source: "/api/payments/:path*", headers: filesHeaders },
       { source: "/api/docs-file/:path*", headers: filesHeaders },
+      { source: "/api/certificate/:path*", headers: filesHeaders },
       // Cualquier otra ruta: bloqueo total de embebido.
       { source: "/:path*", headers: securityHeaders },
     ];

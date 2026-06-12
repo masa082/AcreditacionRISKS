@@ -3,6 +3,7 @@ import { qrDataUrl } from "@/lib/certificate";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { readFileByKey, extFromName } from "@/lib/storage";
 import { resolveTheme, hexToRgb01 } from "@/lib/theme";
+import { safeText } from "@/lib/pdf-text";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -89,31 +90,31 @@ export async function GET(
 
   // Encabezado: organismo
   const orgName = (cert.subscriber.tradeName ?? cert.subscriber.legalName).toUpperCase();
-  page.drawText("ORGANISMO CERTIFICADOR", { x: W / 2 - 80, y: H - 60, size: 9, font: fontBold, color: GREY });
-  page.drawText(orgName, { x: W / 2 - fontBold.widthOfTextAtSize(orgName, 16) / 2, y: H - 80, size: 16, font: fontBold, color: NAVY });
+  page.drawText(safeText("ORGANISMO CERTIFICADOR"), { x: W / 2 - 80, y: H - 60, size: 9, font: fontBold, color: GREY });
+  page.drawText(safeText(orgName), { x: W / 2 - fontBold.widthOfTextAtSize(orgName, 16) / 2, y: H - 80, size: 16, font: fontBold, color: NAVY });
   if (cert.subscriber.legalName !== (cert.subscriber.tradeName ?? cert.subscriber.legalName)) {
-    page.drawText(cert.subscriber.legalName, { x: W / 2 - fontReg.widthOfTextAtSize(cert.subscriber.legalName, 9) / 2, y: H - 95, size: 9, font: fontItalic, color: GREY });
+    page.drawText(safeText(cert.subscriber.legalName), { x: W / 2 - fontReg.widthOfTextAtSize(cert.subscriber.legalName, 9) / 2, y: H - 95, size: 9, font: fontItalic, color: GREY });
   }
 
   // Cinta de estado
   page.drawRectangle({ x: 60, y: H - 130, width: W - 120, height: 24, color: LIGHT });
-  page.drawText(`ESTADO DEL CERTIFICADO: ${effectiveStatus === "VALID" ? "VIGENTE" : effectiveStatus === "EXPIRED" ? "VENCIDO" : effectiveStatus}`,
+  page.drawText(safeText(`ESTADO DEL CERTIFICADO: ${effectiveStatus === "VALID" ? "VIGENTE" : effectiveStatus === "EXPIRED" ? "VENCIDO" : effectiveStatus}`),
     { x: W / 2 - 110, y: H - 122, size: 11, font: fontBold, color: STATUS_COLOR });
 
   // Cuerpo del diploma
-  page.drawText("CERTIFICA QUE", { x: W / 2 - 50, y: H - 175, size: 11, font: fontReg, color: GREY });
+  page.drawText(safeText("CERTIFICA QUE"), { x: W / 2 - 50, y: H - 175, size: 11, font: fontReg, color: GREY });
   const holder = cert.holderName.toUpperCase();
-  page.drawText(holder, {
+  page.drawText(safeText(holder), {
     x: W / 2 - fontBold.widthOfTextAtSize(holder, 28) / 2, y: H - 220, size: 28, font: fontBold, color: NAVY,
   });
   if (cert.documentNumber) {
     const docLine = `Identificado(a) con documento Nº ${cert.documentNumber}`;
-    page.drawText(docLine, { x: W / 2 - fontReg.widthOfTextAtSize(docLine, 11) / 2, y: H - 240, size: 11, font: fontReg, color: DARK });
+    page.drawText(safeText(docLine), { x: W / 2 - fontReg.widthOfTextAtSize(docLine, 11) / 2, y: H - 240, size: 11, font: fontReg, color: DARK });
   }
-  page.drawText("Ha cumplido satisfactoriamente con los requisitos para obtener la siguiente certificación de competencias:", {
+  page.drawText(safeText("Ha cumplido satisfactoriamente con los requisitos para obtener la siguiente certificación de competencias:"), {
     x: 110, y: H - 270, size: 10, font: fontItalic, color: GREY,
   });
-  page.drawText(cert.title, {
+  page.drawText(safeText(cert.title), {
     x: W / 2 - fontBold.widthOfTextAtSize(cert.title, 16) / 2, y: H - 295, size: 16, font: fontBold, color: GOLD,
   });
   if (cert.scope ?? cert.scheme?.scope) {
@@ -125,29 +126,29 @@ export async function GET(
     for (const w of words) {
       const trial = line ? `${line} ${w}` : w;
       if (fontReg.widthOfTextAtSize(trial, 9) > max) {
-        page.drawText(line, { x: 110, y, size: 9, font: fontReg, color: DARK });
+        page.drawText(safeText(line), { x: 110, y, size: 9, font: fontReg, color: DARK });
         line = w; y -= 12;
       } else line = trial;
     }
-    if (line) page.drawText(line, { x: 110, y, size: 9, font: fontReg, color: DARK });
+    if (line) page.drawText(safeText(line), { x: 110, y, size: 9, font: fontReg, color: DARK });
   }
 
   // Datos formales (izquierda)
   const dataY = 170;
-  page.drawText("Código:", { x: 60, y: dataY + 60, size: 9, font: fontBold, color: GREY });
-  page.drawText(cert.code, { x: 100, y: dataY + 60, size: 10, font: fontBold, color: NAVY });
-  page.drawText("Fecha de emisión:", { x: 60, y: dataY + 45, size: 9, font: fontBold, color: GREY });
-  page.drawText(new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(cert.issuedAt), { x: 165, y: dataY + 45, size: 10, font: fontReg, color: DARK });
+  page.drawText(safeText("Código:"), { x: 60, y: dataY + 60, size: 9, font: fontBold, color: GREY });
+  page.drawText(safeText(cert.code), { x: 100, y: dataY + 60, size: 10, font: fontBold, color: NAVY });
+  page.drawText(safeText("Fecha de emisión:"), { x: 60, y: dataY + 45, size: 9, font: fontBold, color: GREY });
+  page.drawText(safeText(new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(cert.issuedAt)), { x: 165, y: dataY + 45, size: 10, font: fontReg, color: DARK });
   if (cert.expiresAt) {
-    page.drawText("Fecha de vencimiento:", { x: 60, y: dataY + 30, size: 9, font: fontBold, color: GREY });
-    page.drawText(new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(cert.expiresAt), { x: 185, y: dataY + 30, size: 10, font: fontReg, color: DARK });
+    page.drawText(safeText("Fecha de vencimiento:"), { x: 60, y: dataY + 30, size: 9, font: fontBold, color: GREY });
+    page.drawText(safeText(new Intl.DateTimeFormat("es-CO", { dateStyle: "long" }).format(cert.expiresAt)), { x: 185, y: dataY + 30, size: 10, font: fontReg, color: DARK });
   }
   if (cert.scheme?.normReference) {
-    page.drawText("Norma de referencia:", { x: 60, y: dataY + 15, size: 9, font: fontBold, color: GREY });
-    page.drawText(cert.scheme.normReference, { x: 175, y: dataY + 15, size: 10, font: fontReg, color: DARK });
+    page.drawText(safeText("Norma de referencia:"), { x: 60, y: dataY + 15, size: 9, font: fontBold, color: GREY });
+    page.drawText(safeText(cert.scheme.normReference), { x: 175, y: dataY + 15, size: 10, font: fontReg, color: DARK });
   }
   if (cert.subscriber.taxId) {
-    page.drawText(`NIT ${cert.subscriber.taxId}`, { x: 60, y: dataY, size: 8, font: fontItalic, color: GREY });
+    page.drawText(safeText(`NIT ${cert.subscriber.taxId}`), { x: 60, y: dataY, size: 8, font: fontItalic, color: GREY });
   }
 
   // Firma (derecha)
@@ -165,9 +166,9 @@ export async function GET(
   }
   page.drawLine({ start: { x: W - 250, y: dataY + 30 }, end: { x: W - 90, y: dataY + 30 }, thickness: 0.6, color: GREY });
   if (cert.subscriber.authorizedSigner) {
-    page.drawText(cert.subscriber.authorizedSigner, { x: W - 250, y: dataY + 18, size: 9, font: fontBold, color: NAVY });
+    page.drawText(safeText(cert.subscriber.authorizedSigner), { x: W - 250, y: dataY + 18, size: 9, font: fontBold, color: NAVY });
   }
-  page.drawText("Firma autorizada del organismo de certificación", { x: W - 250, y: dataY + 6, size: 8, font: fontItalic, color: GREY });
+  page.drawText(safeText("Firma autorizada del organismo de certificación"), { x: W - 250, y: dataY + 6, size: 8, font: fontItalic, color: GREY });
 
   // QR de verificación (esquina inferior izquierda del cuerpo)
   try {
@@ -177,14 +178,14 @@ export async function GET(
       const qrBytes = Buffer.from(base64, "base64");
       const qrImg = await pdf.embedPng(qrBytes);
       page.drawImage(qrImg, { x: 60, y: 60, width: 90, height: 90 });
-      page.drawText("Verifique este certificado escaneando el QR", { x: 60, y: 50, size: 8, font: fontItalic, color: GREY });
-      page.drawText(`okacreditado.com/verificar/${cert.code}`, { x: 60, y: 38, size: 7, font: fontReg, color: GREY });
+      page.drawText(safeText("Verifique este certificado escaneando el QR"), { x: 60, y: 50, size: 8, font: fontItalic, color: GREY });
+      page.drawText(safeText(`okacreditado.com/verificar/${cert.code}`), { x: 60, y: 38, size: 7, font: fontReg, color: GREY });
     }
   } catch { /* ignore */ }
 
   // Pie con token de seguridad truncado (no se expone el token completo)
   const tokenPreview = `${token.slice(0, 8)}…${token.slice(-8)}`;
-  page.drawText(`Documento emitido digitalmente · token de verificación: ${tokenPreview}`, {
+  page.drawText(safeText(`Documento emitido digitalmente · token de verificación: ${tokenPreview}`), {
     x: W / 2 - 200, y: 44, size: 7, font: fontItalic, color: GREY,
   });
 
@@ -202,10 +203,14 @@ export async function GET(
   } catch { /* tolerante */ }
 
   const bytes = await pdf.save();
+  // Content-Disposition: inline — permite que el PDF se vea embebido en
+  // <iframe> en la pantalla "Mis certificados" del candidato. El botón
+  // "Descargar" del cliente usa el atributo HTML download="" para forzar
+  // la descarga cuando el usuario lo pide explícitamente.
   return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="certificado-${cert.code}.pdf"`,
+      "Content-Disposition": `inline; filename="certificado-${cert.code}.pdf"`,
       "Cache-Control": "private, no-store",
       // Indicamos a los buscadores que no indexen este recurso
       "X-Robots-Tag": "noindex, nofollow",
