@@ -15,6 +15,7 @@ import {
   HonestyGate,
   MonitoringBanner,
   AntifraudHooks,
+  FocusGuard,
   useQuestionTimer,
 } from "@/components/exam-antifraud";
 
@@ -268,7 +269,6 @@ export function ExamRunner({
   const [submitting, startSubmit] = useTransition();
   const submittedRef = useRef(false);
   const [incidents, setIncidents] = useState(0);
-  const lastIncidentRef = useRef(0);
 
   const secondsLeft = Math.floor((dueMs - now) / 1000);
 
@@ -285,26 +285,8 @@ export function ExamRunner({
     return () => clearInterval(t);
   }, []);
 
-  // Antifraude básico: registra salidas de la pantalla del examen.
-  useEffect(() => {
-    function flag() {
-      if (submittedRef.current) return;
-      const ts = Date.now();
-      if (ts - lastIncidentRef.current < 1500) return; // evita doble disparo
-      lastIncidentRef.current = ts;
-      setIncidents((n) => n + 1);
-      void recordAttemptEvent(attemptId, "focus_lost");
-    }
-    function onVis() {
-      if (document.hidden) flag();
-    }
-    window.addEventListener("blur", flag);
-    document.addEventListener("visibilitychange", onVis);
-    return () => {
-      window.removeEventListener("blur", flag);
-      document.removeEventListener("visibilitychange", onVis);
-    };
-  }, [attemptId]);
+  // Las salidas de pantalla ahora las maneja <FocusGuard/> con UI
+  // bloqueante y umbral de abandono — ver más abajo en el render.
 
   useEffect(() => {
     if (secondsLeft <= 0 && !submittedRef.current) doSubmit();
@@ -381,6 +363,20 @@ export function ExamRunner({
           // Sumamos al contador visible para que el candidato sepa que
           // el incidente quedó registrado.
           setIncidents((n) => n + 1);
+        }}
+      />
+      {/*
+        Guardia de foco: oculta INMEDIATAMENTE el examen al cambiar de
+        pestaña / abrir otra app + cuenta cada salida + cierra el intento
+        como `forced_abandon` al llegar a 3.
+      */}
+      <FocusGuard
+        attemptId={attemptId}
+        maxIncidents={3}
+        onAbandon={() => {
+          // Auto-submit del intento. El backend marcará el ExamAttempt
+          // como SUBMITTED y la traza incluirá `forced_abandon`.
+          doSubmit();
         }}
       />
       <MonitoringBanner candidateCode={wmToken} />

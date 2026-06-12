@@ -201,6 +201,8 @@ export async function uploadAnswerFile(
 ///   focus_lost | blur | resume | fullscreen_exit | paste
 ///   print_screen | copy | cut | context_menu | dev_tools
 ///   question_time | question_change
+///   screen_record_attempt | recording_warning_shown | abandonment_warning
+///   forced_abandon | beforeunload_attempt
 export async function recordAttemptEvent(
   attemptId: string,
   type: string,
@@ -214,6 +216,12 @@ export async function recordAttemptEvent(
     // Reporte de novedad del candidato durante la presentación
     // (corte de luz, internet inestable, dudas, etc.). Texto en `details`.
     "incident_report",
+    // Antifraude reforzado (sesión de evaluación):
+    "screen_record_attempt",      // Cmd+Shift+5 (macOS), Win+G (Windows Game Bar), etc.
+    "recording_warning_shown",    // Se mostró advertencia de no-grabación
+    "abandonment_warning",        // Advertencia "no salir de la sesión" mostrada
+    "beforeunload_attempt",       // Intento de cerrar la pestaña/navegar fuera
+    "forced_abandon",             // Auto-cierre por superar el tope de infracciones
   ];
   if (!allowed.includes(type)) return { ok: false };
   const attempt = await loadOwnedAttempt(candidateId, attemptId);
