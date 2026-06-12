@@ -1,6 +1,7 @@
 import "server-only";
 import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { createHash } from "node:crypto";
+import { safeText } from "@/lib/pdf-text";
 
 /**
  * Genera el PDF de "Autorización de Tratamiento de Datos Personales"
@@ -178,7 +179,12 @@ export async function buildHabeasReceipt(data: HabeasReceiptInput): Promise<Habe
     const maxWidth = opts.maxWidth ?? PAGE_W - MARGIN_X * 2;
     const leading = opts.leading ?? size * 1.4;
 
-    const words = text.split(/\s+/);
+    // safeText() ANTES de medir y dibujar: pdf-lib + Helvetica usan
+    // encoding WinAnsi y rompen con marcas combinantes NFD (e.g. `é`
+    // en vez de `é`) o caracteres no-Latin-1 (CJK, emojis, comillas
+    // curvas). Ver src/lib/pdf-text.ts.
+    const safe = safeText(text);
+    const words = safe.split(/\s+/);
     let line = "";
     for (const w of words) {
       const trial = line ? `${line} ${w}` : w;
@@ -260,7 +266,7 @@ export async function buildHabeasReceipt(data: HabeasReceiptInput): Promise<Habe
     const checkY = cursorY - 4;
     page.drawRectangle({ x: MARGIN_X, y: checkY - 10, width: 12, height: 12, borderColor: NAVY, borderWidth: 1, color: rgb(0.93, 0.97, 0.93) });
     page.drawText("✓", { x: MARGIN_X + 2, y: checkY - 9, size: 11, font: fontBold, color: rgb(0.07, 0.55, 0.27) });
-    page.drawText(`Declaración ${a.n} — ${a.title}`, { x: MARGIN_X + 20, y: checkY - 8, size: 10, font: fontBold, color: NAVY });
+    page.drawText(safeText(`Declaración ${a.n} — ${a.title}`), { x: MARGIN_X + 20, y: checkY - 8, size: 10, font: fontBold, color: NAVY });
     cursorY -= 18;
     drawWrapped(a.body, { x: MARGIN_X + 20, maxWidth: PAGE_W - MARGIN_X * 2 - 20, size: 9.5, color: TEXT, leading: 12 });
     cursorY -= 6;

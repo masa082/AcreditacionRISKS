@@ -135,6 +135,40 @@ export async function deleteByKey(key: string): Promise<void> {
 }
 
 /**
+ * URL prefirmada GET para que el navegador descargue el archivo
+ * DIRECTAMENTE desde el bucket S3, sin que pase por el serverless de
+ * Vercel. Crítico ahora que el tope subió a 100 MB: bufferar el archivo
+ * en la función causaba timeouts y OOM (HTTP 500 sin cuerpo).
+ *
+ * El endpoint /api/files/[id] valida la sesión y los permisos, y luego
+ * redirige (302) a esta URL firmada. La URL tiene TTL corto (5 min) —
+ * suficiente para que el browser termine la descarga, no para
+ * compartirla por fuera.
+ *
+ * Modo dev (sin S3 configurado): devolvemos null y el llamador hace
+ * fallback al stream tradicional.
+ */
+export async function presignedGetUrl(
+  key: string,
+  opts: { expiresInSeconds?: number; contentType?: string; downloadName?: string } = {},
+): Promise<string | null> {
+  if (!useS3) return null;
+  const cmd = new GetObjectCommand({
+    Bucket: S3_BUCKET,
+    Key: key,
+    // Forzar Content-Type al servir desde S3 (el bucket no siempre
+    // lo guarda con el MIME correcto).
+    ...(opts.contentType ? { ResponseContentType: opts.contentType } : {}),
+    // Cuando queremos que el navegador descargue con un nombre
+    // específico en vez de inline (no se usa por defecto).
+    ...(opts.downloadName
+      ? { ResponseContentDisposition: `inline; filename="${opts.downloadName.replace(/"/g, "")}"` }
+      : {}),
+  });
+  return await getSignedUrl(s3(), cmd, { expiresIn: opts.expiresInSeconds ?? 300 });
+}
+
+/**
  * URL prefirmada PUT para subir un archivo DIRECTAMENTE al bucket desde
  * el navegador del candidato, sin pasar por el serverless de Vercel.
  *

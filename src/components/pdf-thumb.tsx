@@ -71,7 +71,13 @@ export function PdfThumb({ url, alt }: { url: string; alt?: string }) {
           pdfjsLib.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
         }
 
-        const loadingTask = pdfjsLib.getDocument({ url, withCredentials: true });
+        // withCredentials se deja en false: la URL /api/files/[id] es
+        // same-origin (las cookies se envían por defecto) y luego el
+        // server responde 302 al bucket S3 cross-origin. Si pidiéramos
+        // credentials:include en el redirect, el navegador exige que la
+        // respuesta de S3 tenga ACAO específico + ACAC:true — que el
+        // bucket no manda con CORS:* — y el fetch falla con CORS error.
+        const loadingTask = pdfjsLib.getDocument({ url });
         const pdf = await loadingTask.promise;
         if (cancelled) return;
 

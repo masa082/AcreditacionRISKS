@@ -1,10 +1,23 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
-import { readFileByKey, EXT_TO_MIME, extFromName } from "@/lib/storage";
+import {
+  readFileByKey,
+  EXT_TO_MIME,
+  extFromName,
+  presignedGetUrl,
+} from "@/lib/storage";
 
-/// Sirve la evidencia (archivo) adjunta a una respuesta de examen, con control de acceso:
-/// el candidato dueño del intento o personal del suscriptor con permiso de calificación/comité.
+/**
+ * Sirve la evidencia (archivo) adjunta a una respuesta de examen.
+ *
+ * Acceso: el candidato dueño del intento o personal del suscriptor con
+ * permiso de calificación/comité.
+ *
+ * Sirve el archivo redirigiendo (302) a una URL prefirmada del bucket
+ * cuando S3 está configurado. Bufferarlo en Vercel rompe con archivos
+ * grandes (tope subió a 100 MB). Stream local solo en dev.
+ */
 export async function GET(
   _req: Request,
   { params }: { params: Promise<{ answerId: string }> },
@@ -31,15 +44,30 @@ export async function GET(
   }
   if (!allowed) return new Response("Acceso denegado", { status: 403 });
 
+  const ext = extFromName(answer.fileUrl);
+  const mime = EXT_TO_MIME[ext] ?? "application/octet-stream";
+  const fileName = (
+    (answer.response as { fileName?: string } | null)?.fileName ??
+    `evidencia.${ext}`
+  ).replace(/"/g, "");
+
+  try {
+    const presigned = await presignedGetUrl(answer.fileUrl, {
+      expiresInSeconds: 300,
+      contentType: mime,
+      downloadName: fileName,
+    });
+    if (presigned) return Response.redirect(presigned, 302);
+  } catch {
+    /* fallback al stream local */
+  }
+
   let buf: Buffer;
   try {
     buf = await readFileByKey(answer.fileUrl);
   } catch {
     return new Response("Archivo no disponible", { status: 404 });
   }
-  const ext = extFromName(answer.fileUrl);
-  const mime = EXT_TO_MIME[ext] ?? "application/octet-stream";
-  const fileName = ((answer.response as { fileName?: string } | null)?.fileName ?? `evidencia.${ext}`).replace(/"/g, "");
 
   return new Response(new Uint8Array(buf), {
     headers: {

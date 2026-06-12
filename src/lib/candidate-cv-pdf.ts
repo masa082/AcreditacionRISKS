@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { readFileByKey, extFromName } from "@/lib/storage";
 import { appBaseUrl } from "@/lib/app-url";
 import { resolveTheme, hexToRgb01 } from "@/lib/theme";
+import { safeText } from "@/lib/pdf-text";
 
 /// Zona horaria fija para todo el informe: hora legal colombiana.
 /// La plataforma puede ser visitada desde cualquier país, pero el informe
@@ -35,6 +36,7 @@ const TZ_CO = "America/Bogota";
 const PAGE_W = 595.28; // A4
 const PAGE_H = 841.89;
 const MARGIN = 50;
+
 
 // Paleta institucional FALLBACK. Se sobreescribe dinámicamente con la
 // paleta del suscriptor (Subscriber.themeConfig) en buildCandidateCV.
@@ -106,8 +108,10 @@ function _drawText(
   opts: { font: PDFFont; size: number; color?: ReturnType<typeof rgb> } & { maxWidth?: number },
 ): number {
   // Word wrap simple: respeta saltos de línea explícitos y corta por palabra.
+  // NOTA: aplicamos safeText() aquí para que TODOS los textos que pasen por
+  // _drawText queden saneados (NFC + filtro de chars que WinAnsi no acepta).
   const lines: string[] = [];
-  const raw = String(text ?? "").replace(/\r/g, "");
+  const raw = safeText(text).replace(/\r/g, "");
   for (const block of raw.split("\n")) {
     if (!opts.maxWidth) {
       lines.push(block);
@@ -130,7 +134,7 @@ function _drawText(
   }
   let cy = y;
   for (const line of lines) {
-    page.drawText(line, { x, y: cy, size: opts.size, font: opts.font, color: opts.color ?? COLOR_DARK });
+    page.drawText(safeText(line), { x, y: cy, size: opts.size, font: opts.font, color: opts.color ?? COLOR_DARK });
     cy -= opts.size * 1.3;
   }
   return cy + opts.size * 1.3 - opts.size * 1.3 * lines.length; // not strictly used by callers; return final y consumed
@@ -189,7 +193,9 @@ function drawHeader(
   const SAFE = 16; // colchón visual contra el badge ONAC
   const availableW = onacX - textStartX - SAFE;
 
-  const title = opts.title.toUpperCase();
+  // safeText() ANTES de medir: widthOfTextAtSize lanza el mismo error
+  // WinAnsi si recibe un combining mark o glifo no-Latin-1.
+  const title = safeText(opts.title.toUpperCase());
   let titleSize = 18;
   while (titleSize > 12 && fonts.bold.widthOfTextAtSize(title, titleSize) > availableW) {
     titleSize -= 0.5;
@@ -198,21 +204,23 @@ function drawHeader(
     x: textStartX, y: PAGE_H - 48, size: titleSize, font: fonts.bold, color: COLOR_NAVY,
   });
 
+  const orgName = safeText(opts.orgName);
   let orgSize = 10;
-  while (orgSize > 7 && fonts.bold.widthOfTextAtSize(opts.orgName, orgSize) > availableW) {
+  while (orgSize > 7 && fonts.bold.widthOfTextAtSize(orgName, orgSize) > availableW) {
     orgSize -= 0.5;
   }
-  page.drawText(opts.orgName, {
+  page.drawText(orgName, {
     x: textStartX, y: PAGE_H - 64, size: orgSize, font: fonts.bold, color: COLOR_GOLD,
   });
 
   if (opts.subtitle) {
-    let sub = opts.subtitle;
+    let sub = safeText(opts.subtitle);
+    const original = sub;
     const subSize = 8;
     while (sub.length > 8 && fonts.italic.widthOfTextAtSize(sub, subSize) > availableW) {
       sub = sub.slice(0, -2);
     }
-    if (sub !== opts.subtitle) sub = sub.replace(/[ .·-]*$/, "") + "…";
+    if (sub !== original) sub = sub.replace(/[ .-]*$/, "") + "...";
     page.drawText(sub, {
       x: textStartX, y: PAGE_H - 80, size: subSize, font: fonts.italic, color: COLOR_GREY,
     });
@@ -270,22 +278,22 @@ function drawOnacBadge(
   const legSize = 7;
   const lineH = legSize + 2;
   let ly = box.y + box.h - 14;
-  page.drawText("EN PROCESO DE", { x: tx, y: ly, size: legSize, font: fonts.bold, color: ONAC_BLUE });
+  page.drawText(safeText("EN PROCESO DE"), { x: tx, y: ly, size: legSize, font: fonts.bold, color: ONAC_BLUE });
   ly -= lineH;
-  page.drawText("ACREDITACIÓN", { x: tx, y: ly, size: legSize, font: fonts.bold, color: ONAC_BLUE });
+  page.drawText(safeText("ACREDITACIÓN"), { x: tx, y: ly, size: legSize, font: fonts.bold, color: ONAC_BLUE });
   ly -= 6;
   page.drawRectangle({ x: tx, y: ly, width: Math.min(tw, 70), height: 0.6, color: COLOR_HEADER_LINE });
   ly -= 8;
   const sub2Size = 5;
-  page.drawText("ORGANISMO NACIONAL DE", { x: tx, y: ly, size: sub2Size, font: fonts.bold, color: COLOR_GREY });
+  page.drawText(safeText("ORGANISMO NACIONAL DE"), { x: tx, y: ly, size: sub2Size, font: fonts.bold, color: COLOR_GREY });
   ly -= sub2Size + 1;
-  page.drawText("ACREDITACIÓN DE COLOMBIA", { x: tx, y: ly, size: sub2Size, font: fonts.bold, color: COLOR_GREY });
+  page.drawText(safeText("ACREDITACIÓN DE COLOMBIA"), { x: tx, y: ly, size: sub2Size, font: fonts.bold, color: COLOR_GREY });
 }
 
 function sectionTitle(cursor: Cursor, title: string, fonts: Fonts): Cursor {
   cursor.page.drawRectangle({ x: MARGIN, y: cursor.y - 18, width: PAGE_W - MARGIN * 2, height: 22, color: COLOR_LIGHT_BG });
   cursor.page.drawRectangle({ x: MARGIN, y: cursor.y - 18, width: 4, height: 22, color: COLOR_NAVY });
-  cursor.page.drawText(title.toUpperCase(), { x: MARGIN + 10, y: cursor.y - 12, size: 10, font: fonts.bold, color: COLOR_NAVY });
+  cursor.page.drawText(safeText(title.toUpperCase()), { x: MARGIN + 10, y: cursor.y - 12, size: 10, font: fonts.bold, color: COLOR_NAVY });
   return { page: cursor.page, y: cursor.y - 30 };
 }
 
@@ -301,12 +309,14 @@ function _rule(cursor: Cursor): Cursor {
 
 function row(cursor: Cursor, label: string, value: string, fonts: Fonts): Cursor {
   const labelW = 140;
-  cursor.page.drawText(label, { x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_GREY });
-  // Word-wrap del valor con maxWidth
+  cursor.page.drawText(safeText(label), { x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_GREY });
+  // Word-wrap del valor con maxWidth. safeText() ANTES de medir para que
+  // widthOfTextAtSize no caiga con combining marks o glifos non-Latin-1.
   const lines: string[] = [];
   const max = PAGE_W - MARGIN * 2 - labelW;
   let current = "";
-  for (const w of String(value ?? "—").split(/\s+/)) {
+  const safeValue = safeText(value ?? "—");
+  for (const w of safeValue.split(/\s+/)) {
     if (!w) continue;
     const trial = current ? `${current} ${w}` : w;
     if (fonts.regular.widthOfTextAtSize(trial, 10) > max) {
@@ -315,7 +325,7 @@ function row(cursor: Cursor, label: string, value: string, fonts: Fonts): Cursor
     } else current = trial;
   }
   if (current) lines.push(current);
-  if (!lines.length) lines.push("—");
+  if (!lines.length) lines.push("-");
   let cy = cursor.y;
   for (const ln of lines) {
     cursor.page.drawText(ln, { x: MARGIN + labelW, y: cy, size: 10, font: fonts.regular, color: COLOR_DARK });
@@ -341,19 +351,19 @@ function drawFooter(page: PDFPage, fonts: Fonts, pageIdx: number, ctx: ReportCtx
 
   // Bloque de identificación del informe (centro-izquierda)
   const tx = MARGIN + 48;
-  page.drawText("HOJA DE VIDA DEL CANDIDATO · CIOC", { x: tx, y: 46, size: 7, font: fonts.bold, color: COLOR_NAVY });
-  page.drawText(`Titular: ${ctx.candidateName} · Organismo: ${ctx.orgShort}`, {
+  page.drawText(safeText("HOJA DE VIDA DEL CANDIDATO · CIOC"), { x: tx, y: 46, size: 7, font: fonts.bold, color: COLOR_NAVY });
+  page.drawText(safeText(`Titular: ${ctx.candidateName} · Organismo: ${ctx.orgShort}`), {
     x: tx, y: 36, size: 6.5, font: fonts.regular, color: COLOR_DARK,
   });
-  page.drawText(`Sellado: ${fmtDateTime(ctx.generatedAt)} · Hora legal colombiana (UTC-5) · Ref ${ctx.reportId.slice(0, 8).toUpperCase()}-${ctx.reportId.slice(-4).toUpperCase()}`, {
+  page.drawText(safeText(`Sellado: ${fmtDateTime(ctx.generatedAt)} · Hora legal colombiana (UTC-5) · Ref ${ctx.reportId.slice(0, 8).toUpperCase()}-${ctx.reportId.slice(-4).toUpperCase()}`), {
     x: tx, y: 26, size: 6.5, font: fonts.italic, color: COLOR_GREY,
   });
-  page.drawText("Documento confidencial. Verifique autenticidad escaneando el QR.", {
+  page.drawText(safeText("Documento confidencial. Verifique autenticidad escaneando el QR."), {
     x: tx, y: 16, size: 6, font: fonts.italic, color: COLOR_GREY,
   });
 
   // Paginación a la derecha
-  page.drawText(`Pág. ${pageIdx}`, {
+  page.drawText(safeText(`Pág. ${pageIdx}`), {
     x: PAGE_W - MARGIN - 30, y: 36, size: 8, font: fonts.bold, color: COLOR_NAVY,
   });
 }
@@ -514,25 +524,25 @@ export async function buildCandidateCV(
   }
   if (!photoEmbedded) {
     cover.drawRectangle({ x: MARGIN + 15, y: cardY + 15, width: 110, height: 110, color: rgb(0.88, 0.91, 0.96) });
-    cover.drawText("SIN FOTO", { x: MARGIN + 40, y: cardY + 65, size: 9, font: fonts.bold, color: COLOR_GREY });
+    cover.drawText(safeText("SIN FOTO"), { x: MARGIN + 40, y: cardY + 65, size: 9, font: fonts.bold, color: COLOR_GREY });
   }
 
-  cover.drawText(`${candidate.firstName} ${candidate.lastName}`, {
+  cover.drawText(safeText(`${candidate.firstName} ${candidate.lastName}`), {
     x: MARGIN + 145, y: cardY + 105, size: 18, font: fonts.bold, color: COLOR_NAVY,
   });
-  cover.drawText(`${candidate.documentType ?? "CC"} ${candidate.documentNumber ?? "—"}`, {
+  cover.drawText(safeText(`${candidate.documentType ?? "CC"} ${candidate.documentNumber ?? "—"}`), {
     x: MARGIN + 145, y: cardY + 85, size: 10, font: fonts.regular, color: COLOR_DARK,
   });
-  cover.drawText(candidate.email, {
+  cover.drawText(safeText(candidate.email), {
     x: MARGIN + 145, y: cardY + 70, size: 9, font: fonts.regular, color: COLOR_DARK,
   });
   if (candidate.phone) {
-    cover.drawText(candidate.phone, { x: MARGIN + 145, y: cardY + 55, size: 9, font: fonts.regular, color: COLOR_DARK });
+    cover.drawText(safeText(candidate.phone), { x: MARGIN + 145, y: cardY + 55, size: 9, font: fonts.regular, color: COLOR_DARK });
   }
-  cover.drawText(`Registrado el ${fmtDate(candidate.createdAt)}`, {
+  cover.drawText(safeText(`Registrado el ${fmtDate(candidate.createdAt)}`), {
     x: MARGIN + 145, y: cardY + 35, size: 8, font: fonts.italic, color: COLOR_GREY,
   });
-  cover.drawText(`Inscripciones: ${candidate.enrollments.length}`, {
+  cover.drawText(safeText(`Inscripciones: ${candidate.enrollments.length}`), {
     x: MARGIN + 145, y: cardY + 20, size: 9, font: fonts.bold, color: COLOR_DARK,
   });
 
@@ -591,7 +601,7 @@ export async function buildCandidateCV(
   } else {
     for (const s of schemes.values()) {
       cursor = ensureSpace(pdf, cursor, 56, fonts, ctx);
-      cursor.page.drawText(`${s.code} — ${s.name}`, { x: MARGIN, y: cursor.y, size: 10, font: fonts.bold, color: COLOR_NAVY });
+      cursor.page.drawText(safeText(`${s.code} — ${s.name}`), { x: MARGIN, y: cursor.y, size: 10, font: fonts.bold, color: COLOR_NAVY });
       cursor.y -= 13;
       if (s.scope) cursor = row(cursor, "Alcance", s.scope, fonts);
       if (s.norm) cursor = row(cursor, "Norma de referencia", s.norm, fonts);
@@ -628,23 +638,23 @@ export async function buildCandidateCV(
   function listDocs(cursorRef: Cursor, list: typeof allDocs, emptyMsg: string): Cursor {
     let c = cursorRef;
     if (list.length === 0) {
-      c.page.drawText(emptyMsg, { x: MARGIN, y: c.y, size: 9, font: fonts.italic, color: COLOR_GREY });
+      c.page.drawText(safeText(emptyMsg), { x: MARGIN, y: c.y, size: 9, font: fonts.italic, color: COLOR_GREY });
       c.y -= 14;
       return c;
     }
     for (const d of list) {
       c = ensureSpace(pdf, c, 24, fonts);
       const statusLabel: Record<string, string> = { SUBMITTED: "en revisión", APPROVED: "aprobado", REJECTED: "rechazado", PENDING: "pendiente" };
-      c.page.drawText(`• ${d.requiredDocument?.name ?? "Documento"}`, {
+      c.page.drawText(safeText(`• ${d.requiredDocument?.name ?? "Documento"}`), {
         x: MARGIN, y: c.y, size: 10, font: fonts.bold, color: COLOR_DARK,
       });
       c.y -= 12;
-      c.page.drawText(`   Archivo: ${d.fileName ?? ""} · ${statusLabel[d.status] ?? d.status} · ${fmtDate(d.uploadedAt)}`, {
+      c.page.drawText(safeText(`   Archivo: ${d.fileName ?? ""} · ${statusLabel[d.status] ?? d.status} · ${fmtDate(d.uploadedAt)}`), {
         x: MARGIN, y: c.y, size: 8, font: fonts.italic, color: COLOR_GREY,
       });
       c.y -= 12;
       if (d.requiredDocument?.description) {
-        c.page.drawText(`   ${d.requiredDocument.description}`, { x: MARGIN, y: c.y, size: 8, font: fonts.regular, color: COLOR_DARK });
+        c.page.drawText(safeText(`   ${d.requiredDocument.description}`), { x: MARGIN, y: c.y, size: 8, font: fonts.regular, color: COLOR_DARK });
         c.y -= 12;
       }
     }
@@ -654,7 +664,7 @@ export async function buildCandidateCV(
   cursor.y -= 4;
   cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Formación académica", fonts);
-  cursor.page.drawText("Los siguientes documentos académicos fueron aportados por el candidato. El detalle completo se incluye como anexo al final de este informe.",
+  cursor.page.drawText(safeText("Los siguientes documentos académicos fueron aportados por el candidato. El detalle completo se incluye como anexo al final de este informe."),
     { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
   cursor.y -= 14;
   cursor = listDocs(cursor, docsFormacion, "Sin documentos académicos cargados todavía.");
@@ -662,7 +672,7 @@ export async function buildCandidateCV(
   cursor.y -= 6;
   cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Antecedentes disciplinarios, judiciales y penales", fonts);
-  cursor.page.drawText("Certificados expedidos por las autoridades de control. Verifíquense por sus canales oficiales antes de la emisión final.",
+  cursor.page.drawText(safeText("Certificados expedidos por las autoridades de control. Verifíquense por sus canales oficiales antes de la emisión final."),
     { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
   cursor.y -= 14;
   cursor = listDocs(cursor, docsAnte, "Sin certificados de antecedentes cargados todavía.");
@@ -670,7 +680,7 @@ export async function buildCandidateCV(
   cursor.y -= 6;
   cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
   cursor = sectionTitle(cursor, "Historial laboral y experiencia", fonts);
-  cursor.page.drawText("Documentos que evidencian la experiencia y trayectoria laboral del candidato.",
+  cursor.page.drawText(safeText("Documentos que evidencian la experiencia y trayectoria laboral del candidato."),
     { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
   cursor.y -= 14;
   cursor = listDocs(cursor, docsLaboral, "Sin documentos de experiencia laboral cargados todavía.");
@@ -694,19 +704,19 @@ export async function buildCandidateCV(
       const title = e.exam?.name ?? e.scheme?.name ?? "Inscripción";
       const cert = candidate.certificates.find((c) => c.enrollmentId === e.id);
       cursor.page.drawRectangle({ x: MARGIN, y: cursor.y - 6, width: PAGE_W - MARGIN * 2, height: 1, color: COLOR_RULE });
-      cursor.page.drawText(title, { x: MARGIN, y: cursor.y - 16, size: 11, font: fonts.bold, color: COLOR_NAVY });
-      cursor.page.drawText(`Folio ${e.code ?? "—"} · Estado de la inscripción: ${e.status} · ${fmtDate(e.createdAt)}`, {
+      cursor.page.drawText(safeText(title), { x: MARGIN, y: cursor.y - 16, size: 11, font: fonts.bold, color: COLOR_NAVY });
+      cursor.page.drawText(safeText(`Folio ${e.code ?? "—"} · Estado de la inscripción: ${e.status} · ${fmtDate(e.createdAt)}`), {
         x: MARGIN, y: cursor.y - 30, size: 8, font: fonts.italic, color: COLOR_GREY,
       });
       cursor.y -= 42;
 
       // Intentos
       if (e.attempts.length === 0) {
-        cursor.page.drawText("Estado: EVALUACIÓN PENDIENTE — el candidato aún no ha presentado esta prueba.",
+        cursor.page.drawText(safeText("Estado: EVALUACIÓN PENDIENTE — el candidato aún no ha presentado esta prueba."),
           { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: rgb(0.73, 0.43, 0.05) });
         cursor.y -= 14;
       } else {
-        cursor.page.drawText(`Intentos realizados: ${e.attempts.length}`, {
+        cursor.page.drawText(safeText(`Intentos realizados: ${e.attempts.length}`), {
           x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_DARK,
         });
         cursor.y -= 13;
@@ -715,12 +725,12 @@ export async function buildCandidateCV(
           const score = a.scorePercent != null ? `${Number(a.scorePercent).toFixed(1)}%` : "—";
           const verdict = a.passed === true ? "APROBÓ" : a.passed === false ? "NO APROBÓ" : a.status;
           const verdictColor = a.passed === true ? rgb(0.04, 0.55, 0.34) : a.passed === false ? rgb(0.73, 0.13, 0.20) : COLOR_GREY;
-          cursor.page.drawText(`#${a.attemptNumber} · Estado: ${a.status} · Puntaje: ${score} · ${verdict}`, {
+          cursor.page.drawText(safeText(`#${a.attemptNumber} · Estado: ${a.status} · Puntaje: ${score} · ${verdict}`), {
             x: MARGIN + 16, y: cursor.y, size: 9, font: fonts.regular, color: verdictColor,
           });
           cursor.y -= 12;
           if (a.submittedAt) {
-            cursor.page.drawText(`   Presentado: ${fmtDateTime(a.submittedAt)}`, { x: MARGIN + 16, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
+            cursor.page.drawText(safeText(`   Presentado: ${fmtDateTime(a.submittedAt)}`), { x: MARGIN + 16, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
             cursor.y -= 11;
           }
         }
@@ -732,14 +742,14 @@ export async function buildCandidateCV(
         const vigenteHasta = cert.expiresAt ? fmtDate(cert.expiresAt) : "No vence";
         const estado = cert.status;
         const vigColor = estado === "VALID" ? rgb(0.04, 0.55, 0.34) : estado === "EXPIRED" ? rgb(0.73, 0.43, 0.05) : rgb(0.73, 0.13, 0.20);
-        cursor.page.drawText(`Certificado: ${cert.code}`, { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY });
+        cursor.page.drawText(safeText(`Certificado: ${cert.code}`), { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY });
         cursor.y -= 12;
-        cursor.page.drawText(`Estado: ${estado} · Emitido: ${fmtDate(cert.issuedAt)} · Vigente hasta: ${vigenteHasta}`, {
+        cursor.page.drawText(safeText(`Estado: ${estado} · Emitido: ${fmtDate(cert.issuedAt)} · Vigente hasta: ${vigenteHasta}`), {
           x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: vigColor,
         });
         cursor.y -= 12;
       } else if (e.attempts.some((a) => a.passed === true)) {
-        cursor.page.drawText("Certificado: pendiente de emisión.", { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.italic, color: COLOR_GREY });
+        cursor.page.drawText(safeText("Certificado: pendiente de emisión."), { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.italic, color: COLOR_GREY });
         cursor.y -= 12;
       }
 
@@ -747,7 +757,7 @@ export async function buildCandidateCV(
       if (e.bookings.length > 0) {
         for (const b of e.bookings) {
           cursor = ensureSpace(pdf, cursor, 14, fonts, ctx);
-          cursor.page.drawText(`Agenda: ${fmtDateTime(b.session.startsAt)} · ${b.session.modality ?? ""} · ${b.session.location ?? ""}`,
+          cursor.page.drawText(safeText(`Agenda: ${fmtDateTime(b.session.startsAt)} · ${b.session.modality ?? ""} · ${b.session.location ?? ""}`),
             { x: MARGIN + 10, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK });
           cursor.y -= 12;
         }
@@ -766,20 +776,20 @@ export async function buildCandidateCV(
     for (const p of allPayments) {
       cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
       const meta = (p.metadata as { rapyd?: { checkoutId?: string; type?: string }; receipt?: { fileName?: string; note?: string | null } } | null) ?? {};
-      cursor.page.drawText(`${p.status} · ${p.provider ?? "manual"} · ${fmtCOP(Number(p.amount.toString()))}`, {
+      cursor.page.drawText(safeText(`${p.status} · ${p.provider ?? "manual"} · ${fmtCOP(Number(p.amount.toString()))}`), {
         x: MARGIN, y: cursor.y, size: 10, font: fonts.bold, color: p.status === "APPROVED" ? rgb(0.04, 0.55, 0.34) : p.status === "REJECTED" ? rgb(0.73, 0.13, 0.20) : COLOR_NAVY,
       });
       cursor.y -= 13;
-      cursor.page.drawText(`Folio ${p.enrollment.code ?? "—"} · Creado ${fmtDate(p.createdAt)} · ${p.paidAt ? `Pagado ${fmtDate(p.paidAt)}` : "Sin fecha de pago"}`, {
+      cursor.page.drawText(safeText(`Folio ${p.enrollment.code ?? "—"} · Creado ${fmtDate(p.createdAt)} · ${p.paidAt ? `Pagado ${fmtDate(p.paidAt)}` : "Sin fecha de pago"}`), {
         x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY,
       });
       cursor.y -= 12;
-      cursor.page.drawText(`Ref. ${p.providerRef ?? "—"}${meta.rapyd?.checkoutId ? ` · Checkout ${meta.rapyd.checkoutId}` : ""}`, {
+      cursor.page.drawText(safeText(`Ref. ${p.providerRef ?? "—"}${meta.rapyd?.checkoutId ? ` · Checkout ${meta.rapyd.checkoutId}` : ""}`), {
         x: MARGIN, y: cursor.y, size: 8, font: fonts.regular, color: COLOR_DARK,
       });
       cursor.y -= 12;
       if (meta.receipt?.fileName || p.receiptUrl) {
-        cursor.page.drawText(`Soporte: ${meta.receipt?.fileName ?? "comprobante"}`, {
+        cursor.page.drawText(safeText(`Soporte: ${meta.receipt?.fileName ?? "comprobante"}`), {
           x: MARGIN, y: cursor.y, size: 8, font: fonts.regular, color: COLOR_DARK,
         });
         cursor.y -= 12;
@@ -794,14 +804,14 @@ export async function buildCandidateCV(
   if (allDocs.length === 0) {
     cursor = row(cursor, "Sin documentos", "El candidato aún no ha cargado documentos.", fonts);
   } else {
-    cursor.page.drawText("Listado consolidado de los archivos cargados por el candidato. Los archivos completos se anexan al final de este informe.",
+    cursor.page.drawText(safeText("Listado consolidado de los archivos cargados por el candidato. Los archivos completos se anexan al final de este informe."),
       { x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY });
     cursor.y -= 14;
     for (const d of allDocs) {
       cursor = ensureSpace(pdf, cursor, 16, fonts, ctx);
       const statusLabel: Record<string, string> = { SUBMITTED: "en revisión", APPROVED: "aprobado", REJECTED: "rechazado", PENDING: "pendiente" };
       cursor.page.drawText(
-        `• ${d.requiredDocument?.name ?? "Documento"} — ${d.fileName ?? ""} (${statusLabel[d.status] ?? d.status})`,
+        safeText(`• ${d.requiredDocument?.name ?? "Documento"} — ${d.fileName ?? ""} (${statusLabel[d.status] ?? d.status})`),
         { x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK },
       );
       cursor.y -= 12;
@@ -814,23 +824,23 @@ export async function buildCandidateCV(
   cursor = sectionTitle(cursor, "Autorizaciones y aceptaciones del candidato", fonts);
 
   // 10.a Tratamiento de datos
-  cursor.page.drawText("a) Autorización de tratamiento de datos personales (Ley 1581 de 2012)", {
+  cursor.page.drawText(safeText("a) Autorización de tratamiento de datos personales (Ley 1581 de 2012)"), {
     x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY,
   });
   cursor.y -= 14;
   if (candidate.consents.length === 0) {
-    cursor.page.drawText("Sin registro de aceptación. Verifique el proceso del candidato.", {
+    cursor.page.drawText(safeText("Sin registro de aceptación. Verifique el proceso del candidato."), {
       x: MARGIN, y: cursor.y, size: 9, font: fonts.italic, color: rgb(0.73, 0.13, 0.20),
     });
     cursor.y -= 14;
   } else {
     for (const c of candidate.consents) {
       cursor = ensureSpace(pdf, cursor, 40, fonts, ctx);
-      cursor.page.drawText(`• Aceptada: ${fmtDateTime(c.acceptedAt)} · IP: ${c.ip ?? "—"}`, {
+      cursor.page.drawText(safeText(`• Aceptada: ${fmtDateTime(c.acceptedAt)} · IP: ${c.ip ?? "—"}`), {
         x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
       });
       cursor.y -= 12;
-      cursor.page.drawText(`  Política versión: ${c.policyVersion ?? "—"} · Titular: ${c.holderName ?? "—"}`, {
+      cursor.page.drawText(safeText(`  Política versión: ${c.policyVersion ?? "—"} · Titular: ${c.holderName ?? "—"}`), {
         x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: COLOR_GREY,
       });
       cursor.y -= 12;
@@ -840,7 +850,7 @@ export async function buildCandidateCV(
   // 10.b Términos y condiciones del cobro/proceso
   cursor.y -= 6;
   cursor = ensureSpace(pdf, cursor, 60, fonts, ctx);
-  cursor.page.drawText("b) Aceptación de términos y condiciones del proceso de certificación", {
+  cursor.page.drawText(safeText("b) Aceptación de términos y condiciones del proceso de certificación"), {
     x: MARGIN, y: cursor.y, size: 9, font: fonts.bold, color: COLOR_NAVY,
   });
   cursor.y -= 14;
@@ -851,18 +861,18 @@ export async function buildCandidateCV(
     })
     .filter((t): t is NonNullable<typeof t> => t !== null);
   if (termsPayments.length === 0) {
-    cursor.page.drawText("Sin registros de aceptación de términos (pagos creados antes de esta política).", {
+    cursor.page.drawText(safeText("Sin registros de aceptación de términos (pagos creados antes de esta política)."), {
       x: MARGIN, y: cursor.y, size: 9, font: fonts.italic, color: COLOR_GREY,
     });
     cursor.y -= 14;
   } else {
     for (const t of termsPayments) {
       cursor = ensureSpace(pdf, cursor, 50, fonts, ctx);
-      cursor.page.drawText(`• Pago ${t.payment.id.slice(-8).toUpperCase()} · Folio ${t.payment.enrollment.code ?? "—"} · ${fmtDateTime(t.acceptedAt ? new Date(t.acceptedAt) : t.payment.createdAt)}`, {
+      cursor.page.drawText(safeText(`• Pago ${t.payment.id.slice(-8).toUpperCase()} · Folio ${t.payment.enrollment.code ?? "—"} · ${fmtDateTime(t.acceptedAt ? new Date(t.acceptedAt) : t.payment.createdAt)}`), {
         x: MARGIN, y: cursor.y, size: 9, font: fonts.regular, color: COLOR_DARK,
       });
       cursor.y -= 12;
-      cursor.page.drawText(`  No reembolso (obligación de medio): ${t.acceptRefund ? "ACEPTADO" : "NO"} · Uso para actividad económica/profesión: ${t.acceptEconomic ? "ACEPTADO" : "NO"}`, {
+      cursor.page.drawText(safeText(`  No reembolso (obligación de medio): ${t.acceptRefund ? "ACEPTADO" : "NO"} · Uso para actividad económica/profesión: ${t.acceptEconomic ? "ACEPTADO" : "NO"}`), {
         x: MARGIN, y: cursor.y, size: 8, font: fonts.italic, color: t.acceptRefund && t.acceptEconomic ? rgb(0.04, 0.55, 0.34) : rgb(0.73, 0.43, 0.05),
       });
       cursor.y -= 14;
