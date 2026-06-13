@@ -4,20 +4,25 @@ import { can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui";
-import { GradingTable, type GradingRow } from "@/components/grading-table";
+import {
+  GradingByCandidate,
+  type CandidateGradingGroup,
+  type GradingAttemptRow,
+} from "@/components/grading-by-candidate";
 
 export const metadata = { title: "Calificación" };
 
 /**
- * Vista de calificación: tabla con TODOS los intentos del suscriptor
- * (no solo los que esperan calificación manual). Cada fila muestra el
- * estado actual del intento — desde "En curso" hasta "Aprobó / No
- * aprobó / En comité / Anulado" — y la calificación cuando ya está.
+ * Vista de calificación AGRUPADA POR CANDIDATO. Cada candidato muestra
+ * sus inscripciones e intentos en un mismo bloque, con accesos directos
+ * a la ficha (`/panel/candidatos/[id]`) y a la Hoja de Vida en PDF
+ * (`/panel/candidatos/[id]/cv`) para que el evaluador pueda revisar el
+ * informe del candidato antes de calificar.
  *
- * Filtrable por estado y buscable por candidato/documento/examen/folio.
- * El evaluador con permiso GRADE_MANUAL ve botón "Calificar →" solo
- * para los intentos en MANUAL_GRADING; el resto lo pueden abrir como
- * "Ver" (read-only) para inspeccionar puntajes.
+ * Filtrable por estado (Por calificar / En curso / En comité /
+ * Aprobaron / No aprobaron) y buscable por nombre, documento, examen
+ * o folio. El evaluador con permiso GRADE_MANUAL ve botón "Calificar"
+ * solo para intentos en MANUAL_GRADING; el resto se abren como "Ver".
  */
 export default async function GradingListPage() {
   const { ctx, subscriberId } = await requireSubscriberPage();
@@ -28,39 +33,73 @@ export default async function GradingListPage() {
     orderBy: [{ submittedAt: "desc" }, { createdAt: "desc" }],
     include: {
       exam: { select: { name: true, passingScore: true } },
-      candidate: { select: { firstName: true, lastName: true, documentNumber: true } },
-      enrollment: { select: { code: true } },
+      candidate: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          documentNumber: true,
+          documentType: true,
+          email: true,
+          phone: true,
+        },
+      },
+      enrollment: {
+        select: {
+          code: true,
+          scheme: { select: { name: true } },
+        },
+      },
     },
   });
 
-  const rows: GradingRow[] = attempts.map((a) => ({
-    attemptId: a.id,
-    candidateName: `${a.candidate.firstName} ${a.candidate.lastName}`.trim(),
-    documentNumber: a.candidate.documentNumber,
-    enrollmentCode: a.enrollment.code,
-    examName: a.exam.name,
-    status: a.status,
-    scorePercent: a.scorePercent != null ? Number(a.scorePercent.toString()) : null,
-    passingScore: Number(a.exam.passingScore.toString()),
-    attemptNumber: a.attemptNumber,
-    startedAtIso: a.startedAt ? a.startedAt.toISOString() : null,
-    submittedAtIso: a.submittedAt ? a.submittedAt.toISOString() : null,
-    gradedAtIso: a.gradedAt ? a.gradedAt.toISOString() : null,
-  }));
+  // Agrupamos por candidato preservando el orden de aparición (el primer
+  // intento del candidato — ya viene ordenado por submittedAt desc).
+  const byCandidate = new Map<string, CandidateGradingGroup>();
+  for (const a of attempts) {
+    const cid = a.candidate.id;
+    const existing = byCandidate.get(cid);
+    const row: GradingAttemptRow = {
+      attemptId: a.id,
+      enrollmentCode: a.enrollment.code,
+      schemeName: a.enrollment.scheme?.name ?? null,
+      examName: a.exam.name,
+      status: a.status,
+      scorePercent: a.scorePercent != null ? Number(a.scorePercent.toString()) : null,
+      passingScore: Number(a.exam.passingScore.toString()),
+      attemptNumber: a.attemptNumber,
+      submittedAtIso: a.submittedAt ? a.submittedAt.toISOString() : null,
+      gradedAtIso: a.gradedAt ? a.gradedAt.toISOString() : null,
+    };
+    if (existing) {
+      existing.attempts.push(row);
+    } else {
+      byCandidate.set(cid, {
+        candidateId: cid,
+        fullName: `${a.candidate.firstName} ${a.candidate.lastName}`.trim(),
+        documentLabel: [a.candidate.documentType, a.candidate.documentNumber].filter(Boolean).join(" ") || "—",
+        email: a.candidate.email,
+        phone: a.candidate.phone ?? null,
+        attempts: [row],
+      });
+    }
+  }
+  const groups = [...byCandidate.values()];
 
-  const manualPending = rows.filter((r) => r.status === "MANUAL_GRADING").length;
+  const totalAttempts = attempts.length;
+  const manualPending = attempts.filter((a) => a.status === "MANUAL_GRADING").length;
 
   return (
     <>
       <PageHeader
         title="Calificación"
         subtitle={
-          rows.length === 0
+          totalAttempts === 0
             ? "Aún no hay intentos de evaluación registrados."
-            : `${rows.length} intento(s) en total · ${manualPending} pendiente(s) de calificación manual.`
+            : `${groups.length} candidato(s) · ${totalAttempts} intento(s) · ${manualPending} por calificar.`
         }
       />
-      <GradingTable rows={rows} />
+      <GradingByCandidate groups={groups} />
     </>
   );
 }
