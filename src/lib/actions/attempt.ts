@@ -20,6 +20,7 @@ import { syncEnrollmentStatus } from "@/lib/enrollment";
 import { issuePresentationCertificate } from "@/lib/certificate";
 import { sendExamScoreEmail, sendManualGradingRequiredEmail } from "@/lib/email";
 import { getGradingTeamRecipients } from "@/lib/grading-team";
+import { issueCertificationInternal } from "@/lib/certificate-issuer";
 import { BRAND } from "@/lib/brand";
 import { EXAM_CONSENT_TEXT } from "@/lib/exam-consent";
 import type { ActionResult } from "@/lib/actions/schemes";
@@ -636,6 +637,17 @@ export async function submitAttempt(attemptId: string): Promise<void> {
     },
   });
   await prisma.enrollment.update({ where: { id: attempt.enrollmentId }, data: { status: enrollmentStatus } });
+
+  // Emisión automática del certificado de competencias cuando el examen
+  // está configurado como autoCertificate (no requiere comité). Idempotente.
+  if (enrollmentStatus === "CERTIFIED") {
+    try {
+      await issueCertificationInternal({
+        enrollmentId: attempt.enrollmentId,
+        issuedByUserId: ctx.userId,
+      });
+    } catch { /* la emisión se puede reintentar manualmente */ }
+  }
 
   // Si pasó la prueba y aplica comité, garantizar que exista la revisión
   // para que el panel del comité la vea en su bandeja inmediatamente.

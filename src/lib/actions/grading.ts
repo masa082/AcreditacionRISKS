@@ -10,6 +10,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
 import { sendExamScoreEmail } from "@/lib/email";
 import { BRAND } from "@/lib/brand";
+import { issueCertificationInternal } from "@/lib/certificate-issuer";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const gradeSchema = z.object({
@@ -140,6 +141,21 @@ export async function finalizeManualGrading(attemptId: string): Promise<void> {
     data: { status: attemptStatus, rawScore: new Prisma.Decimal(rawScore), scorePercent: new Prisma.Decimal(scorePercent), passed, gradedAt: new Date(), gradedById: ctx.userId },
   });
   await prisma.enrollment.update({ where: { id: attempt.enrollmentId }, data: { status: enrollmentStatus } });
+
+  // Emisión automática del certificado de competencias cuando el examen
+  // está configurado como autoCertificate (caso del Caso Práctico tras
+  // la nueva política operativa). Idempotente: no duplica si ya existe.
+  if (enrollmentStatus === "CERTIFIED") {
+    try {
+      await issueCertificationInternal({
+        enrollmentId: attempt.enrollmentId,
+        issuedByUserId: ctx.userId,
+      });
+    } catch {
+      /* la emisión se puede reintentar manualmente; no bloqueamos la
+         consolidación de la calificación */
+    }
+  }
 
   // Si pasa a comité, crear la revisión si no existe.
   if (attemptStatus === "PENDING_COMMITTEE") {

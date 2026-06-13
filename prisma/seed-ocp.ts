@@ -414,7 +414,7 @@ async function main() {
         type: "PRACTICAL", modality: "ONLINE", status: "PUBLISHED",
         durationMin: 240, numQuestions: 1, totalPoints: new Prisma.Decimal(80), passingScore: new Prisma.Decimal(70),
         attemptsAllowed: 1, randomizeQuestions: false, randomizeOptions: false,
-        requirePayment: false, requireSchedule: false, requireCommittee: true, autoCertificate: false,
+        requirePayment: false, requireSchedule: false, requireCommittee: false, autoCertificate: true,
         showResultImmediately: false, allowReview: false,
         instructions: "Dispone de 4 horas. Entregue su desarrollo en un único archivo PDF. La evaluación es calificada por dos evaluadores independientes.",
       },

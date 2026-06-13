@@ -5,6 +5,7 @@ import { StatTile, PageHeader, Badge, EmptyState, Card } from "@/components/ui";
 import { SubmitButton } from "@/components/form";
 import { dateOnly } from "@/lib/format";
 import { WelcomeWizard, ProcessSteps } from "@/components/process-steps";
+import { CelebrationBanner } from "@/components/celebration-banner";
 import { retryAttempt } from "@/lib/actions/attempt";
 import { getServerLocale } from "@/lib/i18n/server";
 import { t } from "@/lib/i18n/locale";
@@ -129,6 +130,17 @@ export default async function CandidatePortal() {
   // Examen Teórico de la misma certificación con un único panel guiado.
   const programs = groupBySchemeOrEnrollment(enrollments);
 
+  // Certificados CERTIFICATION vigentes para el banner de felicitación.
+  // El componente cliente decide si animar (solo si encuentra uno que el
+  // candidato aún no celebró según localStorage).
+  const certForCelebration = activeCerts
+    .filter((c) => c.type === "CERTIFICATION")
+    .map((c) => {
+      const full = certificates.find((f) => f.id === c.id);
+      return full ? { code: full.code, title: full.title, issuedAt: full.issuedAt.toISOString() } : null;
+    })
+    .filter((c): c is { code: string; title: string; issuedAt: string } => c !== null);
+
   return (
     <>
       <PageHeader
@@ -143,6 +155,8 @@ export default async function CandidatePortal() {
           </Link>
         }
       />
+
+      <CelebrationBanner certificates={certForCelebration} />
 
       {enrollments.length === 0 ? (
         <div className="mb-5">
