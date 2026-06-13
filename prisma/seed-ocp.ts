@@ -56,7 +56,14 @@ interface CertConfig {
   bank: { code: string; name: string; normReference: string };
   examName: string;
   caseName: string;
+  /** Instrucción concreta de qué entregar (matriz, ROS, plan, etc.). */
   caseStatement: string;
+  /** TEXTO COMPLETO del caso a analizar — empresa, gobierno corporativo,
+   *  contrapartes, eventos y señales de alerta, documentación disponible.
+   *  Va al campo Question.contextText y se muestra ANTES del statement
+   *  en el runner del examen. SIN este texto, el candidato no tiene
+   *  contexto sobre el que trabajar. */
+  caseContext: string;
 }
 
 const CERTS: CertConfig[] = [
@@ -77,6 +84,8 @@ const CERTS: CertConfig[] = [
     caseName: "Caso Práctico — Oficial de Cumplimiento SARLAFT (Supertransporte)",
     caseStatement:
       "A partir del escenario entregado de una empresa de transporte, elabore: (1) identificación de riesgos LA/FT, (2) matriz de riesgos con clasificación inherente y residual, (3) diseño de controles, (4) un Reporte de Operación Sospechosa (ROS) y (5) un plan de acción SARLAFT. Adjunte su desarrollo en un único archivo PDF.",
+    caseContext:
+      "ESCENARIO — EMPRESA TRANSPORTES ANDINOS S.A.S.\n\nTransportes Andinos S.A.S. es una empresa colombiana del sector transporte terrestre de carga, vigilada por la Superintendencia de Transporte. Tiene 14 años de operación, 47 vehículos propios, una flota tercerizada de 28 vehículos adicionales y opera en las rutas Bogotá–Medellín–Barranquilla y Bogotá–Cali–Buenaventura. La empresa factura aproximadamente COP $42.000 millones al año.\n\nESTRUCTURA Y GOBIERNO\n\n  • Representante Legal: Sra. Patricia Cárdenas Moreno (15 años en el cargo, accionista mayoritaria con el 55%).\n  • Junta Directiva: 5 miembros, sesiona trimestralmente.\n  • Oficial de Cumplimiento (OC) Principal: Sr. José Restrepo Vélez (administrador de empresas, 2 años en el cargo, dedicación parcial — también dirige el área de Talento Humano).\n  • Oficial Suplente: no designado a la fecha.\n  • Equipo de cumplimiento: una analista junior (recientemente contratada, 4 meses).\n\nCLIENTES Y CONTRATOS\n\n  • 312 clientes activos en los últimos 12 meses.\n  • Cliente #1 (35% de los ingresos): \"Compañía Internacional Trade & Logistics CITL Ltd.\", domiciliada en Panamá, contrata viajes semanales con pagos por anticipado en efectivo recibidos en una cuenta corriente del Banco de Bogotá. CITL fue presentada por un intermediario en 2024; no se cuenta con visita comercial al domicilio del cliente.\n  • Cliente #7: \"Suministros Mineros del Pacífico\", cuyo beneficiario final (UBO) no ha podido determinarse — la sociedad tiene 3 niveles de accionistas con compañías en BVI y Panamá.\n  • 12 clientes han realizado pagos en efectivo por valores individuales superiores a 10.000 USD durante los últimos 6 meses, sin que se haya generado reporte interno alguno.\n\nEVENTOS Y SEÑALES DE ALERTA RECIENTES\n\n  1. El conductor del vehículo de placa XYZ-123 reportó haber transportado mercancía declarada como \"insumos químicos industriales\" desde Buenaventura hasta Medellín, sin documentación SAE-DIAN ni manifiestos completos. El conductor no firmó acta. Esto ocurrió 4 veces en los últimos 60 días.\n  2. La caja menor del patio operativo recibió COP $48.000.000 en efectivo en una sola consignación a nombre de \"tercero anónimo\" para \"anticipo de fletes futuros\". No se generó identificación del depositante.\n  3. Un cliente nuevo, \"Distribuciones del Norte Sociedad de Inversión\", solicitó realizar pagos de fletes contra una cuenta en una jurisdicción no cooperante (Belice). La analista junior aprobó la vinculación sin verificar listas vinculantes (ONU/OFAC/CV).\n  4. El OC no asistió a las dos últimas reuniones de Junta y no ha presentado los informes trimestrales del año en curso.\n  5. La empresa no tiene Sistema de Administración del Riesgo LA/FT aprobado por la Junta — opera con un manual heredado del año 2018.\n\nDOCUMENTACIÓN DISPONIBLE PARA SU ANÁLISIS\n\n  • Estados financieros de los últimos 3 años.\n  • Listado de los 50 principales clientes con monto, frecuencia y modalidad de pago.\n  • Manual SARLAFT vigente (2018).\n  • Reporte mensual del oficial — solo enero a marzo del año en curso.\n  • Comunicación oficial de la Superintendencia de Transporte requiriendo el reporte SARLAFT del año anterior (fecha de vencimiento: hace 45 días).\n\nUSTED HA SIDO CONTRATADO COMO OFICIAL DE CUMPLIMIENTO PRINCIPAL SUPLENTE PARA ASESORAR A LA EMPRESA Y REGULARIZAR SU SARLAFT. Tiene 4 horas para entregar su análisis y plan de acción siguiendo las instrucciones de la pregunta.",
   },
   {
     prefix: "SG",
@@ -95,6 +104,8 @@ const CERTS: CertConfig[] = [
     caseName: "Caso Práctico — Oficial de Cumplimiento SAGRILAFT (Supersociedades)",
     caseStatement:
       "A partir del escenario entregado de una empresa del sector real, elabore: (1) identificación de riesgos LA/FT/FPADM, (2) matriz de riesgos con clasificación inherente y residual, (3) diseño de controles, (4) un Reporte de Operación Sospechosa (ROS) y (5) un plan de acción SAGRILAFT. Adjunte su desarrollo en un único archivo PDF.",
+    caseContext:
+      "ESCENARIO — INDUSTRIAS DELTA S.A.\n\nIndustrias Delta S.A. es una sociedad anónima del sector real con sede en Bogotá, vigilada por la Superintendencia de Sociedades. Se dedica a la fabricación y comercialización de productos químicos especializados para minería y agroindustria. Tiene 23 años de operación, 380 empleados directos y factura aproximadamente COP $185.000 millones al año.\n\nESTRUCTURA Y GOBIERNO CORPORATIVO\n\n  • Representante Legal: Sr. Carlos Eduardo Ramírez Posada (8 años).\n  • Junta Directiva: 7 miembros (incluye 2 independientes).\n  • Oficial de Cumplimiento: Dra. Lina Marcela Torres (abogada, 11 meses en el cargo, dedicación 50% — el otro 50% es del área jurídica).\n  • Comité de Auditoría: 3 miembros, sesiona cuatrimestralmente.\n  • Programa de Transparencia y Ética Empresarial (PTEE): aprobado por la Junta en 2023, pendiente de actualización a 2026.\n\nCONTRAPARTES Y RELACIONES COMERCIALES\n\n  • 84 proveedores activos. El proveedor #3 (\"Quimitech Holding\") aporta el 28% de las compras anuales y está domiciliado en Islas Vírgenes Británicas (BVI). El beneficiario final aún no ha sido determinado por la empresa.\n  • 217 clientes activos en los últimos 12 meses.\n  • 6 clientes son Personas Expuestas Políticamente (PEP) — uno de ellos, hijo de un congresista de la región, vinculado en 2025 sin que se realizara la debida diligencia reforzada.\n  • Existe una sociedad relacionada: \"Delta Energy LLC\" en Delaware (EE.UU.). El representante legal de Industrias Delta es también director de Delta Energy. Las transacciones intercompañía superaron USD 4.200.000 en el último año.\n\nEVENTOS Y SEÑALES DE ALERTA RECIENTES\n\n  1. Operación con un proveedor ocasional (\"Servicios Andinos Express\") por COP $720.000.000 pagada en una sola transacción bancaria sin proceso de selección documentado, sin contrato formal y con un detalle vago de \"servicios logísticos\".\n  2. Cinco facturas de \"Quimitech Holding\" fueron pagadas a una cuenta distinta a la registrada en el RUT del proveedor, en una entidad financiera de Hong Kong.\n  3. Una donación a una fundación recién creada, vinculada a un funcionario público de Min. Ambiente, por COP $185.000.000 justo antes del trámite de una licencia.\n  4. El sistema de monitoreo transaccional generó 38 alertas el último trimestre. Ninguna se documentó ni se cerró.\n  5. La empresa no ha aplicado debida diligencia reforzada sobre el cliente PEP de mayor riesgo, ni sobre los 12 clientes ubicados en jurisdicciones no cooperantes.\n  6. El PTEE no ha sido socializado con la fuerza comercial.\n\nDOCUMENTACIÓN DISPONIBLE PARA SU ANÁLISIS\n\n  • Manual SAGRILAFT vigente (versión 2023).\n  • Listado de proveedores y clientes con su rotación, monto y jurisdicción.\n  • Estados financieros últimos 3 años.\n  • Actas de Junta Directiva y Comité de Auditoría.\n  • Reporte de alertas del monitoreo transaccional.\n  • Comunicación de la Supersociedades requiriendo plan de cierre de brechas en el SAGRILAFT (vencimiento: hace 30 días).\n\nUSTED HA SIDO CONTRATADO COMO ASESOR EXTERNO PARA REVISAR EL SAGRILAFT DE INDUSTRIAS DELTA S.A. Y CONSTRUIR EL PLAN DE REMEDIACIÓN. Tiene 4 horas para entregar su análisis y plan de acción siguiendo las instrucciones de la pregunta.",
   },
 ];
 
@@ -366,10 +377,18 @@ async function main() {
       create: { subscriberId: subscriber.id, schemeId: scheme.id, code: `${cfg.prefix}-BANK-CASO`, name: `Casos Prácticos — ${cfg.prefix}`, version: "v1" },
     });
     await prisma.question.deleteMany({ where: { subscriberId: subscriber.id, bankId: caseBank.id } });
+    // contextText vs statement: el TEXTO DEL CASO con el escenario
+    // detallado va en contextText (lo que el candidato debe ANALIZAR).
+    // statement queda con la INSTRUCCIÓN específica de qué entregar
+    // (matriz, ROS, plan, etc.). Sin contextText el candidato presenta
+    // sin saber sobre qué — caso ocurrido con Samuel Sánchez en
+    // INS-2026-0011 (corregido a posteriori vía
+    // prisma/scripts/populate-case-context.ts).
     await prisma.question.create({
       data: {
         subscriberId: subscriber.id, bankId: caseBank.id, code: `${cfg.prefix}-CASO-01`,
-        type: "CASE_STUDY", statement: cfg.caseStatement, points: new Prisma.Decimal(80),
+        type: "CASE_STUDY", statement: cfg.caseStatement, contextText: cfg.caseContext,
+        points: new Prisma.Decimal(80),
         difficulty: "ADVANCED", competencyId: competency.id, topicId: topicIdByCode["T2"],
         status: "APPROVED", authorId: author.id, reviewerId: reviewer.id, approvedAt: now,
         rubric: {

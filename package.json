@@ -24,7 +24,8 @@
     "add:uiaf-doc": "tsx prisma/scripts/add-uiaf-required-doc.ts",
     "fix:roe-to-roi": "tsx prisma/scripts/fix-roe-to-roi.ts",
     "sync:stale-enrollments": "tsx prisma/scripts/sync-stale-enrollments.ts",
-    "set:attempts": "tsx prisma/scripts/set-attempts-allowed.ts"
+    "set:attempts": "tsx prisma/scripts/set-attempts-allowed.ts",
+    "populate:case-context": "tsx prisma/scripts/populate-case-context.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
