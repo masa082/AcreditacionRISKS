@@ -61,16 +61,23 @@ export function FormError({ error }: { error?: string }) {
 export function SubmitButton({
   children = "Guardar",
   pendingText = "Guardando…",
+  className,
 }: {
   children?: ReactNode;
   pendingText?: string;
+  /** Override del estilo por defecto. Útil para variantes inline o
+   *  destructivas (e.g. botón de reintento rosa con animate-pulse). */
+  className?: string;
 }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
       disabled={pending}
-      className="rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+      className={
+        className ??
+        "rounded-lg btn-grad-navy px-5 py-2.5 text-sm font-semibold text-white transition disabled:opacity-60"
+      }
     >
       {pending ? pendingText : children}
     </button>

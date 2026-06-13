@@ -2,8 +2,10 @@ import Link from "next/link";
 import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { StatTile, PageHeader, Badge, EmptyState, Card } from "@/components/ui";
+import { SubmitButton } from "@/components/form";
 import { dateOnly } from "@/lib/format";
 import { WelcomeWizard, ProcessSteps } from "@/components/process-steps";
+import { retryAttempt } from "@/lib/actions/attempt";
 import { getServerLocale } from "@/lib/i18n/server";
 import { t } from "@/lib/i18n/locale";
 
@@ -60,7 +62,9 @@ export default async function CandidatePortal() {
       where: { candidateId },
       orderBy: { createdAt: "desc" },
       include: {
-        exam: { select: { id: true, name: true, passingScore: true, requirePayment: true } },
+        // attemptsAllowed: necesario para calcular cuántos reintentos le
+        // quedan al candidato si su último intento NO fue aprobado.
+        exam: { select: { id: true, name: true, passingScore: true, requirePayment: true, attemptsAllowed: true } },
         scheme: { select: { id: true, name: true } },
         attempts: {
           orderBy: { createdAt: "desc" },
@@ -202,8 +206,6 @@ export default async function CandidatePortal() {
                   : null;
                 // Indica si esta inscripción tiene una acción PENDIENTE
                 // del candidato (lista para presentar, intento en curso).
-                // En esos casos mostramos el botón animado "Completar el
-                // proceso →" inline.
                 const showActionButton =
                   e.status === "READY" ||
                   (latestAttempt?.status === "IN_PROGRESS" || latestAttempt?.status === "NOT_STARTED");
@@ -211,6 +213,23 @@ export default async function CandidatePortal() {
                   latestAttempt?.status === "IN_PROGRESS"
                     ? "Continuar prueba"
                     : "Completar el proceso";
+
+                // ── REINTENTO ────────────────────────────────────────
+                // Cuenta los intentos TERMINADOS (cualquier final
+                // distinto de IN_PROGRESS/NOT_STARTED).
+                const FINISHED_STATUS = new Set([
+                  "SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED",
+                  "PASSED", "FAILED", "PENDING_COMMITTEE", "VOID",
+                ]);
+                const finishedAttempts = e.attempts.filter((a) => FINISHED_STATUS.has(a.status));
+                const attemptsLeft = Math.max(0, (e.exam?.attemptsAllowed ?? 1) - finishedAttempts.length);
+                // Mostramos botón de reintento cuando el último intento
+                // ya está calificado (passed=false != null) Y aún quedan
+                // intentos disponibles según la configuración del examen.
+                const showRetryButton =
+                  latestAttempt &&
+                  latestAttempt.passed === false &&
+                  attemptsLeft > 0;
                 return (
                   <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                     <div className="min-w-0 flex-1">
@@ -240,6 +259,12 @@ export default async function CandidatePortal() {
                           ⏳ Pendiente de presentar — última acción suya
                         </p>
                       ) : null}
+                      {showRetryButton ? (
+                        <p className="mt-1 text-[11px] font-semibold text-rose-700">
+                          ↻ Le quedan <strong>{attemptsLeft}</strong> reintento(s).
+                          {" "}El próximo intento tendrá preguntas distintas y mayor dificultad.
+                        </p>
+                      ) : null}
                     </div>
                     <div className="flex items-center gap-2">
                       <Badge tone={toneFor(e.status)}>
@@ -255,6 +280,21 @@ export default async function CandidatePortal() {
                         >
                           ➜ {actionLabel}
                         </Link>
+                      ) : null}
+                      {showRetryButton ? (
+                        // Botón de reintento animado: pulse + ring rose
+                        // para distinguirlo visualmente del "Completar el
+                        // proceso" verde. retryAttempt valida cupos y
+                        // delega en startAttempt con preguntas nuevas +
+                        // mayor dificultad.
+                        <form action={retryAttempt.bind(null, latestAttempt!.id)}>
+                          <SubmitButton
+                            pendingText="Preparando…"
+                            className="inline-flex animate-pulse items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-[12px] font-bold text-white shadow ring-2 ring-rose-300 ring-offset-2 hover:bg-rose-700 disabled:opacity-50"
+                          >
+                            ↻ Reintentar examen
+                          </SubmitButton>
+                        </form>
                       ) : null}
                     </div>
                   </li>
@@ -306,7 +346,7 @@ export default async function CandidatePortal() {
 type EnrollmentRow = Awaited<
   ReturnType<typeof prisma.enrollment.findMany<{
     include: {
-      exam: { select: { id: true; name: true; passingScore: true; requirePayment: true } };
+      exam: { select: { id: true; name: true; passingScore: true; requirePayment: true; attemptsAllowed: true } };
       scheme: { select: { id: true; name: true } };
       attempts: {
         orderBy: { createdAt: "desc" };
