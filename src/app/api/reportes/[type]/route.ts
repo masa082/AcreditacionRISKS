@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getCurrentUser, can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
+import { buildPdfFilename } from "@/lib/pdf-filename";
 
 /// Tipos de reporte CSV disponibles para el suscriptor.
 const REPORT_TYPES = [
@@ -221,10 +222,25 @@ export async function GET(
 
   const csv = toCsv(headers, rows);
 
+  // Nombre dinámico — incluye organismo + tipo del reporte + fecha.
+  // Ej: ReporteCandidatos_RISKS-INTERNATIONAL_2026-06-12.csv
+  const subscriber = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: { tradeName: true, legalName: true },
+  });
+  const orgLabel = subscriber?.tradeName ?? subscriber?.legalName ?? "Organismo";
+  // type → capitalizado para que el nombre quede legible.
+  const typeLabel = type.charAt(0).toUpperCase() + type.slice(1);
+  const fname = buildPdfFilename({
+    prefix: `Reporte${typeLabel}`,
+    holderName: orgLabel,
+    suffix: new Date().toISOString().slice(0, 10),
+    ext: "csv",
+  });
   return new Response(csv, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="reporte-${type}.csv"`,
+      "Content-Disposition": `attachment; filename="${fname}"`,
       "Cache-Control": "no-store",
     },
   });

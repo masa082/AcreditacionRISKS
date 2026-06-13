@@ -403,12 +403,29 @@ export async function sendHabeasReceiptEmail(
     policyUrl: data.policyUrl,
     evidenceHash: data.evidenceHash,
   });
+  // Nombre dinámico:
+  //   AutorizacionHabeasData_SAMUEL-SANCHEZ_CC-7182416_FIRMADO_2026-06-12.pdf
+  // Importamos el helper acá para no acoplar el módulo de email al
+  // árbol completo de PDF utils en builds donde no se use.
+  const { buildPdfFilename } = await import("@/lib/pdf-filename");
+  // documentLabel viene en formato "CC 7182416" — lo dividimos.
+  const docParts = (data.documentLabel ?? "").trim().split(/\s+/);
+  const docType = docParts.length > 1 ? docParts[0] : "DOC";
+  const docNumber = docParts.length > 1 ? docParts.slice(1).join("") : docParts[0];
+  const filename = buildPdfFilename({
+    prefix: "AutorizacionHabeasData",
+    holderName: data.holderName,
+    documentType: docType,
+    documentNumber: docNumber,
+    status: "FIRMADO",
+    suffix: data.acceptedAt.toISOString().slice(0, 10),
+  });
   return sendEmail({
     subscriberId, to,
     subject: rendered.subject, html: rendered.html, text: rendered.text,
     attachments: [
       {
-        filename: `Autorizacion-Habeas-Data-${data.holderName.replace(/\s+/g, "-")}.pdf`,
+        filename,
         content: data.pdfBytes,
         contentType: "application/pdf",
       },

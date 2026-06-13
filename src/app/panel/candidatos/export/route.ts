@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberPage } from "@/lib/guards";
 import { can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
+import { buildPdfFilename } from "@/lib/pdf-filename";
 
 export const dynamic = "force-dynamic";
 
@@ -99,7 +100,19 @@ export async function GET(req: NextRequest) {
 
   // BOM + CRLF para máxima compatibilidad con Excel (especialmente en Windows).
   const body = "﻿" + rows.join("\r\n");
-  const fname = `candidatos_${new Date().toISOString().slice(0, 10)}.csv`;
+  // Nombre dinámico — incluye el nombre del suscriptor y la fecha.
+  // Ej: Candidatos_RISKS-INTERNATIONAL_2026-06-12.csv
+  const subscriber = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: { tradeName: true, legalName: true },
+  });
+  const orgLabel = subscriber?.tradeName ?? subscriber?.legalName ?? "Organismo";
+  const fname = buildPdfFilename({
+    prefix: "Candidatos",
+    holderName: orgLabel,
+    suffix: new Date().toISOString().slice(0, 10),
+    ext: "csv",
+  });
   return new Response(body, {
     status: 200,
     headers: {

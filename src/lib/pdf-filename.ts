@@ -67,6 +67,9 @@ const STATUS_LABEL: Record<string, string> = {
   VALID: "VIGENTE",
   SUSPENDED: "SUSPENDIDO",
   WITHDRAWN: "ANULADO",
+  // Para pagos (PaymentStatus): PENDING / APPROVED / REJECTED / EXPIRED / REFUNDED
+  // APPROVED / PENDING / REJECTED / EXPIRED ya están arriba.
+  REFUNDED: "REEMBOLSADO",
 };
 
 export function labelStatus(status: string | null | undefined): string {

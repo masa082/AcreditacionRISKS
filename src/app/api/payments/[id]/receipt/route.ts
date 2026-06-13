@@ -7,6 +7,7 @@ import {
   extFromName,
   presignedGetUrl,
 } from "@/lib/storage";
+import { buildPdfFilename } from "@/lib/pdf-filename";
 
 /**
  * Sirve el soporte (comprobante) de un Payment con control de acceso:
@@ -36,7 +37,16 @@ export async function GET(
       enrollment: {
         select: {
           subscriberId: true,
-          candidate: { select: { userId: true } },
+          code: true,
+          candidate: {
+            select: {
+              userId: true,
+              firstName: true,
+              lastName: true,
+              documentType: true,
+              documentNumber: true,
+            },
+          },
         },
       },
     },
@@ -59,7 +69,17 @@ export async function GET(
 
   const ext = extFromName(payment.receiptUrl);
   const mime = EXT_TO_MIME[ext] ?? "application/octet-stream";
-  const downloadName = `soporte-pago-${payment.id}.${ext}`;
+  // Nombre dinámico: SoportePago_NOMBRE_CC-XXX_APROBADO_INS-2026-0010.pdf
+  const cand = payment.enrollment?.candidate;
+  const downloadName = buildPdfFilename({
+    prefix: "SoportePago",
+    holderName: cand ? `${cand.firstName ?? ""} ${cand.lastName ?? ""}`.trim() : "",
+    documentType: cand?.documentType ?? "DOC",
+    documentNumber: cand?.documentNumber ?? undefined,
+    status: payment.status,
+    suffix: payment.enrollment?.code ?? payment.id.slice(-6),
+    ext,
+  });
 
   // Redirect a presigned S3 si está configurado (producción).
   try {

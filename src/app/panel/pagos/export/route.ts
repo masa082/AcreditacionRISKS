@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberPage } from "@/lib/guards";
 import { can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
+import { buildPdfFilename } from "@/lib/pdf-filename";
 import type { Prisma } from "@prisma/client";
 
 export const dynamic = "force-dynamic";
@@ -122,10 +123,23 @@ export async function GET(req: NextRequest) {
   // BOM + CRLF para máxima compatibilidad con Excel en Windows / Mac.
   const body = "﻿" + [headers.join(","), ...rows].join("\r\n");
 
+  // Nombre dinámico — incluye organismo + fecha.
+  // Ej: PagosRecibidos_RISKS-INTERNATIONAL_2026-06-12.csv
+  const subscriber = await prisma.subscriber.findUnique({
+    where: { id: subscriberId },
+    select: { tradeName: true, legalName: true },
+  });
+  const orgLabel = subscriber?.tradeName ?? subscriber?.legalName ?? "Organismo";
+  const fname = buildPdfFilename({
+    prefix: "PagosRecibidos",
+    holderName: orgLabel,
+    suffix: new Date().toISOString().slice(0, 10),
+    ext: "csv",
+  });
   return new Response(body, {
     headers: {
       "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": `attachment; filename="pagos-${new Date().toISOString().slice(0,10)}.csv"`,
+      "Content-Disposition": `attachment; filename="${fname}"`,
       "Cache-Control": "no-store",
     },
   });
