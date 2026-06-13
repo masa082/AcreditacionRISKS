@@ -6,7 +6,7 @@ import { can } from "@/lib/session";
 import { PERMISSIONS } from "@/lib/permissions";
 import { Card, PageHeader, Badge } from "@/components/ui";
 import { QuestionEditor, type QuestionInitial } from "@/components/question-editor";
-import { setQuestionStatus, deleteQuestion } from "@/lib/actions/questions";
+import { setQuestionStatus, setQuestionStatusForm, deleteQuestion } from "@/lib/actions/questions";
 import { QUESTION_STATUS_LABELS, type QuestionTypeKey } from "@/lib/question-types";
 
 export const metadata = { title: "Editar pregunta" };
@@ -99,7 +99,7 @@ export default async function EditQuestionPage({
           <span className="text-sm text-slate-400">Sin acciones disponibles para su rol en este estado.</span>
         ) : null}
         {actions.filter((a) => a.show).map((a) => (
-          <form key={a.transition} action={setQuestionStatus.bind(null, q.id, a.transition)}>
+          <form key={a.transition} action={setQuestionStatusForm.bind(null, q.id, a.transition)}>
             <button className={`rounded-lg ${a.tone} px-4 py-2 text-sm font-semibold text-white hover:opacity-90`}>{a.label}</button>
           </form>
         ))}

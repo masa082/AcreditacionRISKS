@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
-import { duplicateQuestion, deleteQuestion } from "@/lib/actions/questions";
+import { duplicateQuestion, deleteQuestion, setQuestionStatus } from "@/lib/actions/questions";
 import { useSortableRows, SortableHeader } from "@/components/sortable";
 
 export interface QuestionRow {
@@ -44,12 +44,16 @@ export function QuestionsTable({
   knownTags,
   canEdit,
   canCreate,
+  canApprove = false,
+  canReview = false,
 }: {
   bankId: string;
   rows: QuestionRow[];
   knownTags: string[];
   canEdit: boolean;
   canCreate: boolean;
+  canApprove?: boolean;
+  canReview?: boolean;
 }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -67,6 +71,26 @@ export function QuestionsTable({
     setBusyId(id);
     try {
       await duplicateQuestion(id);
+    } finally {
+      setBusyId(null);
+    }
+  }
+  async function onApprove(id: string, code: string) {
+    if (!confirm(`¿Aprobar la pregunta ${code}? Quedará disponible para los exámenes.`)) return;
+    setBusyId(id);
+    try {
+      const res = await setQuestionStatus(id, "approve");
+      if (!res?.ok) alert(res?.error ?? "No se pudo aprobar la pregunta.");
+    } finally {
+      setBusyId(null);
+    }
+  }
+  async function onReject(id: string, code: string) {
+    if (!confirm(`¿Rechazar la pregunta ${code}? El autor deberá corregirla y reenviarla.`)) return;
+    setBusyId(id);
+    try {
+      const res = await setQuestionStatus(id, "reject");
+      if (!res?.ok) alert(res?.error ?? "No se pudo rechazar la pregunta.");
     } finally {
       setBusyId(null);
     }
@@ -226,6 +250,28 @@ export function QuestionsTable({
                 </td>
                 <td className="px-3 py-2 align-top text-right">
                   <div className="flex items-center justify-end gap-1">
+                    {canApprove && (q.status === "DRAFT" || q.status === "IN_REVIEW" || q.status === "REJECTED") ? (
+                      <button
+                        type="button"
+                        disabled={busyId === q.id}
+                        onClick={() => onApprove(q.id, q.code)}
+                        className="rounded-md border border-emerald-300 bg-gradient-to-br from-emerald-500 to-emerald-600 px-2.5 py-1 text-[11px] font-bold text-white shadow-sm shadow-emerald-200 ring-1 ring-emerald-300/60 hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50 animate-pulse"
+                        title={q.status === "DRAFT" ? "Aprobar directamente (Borrador → Aprobada)" : q.status === "REJECTED" ? "Aprobar (Rechazada → Aprobada)" : "Aprobar (En revisión → Aprobada)"}
+                      >
+                        ✓ Aprobar
+                      </button>
+                    ) : null}
+                    {canReview && (q.status === "DRAFT" || q.status === "IN_REVIEW") ? (
+                      <button
+                        type="button"
+                        disabled={busyId === q.id}
+                        onClick={() => onReject(q.id, q.code)}
+                        className="rounded-md border border-rose-300 bg-white px-2.5 py-1 text-[11px] font-bold text-rose-700 hover:bg-rose-50 disabled:opacity-50"
+                        title="Rechazar la pregunta"
+                      >
+                        ✗ Rechazar
+                      </button>
+                    ) : null}
                     <Link href={`/panel/preguntas/${bankId}/pregunta/${q.id}`} className="rounded border border-slate-300 px-2 py-1 text-[10px] font-semibold text-slate-700 hover:bg-slate-100" title="Ver / Editar">✎</Link>
                     {canCreate ? (
                       <button type="button" disabled={busyId === q.id} onClick={() => onDuplicate(q.id)} className="rounded border border-brand-200 bg-brand-50 px-2 py-1 text-[10px] font-semibold text-brand-800 hover:bg-brand-100 disabled:opacity-50" title="Duplicar pregunta">⎘</button>

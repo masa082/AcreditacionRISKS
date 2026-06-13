@@ -295,13 +295,25 @@ export async function updateQuestion(
 
 type Transition = "submit" | "approve" | "reject" | "inactivate" | "reactivate";
 
+/**
+ * Reglas de transición del workflow de preguntas.
+ *
+ * `approve`: por estándar IN_REVIEW → APPROVED. Adicionalmente
+ * acepta DRAFT y REJECTED para que el admin del suscriptor pueda
+ * aprobar directamente desde la lista del banco sin tener que
+ * primero "Enviar a revisión" y luego "Aprobar". Este atajo solo lo
+ * pueden usar usuarios con QUESTION_APPROVE — quien aprueba se hace
+ * responsable como reviewer.
+ *
+ * `reject`: igual, IN_REVIEW + DRAFT, por simetría con approve.
+ */
 const TRANSITION: Record<
   Transition,
   { from: QuestionStatus[]; to: QuestionStatus; perm: string; action: string }
 > = {
   submit: { from: ["DRAFT", "REJECTED"], to: "IN_REVIEW", perm: PERMISSIONS.QUESTION_EDIT, action: "submitted" },
-  approve: { from: ["IN_REVIEW"], to: "APPROVED", perm: PERMISSIONS.QUESTION_APPROVE, action: "approved" },
-  reject: { from: ["IN_REVIEW"], to: "REJECTED", perm: PERMISSIONS.QUESTION_REVIEW, action: "rejected" },
+  approve: { from: ["DRAFT", "IN_REVIEW", "REJECTED"], to: "APPROVED", perm: PERMISSIONS.QUESTION_APPROVE, action: "approved" },
+  reject: { from: ["DRAFT", "IN_REVIEW"], to: "REJECTED", perm: PERMISSIONS.QUESTION_REVIEW, action: "rejected" },
   inactivate: { from: ["APPROVED"], to: "INACTIVE", perm: PERMISSIONS.QUESTION_APPROVE, action: "inactivated" },
   reactivate: { from: ["INACTIVE"], to: "APPROVED", perm: PERMISSIONS.QUESTION_APPROVE, action: "reactivated" },
 };
@@ -309,15 +321,17 @@ const TRANSITION: Record<
 export async function setQuestionStatus(
   id: string,
   transition: Transition,
-): Promise<void> {
+): Promise<{ ok: boolean; error?: string }> {
   const { ctx, subscriberId } = await requireSubscriberAction();
   const rule = TRANSITION[transition];
-  if (!rule) return;
-  if (!can(ctx, rule.perm)) throw new Error("FORBIDDEN");
+  if (!rule) return { ok: false, error: "Transición desconocida." };
+  if (!can(ctx, rule.perm)) return { ok: false, error: "Sin permisos para esta acción." };
 
   const q = await prisma.question.findUnique({ where: { id } });
-  if (!q || q.subscriberId !== subscriberId) return;
-  if (!rule.from.includes(q.status)) return; // transición no permitida
+  if (!q || q.subscriberId !== subscriberId) return { ok: false, error: "Pregunta no encontrada." };
+  if (!rule.from.includes(q.status)) {
+    return { ok: false, error: `No se puede ${rule.action} desde el estado actual (${q.status}).` };
+  }
 
   await prisma.question.update({
     where: { id },
@@ -345,6 +359,13 @@ export async function setQuestionStatus(
   });
   revalidatePath(`/panel/preguntas/${q.bankId}`);
   revalidatePath(`/panel/preguntas/${q.bankId}/pregunta/${id}`);
+  return { ok: true };
+}
+
+/// Wrapper que descarta el retorno de `setQuestionStatus` para que pueda
+/// usarse como `form action` (que exige `Promise<void>`).
+export async function setQuestionStatusForm(id: string, transition: Transition): Promise<void> {
+  await setQuestionStatus(id, transition);
 }
 
 /// Duplica una pregunta dentro del mismo banco. La copia queda en estado

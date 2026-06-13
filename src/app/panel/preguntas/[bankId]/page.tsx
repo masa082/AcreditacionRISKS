@@ -35,6 +35,8 @@ export default async function BankDetailPage({
   const { ctx, subscriberId } = await requireSubscriberPage();
   const canEdit = can(ctx, PERMISSIONS.QUESTION_EDIT);
   const canCreate = can(ctx, PERMISSIONS.QUESTION_CREATE);
+  const canApprove = can(ctx, PERMISSIONS.QUESTION_APPROVE);
+  const canReview = can(ctx, PERMISSIONS.QUESTION_REVIEW);
 
   const bank = await prisma.questionBank.findUnique({
     where: { id: bankId },
@@ -152,7 +154,7 @@ export default async function BankDetailPage({
       </div>
 
       <Card className="p-5">
-        <QuestionsTable bankId={bankId} rows={rows} knownTags={knownTags} canEdit={canEdit} canCreate={canCreate} />
+        <QuestionsTable bankId={bankId} rows={rows} knownTags={knownTags} canEdit={canEdit} canCreate={canCreate} canApprove={canApprove} canReview={canReview} />
       </Card>
     </>
   );
