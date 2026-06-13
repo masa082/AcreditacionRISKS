@@ -79,8 +79,8 @@ export default async function GradeAttemptPage({
           return (
             <Card key={q.id} className="overflow-hidden">
               <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3">
-                <h2 className="font-semibold text-slate-900">Pregunta {i + 1} · {Number(q.points.toString())} pts</h2>
-                {graded ? <Badge tone="green">Calificada {ans?.finalScore != null ? `(${Number(ans.finalScore.toString())})` : ""}</Badge> : <Badge tone="amber">Pendiente</Badge>}
+                <h2 className="font-semibold text-slate-900">Pregunta {i + 1}</h2>
+                {graded ? <Badge tone="green">Calificada {ans?.manualScore != null ? `(${Number(ans.manualScore.toString())}/100)` : ""}</Badge> : <Badge tone="amber">Pendiente</Badge>}
               </div>
               <div className="space-y-4 p-5">
                 {snap.contextText ? <p className="whitespace-pre-line rounded-lg bg-slate-50 p-3 text-sm text-slate-600">{snap.contextText}</p> : null}
@@ -113,8 +113,7 @@ export default async function GradeAttemptPage({
                 {canGrade && isOpen ? (
                   <GradeAnswerForm
                     answerId={ans?.id ?? ""}
-                    maxPoints={Number(q.points.toString())}
-                    initialScore={ans?.finalScore != null ? Number(ans.finalScore.toString()) : null}
+                    initialScore={ans?.manualScore != null ? Number(ans.manualScore.toString()) : null}
                     initialComment={ans?.graderComment ?? null}
                     graded={graded}
                   />

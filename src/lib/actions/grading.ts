@@ -13,11 +13,20 @@ import { BRAND } from "@/lib/brand";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 const gradeSchema = z.object({
-  score: z.coerce.number().min(0),
+  score: z.coerce.number().min(0).max(100),
   comment: z.string().max(2000).optional().nullable(),
 });
 
-/// Califica manualmente una respuesta (abierta / caso / archivo) con puntaje y comentario.
+/// Califica manualmente una respuesta (abierta / caso / archivo) con
+/// puntaje 0–100 y comentario.
+///
+/// La nota humana es 0–100 (legible para el evaluador). Internamente
+/// reescalamos al `points` de la pregunta para que el cálculo agregado
+/// del intento (rawScore / maxScore = scorePercent) siga siendo correcto
+/// con preguntas de pesos distintos.
+///
+///   manualScore = nota humana (0–100)
+///   finalScore  = manualScore * points / 100
 export async function gradeManualAnswer(
   answerId: string,
   _prev: ActionResult,
@@ -32,7 +41,9 @@ export async function gradeManualAnswer(
       return v.length ? v : null;
     })(),
   });
-  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message };
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "El puntaje debe estar entre 0 y 100." };
+  }
 
   const answer = await prisma.attemptAnswer.findUnique({
     where: { id: answerId },
@@ -44,16 +55,15 @@ export async function gradeManualAnswer(
   if (!answer || answer.attempt.subscriberId !== subscriberId) {
     return { ok: false, error: "Respuesta no encontrada." };
   }
-  const max = Number(answer.attemptQuestion.points.toString());
-  if (parsed.data.score > max) {
-    return { ok: false, error: `El puntaje no puede superar ${max}.` };
-  }
+  const points = Number(answer.attemptQuestion.points.toString());
+  const humanScore = parsed.data.score;          // 0..100
+  const scaledFinal = (humanScore * points) / 100;
 
   await prisma.attemptAnswer.update({
     where: { id: answerId },
     data: {
-      manualScore: new Prisma.Decimal(parsed.data.score),
-      finalScore: new Prisma.Decimal(parsed.data.score),
+      manualScore: new Prisma.Decimal(humanScore),
+      finalScore: new Prisma.Decimal(scaledFinal),
       graderComment: parsed.data.comment,
       gradedById: ctx.userId,
       status: "MANUALLY_SCORED",

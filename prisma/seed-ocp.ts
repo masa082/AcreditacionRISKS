@@ -412,7 +412,7 @@ async function main() {
         subscriberId: subscriber.id, schemeId: scheme.id, code: praCode, name: cfg.caseName,
         description: "Evaluación práctica (caso). Entrega en PDF, calificada por dos evaluadores independientes y revisada por el comité.",
         type: "PRACTICAL", modality: "ONLINE", status: "PUBLISHED",
-        durationMin: 240, numQuestions: 1, totalPoints: new Prisma.Decimal(80), passingScore: new Prisma.Decimal(80),
+        durationMin: 240, numQuestions: 1, totalPoints: new Prisma.Decimal(80), passingScore: new Prisma.Decimal(70),
         attemptsAllowed: 1, randomizeQuestions: false, randomizeOptions: false,
         requirePayment: false, requireSchedule: false, requireCommittee: true, autoCertificate: false,
         showResultImmediately: false, allowReview: false,
