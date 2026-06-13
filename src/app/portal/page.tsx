@@ -74,7 +74,12 @@ export default async function CandidatePortal() {
           },
         },
         payments: { select: { status: true } },
-        certificates: { select: { id: true, status: true } },
+        // Importante: traer el TIPO del certificado para distinguir
+        // EXAM_PRESENTATION (constancia) de CERTIFICATION (certificado
+        // final). Una constancia NO significa que el proceso esté
+        // terminado — el candidato todavía puede tener evaluaciones
+        // pendientes del programa.
+        certificates: { select: { id: true, status: true, type: true } },
       },
     }),
     prisma.certificate.findMany({
@@ -88,12 +93,16 @@ export default async function CandidatePortal() {
   ]);
 
   const activeCerts = certificates.filter((c) => c.status === "VALID");
+  // SOLO la certificación final (no las constancias de presentación)
+  // cuenta como "proceso terminado". Una constancia es un comprobante
+  // de que presentó el examen, no de que aprobó la certificación
+  // completa. Para los KPIs y el stepper hay que distinguir.
+  const finalCerts = activeCerts.filter((c) => c.type === "CERTIFICATION");
 
   // Step REAL del candidato: tomamos el MÁS ALTO de todos los procesos,
-  // no el más reciente. Si tiene un examen aprobado o un certificado,
-  // el stepper avanza aunque haya creado una nueva inscripción que está
-  // en DOCS_PENDING para la siguiente evaluación.
-  const currentStep = computeOverallStep(enrollments, activeCerts.length > 0);
+  // no el más reciente. Step 4 solo si tiene una CERTIFICATION final;
+  // una constancia de presentación NO completa el proceso.
+  const currentStep = computeOverallStep(enrollments, finalCerts.length > 0);
 
   // "Pendientes" reales del candidato — algo que requiere su acción.
   const pendingActions = enrollments.filter((e) => candidateActionRequired(e)).length;
@@ -191,6 +200,17 @@ export default async function CandidatePortal() {
                 const scorePct = latestAttempt?.scorePercent
                   ? Number(latestAttempt.scorePercent.toString())
                   : null;
+                // Indica si esta inscripción tiene una acción PENDIENTE
+                // del candidato (lista para presentar, intento en curso).
+                // En esos casos mostramos el botón animado "Completar el
+                // proceso →" inline.
+                const showActionButton =
+                  e.status === "READY" ||
+                  (latestAttempt?.status === "IN_PROGRESS" || latestAttempt?.status === "NOT_STARTED");
+                const actionLabel =
+                  latestAttempt?.status === "IN_PROGRESS"
+                    ? "Continuar prueba"
+                    : "Completar el proceso";
                 return (
                   <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
                     <div className="min-w-0 flex-1">
@@ -215,10 +235,28 @@ export default async function CandidatePortal() {
                           </span>
                         ) : null}
                       </div>
+                      {showActionButton && !latestAttempt?.passed ? (
+                        <p className="mt-1 text-[11px] font-semibold text-amber-700">
+                          ⏳ Pendiente de presentar — última acción suya
+                        </p>
+                      ) : null}
                     </div>
-                    <Badge tone={toneFor(e.status)}>
-                      {ENROLL_STATUS_KEY[e.status] ? tr(ENROLL_STATUS_KEY[e.status]) : e.status}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge tone={toneFor(e.status)}>
+                        {ENROLL_STATUS_KEY[e.status] ? tr(ENROLL_STATUS_KEY[e.status]) : e.status}
+                      </Badge>
+                      {showActionButton ? (
+                        <Link
+                          href={`/portal/inscripcion/${e.id}`}
+                          // animate-pulse + ring para llamar la atención
+                          // sobre la acción que le falta al candidato.
+                          className="inline-flex animate-pulse items-center gap-1 rounded-lg btn-grad-navy px-3 py-1.5 text-[12px] font-bold text-white shadow ring-2 ring-emerald-400 ring-offset-2"
+                          title="Vaya a la inscripción para iniciar la prueba"
+                        >
+                          ➜ {actionLabel}
+                        </Link>
+                      ) : null}
+                    </div>
                   </li>
                 );
               })}
@@ -278,7 +316,7 @@ type EnrollmentRow = Awaited<
         };
       };
       payments: { select: { status: true } };
-      certificates: { select: { id: true; status: true } };
+      certificates: { select: { id: true; status: true; type: true } };
     };
   }>>
 >[number];
@@ -381,7 +419,14 @@ function ProgramStatusCard({
   const teorScore = teorAttempt?.scorePercent ? Number(teorAttempt.scorePercent.toString()) : null;
   const casoScore = casoAttempt?.scorePercent ? Number(casoAttempt.scorePercent.toString()) : null;
 
-  const hasCert = program.enrollments.some((e) => e.certificates.length > 0);
+  // Distinguir constancia (EXAM_PRESENTATION) de certificación final
+  // (CERTIFICATION). Solo la segunda marca el proceso como completado.
+  const hasFinalCert = program.enrollments.some((e) =>
+    e.certificates.some((c) => c.type === "CERTIFICATION"),
+  );
+  const hasPresentationCert = program.enrollments.some((e) =>
+    e.certificates.some((c) => c.type === "EXAM_PRESENTATION"),
+  );
 
   // Próximo paso del programa.
   const next = computeNextStep({
@@ -389,7 +434,7 @@ function ProgramStatusCard({
     caso,
     teorAttempt,
     casoAttempt,
-    hasCert,
+    hasFinalCert,
   });
 
   return (
@@ -438,15 +483,23 @@ function ProgramStatusCard({
               }
             />
             <Step
-              done={hasCert}
+              done={hasFinalCert}
               pending={false}
               label="Certificado emitido"
-              detail={hasCert ? "Disponible en Mis Certificados" : "Tras aprobar ambas evaluaciones"}
+              detail={
+                hasFinalCert
+                  ? "Disponible en Mis Certificados"
+                  : hasPresentationCert
+                  ? "Constancia emitida — falta aprobar la última evaluación"
+                  : "Tras aprobar ambas evaluaciones"
+              }
             />
           </ul>
         </div>
 
-        {/* Próximo paso destacado a la derecha */}
+        {/* Próximo paso destacado a la derecha. Si la acción depende del
+            candidato (presentar/continuar prueba), añadimos animate-pulse
+            + ring para que llame la atención. */}
         {next ? (
           <aside className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 lg:max-w-xs">
             <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
@@ -457,7 +510,12 @@ function ProgramStatusCard({
             {next.href ? (
               <Link
                 href={next.href}
-                className="mt-3 block rounded-lg btn-grad-navy px-3 py-2 text-center text-sm font-bold text-white shadow-sm"
+                className={
+                  "mt-3 block rounded-lg btn-grad-navy px-3 py-2 text-center text-sm font-bold text-white shadow-sm" +
+                  (next.isAction
+                    ? " animate-pulse ring-2 ring-emerald-400 ring-offset-2"
+                    : "")
+                }
               >
                 {next.cta}
               </Link>
@@ -507,16 +565,22 @@ function computeNextStep({
   caso,
   teorAttempt,
   casoAttempt,
-  hasCert,
+  hasFinalCert,
 }: {
   teor: EnrollmentRow | undefined;
   caso: EnrollmentRow | undefined;
   teorAttempt: { status: string; passed: boolean | null; scorePercent: unknown } | null;
   casoAttempt: { status: string; passed: boolean | null; scorePercent: unknown } | null;
-  hasCert: boolean;
-}): { title: string; detail?: string; cta: string; href?: string } | null {
-  // Certificado emitido → ya está.
-  if (hasCert) {
+  hasFinalCert: boolean;
+}): { title: string; detail?: string; cta: string; href?: string; isAction?: boolean } | null {
+  // `isAction` distingue las acciones donde el candidato debe ACTUAR
+  // (presentar/continuar prueba/inscribirse) de las informativas
+  // (esperar comité, descargar certificado). El render lo usa para
+  // aplicar animate-pulse al CTA.
+  // Solo la CERTIFICATION final cierra el proceso. Una constancia
+  // (EXAM_PRESENTATION) NO basta: el candidato todavía puede tener
+  // evaluaciones pendientes del programa.
+  if (hasFinalCert) {
     return {
       title: "Certificado emitido",
       detail: "Descárguelo, compártalo o verifíquelo por QR.",
@@ -531,6 +595,7 @@ function computeNextStep({
       detail: "Es la primera evaluación del programa.",
       cta: "Ir a evaluaciones disponibles →",
       href: "/portal/evaluaciones",
+      isAction: true,
     };
   }
   // Teórico en curso → continuar.
@@ -540,6 +605,7 @@ function computeNextStep({
       detail: "Tiene un intento en curso.",
       cta: "Volver a la prueba →",
       href: `/portal/examen/${(teorAttempt as { id?: string }).id ?? ""}`,
+      isAction: true,
     };
   }
   // Teórico no presentado → presentar.
@@ -549,6 +615,7 @@ function computeNextStep({
       detail: "Cuando esté listo, inicie la prueba desde la inscripción.",
       cta: "Ir al Examen Teórico →",
       href: `/portal/inscripcion/${teor.id}`,
+      isAction: true,
     };
   }
   // Teórico no aprobado → revisar / reintentar.
@@ -558,6 +625,7 @@ function computeNextStep({
       detail: "Revise el resultado del intento y las opciones de reintento.",
       cta: "Ver detalle del intento →",
       href: `/portal/inscripcion/${teor.id}`,
+      isAction: true,
     };
   }
   // Teórico aprobado y no hay Caso Práctico → ir a inscribirse / iniciar.
@@ -565,8 +633,9 @@ function computeNextStep({
     return {
       title: "Inicie el Caso Práctico",
       detail: "Aprobó el Examen Teórico — sin costo adicional. Los documentos ya aprobados se reutilizan automáticamente.",
-      cta: "Iniciar Caso Práctico →",
+      cta: "Completar el proceso · Iniciar Caso Práctico →",
       href: "/portal/evaluaciones",
+      isAction: true,
     };
   }
   // Caso Práctico inscrito sin presentar.
@@ -574,8 +643,9 @@ function computeNextStep({
     return {
       title: "Presente el Caso Práctico",
       detail: "Última evaluación del programa. Al aprobar se emite su certificado.",
-      cta: "Iniciar Caso Práctico →",
+      cta: "Completar el proceso · Iniciar Caso Práctico →",
       href: `/portal/inscripcion/${caso.id}`,
+      isAction: true,
     };
   }
   if (casoAttempt?.status === "IN_PROGRESS") {
@@ -583,6 +653,7 @@ function computeNextStep({
       title: "Continúe el Caso Práctico",
       cta: "Volver a la prueba →",
       href: `/portal/examen/${(casoAttempt as { id?: string }).id ?? ""}`,
+      isAction: true,
     };
   }
   if (casoAttempt?.status === "PENDING_COMMITTEE" || casoAttempt?.status === "SUBMITTED") {
