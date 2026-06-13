@@ -123,43 +123,88 @@ export interface BuiltQuestion {
 ///    como techo. Si la suma de secciones excede ese tope, se hace un
 ///    sampling aleatorio uniforme respetando la diversidad entre secciones.
 ///    Si es menor, se sirven todas. `0` = sin tope.
-export async function buildAttemptQuestions(examId: string): Promise<BuiltQuestion[]> {
+export interface BuildAttemptOpts {
+  /**
+   * IDs de preguntas que NO deben aparecer en este intento. Útil para
+   * reintentos: el candidato no debe ver de nuevo las mismas preguntas
+   * que ya respondió en intentos anteriores del mismo examen.
+   */
+  excludeQuestionIds?: string[];
+  /**
+   * Si > 0, eleva la dificultad de las preguntas que se seleccionan.
+   *   - 1: descarta BASIC; mezcla INTERMEDIATE + ADVANCED.
+   *   - 2: descarta BASIC + INTERMEDIATE; solo ADVANCED.
+   * Si no hay suficientes preguntas en el nivel objetivo, hace fallback
+   * "graceful" al nivel inferior antes de dejar el examen incompleto.
+   */
+  difficultyBoost?: number;
+}
+
+export async function buildAttemptQuestions(
+  examId: string,
+  opts: BuildAttemptOpts = {},
+): Promise<BuiltQuestion[]> {
   const exam = await prisma.exam.findUniqueOrThrow({
     where: { id: examId },
     include: { sections: { orderBy: { order: "asc" } } },
   });
 
-  // Acumulador con dedupe por questionId (clave: una pregunta solo entra
-  // una vez por intento, sin importar cuántas secciones la incluyan).
-  const seen = new Set<string>();
+  // Acumulador con dedupe por questionId (una pregunta solo entra una
+  // vez por intento) + exclusión externa (preguntas de intentos previos
+  // del mismo candidato).
+  const seen = new Set<string>(opts.excludeQuestionIds ?? []);
   const built: BuiltQuestion[] = [];
+  const boost = Math.max(0, opts.difficultyBoost ?? 0);
 
   for (const section of exam.sections) {
     if (!section.bankId || section.questionCount <= 0) continue;
-    const pool = await prisma.question.findMany({
-      where: {
-        subscriberId: exam.subscriberId,
-        bankId: section.bankId,
-        status: "APPROVED",
-        ...(section.topicFilter ? { topicId: section.topicFilter } : {}),
-        ...(section.difficulty ? { difficulty: section.difficulty } : {}),
-        // Excluye preguntas ya elegidas por secciones anteriores (mismo banco).
-        ...(seen.size > 0 ? { id: { notIn: Array.from(seen) } } : {}),
-      },
-      include: { options: true },
-    });
-    const picked = shuffle(pool).slice(0, section.questionCount);
+
+    // Niveles de dificultad candidatos en orden de prioridad. Si la
+    // sección fija una dificultad explícita, esa manda — el boost no
+    // sobrescribe la configuración. Sin dificultad fija, el boost
+    // determina el orden y los fallbacks.
+    const sectionDifficulty = section.difficulty ?? null;
+    let levels: ("BASIC" | "INTERMEDIATE" | "ADVANCED")[];
+    if (sectionDifficulty) {
+      levels = [sectionDifficulty];
+    } else if (boost >= 2) {
+      levels = ["ADVANCED", "INTERMEDIATE"];
+    } else if (boost === 1) {
+      levels = ["INTERMEDIATE", "ADVANCED", "BASIC"];
+    } else {
+      levels = ["BASIC", "INTERMEDIATE", "ADVANCED"];
+    }
+
+    // Pickamos preguntas en cascada por nivel hasta llenar la sección
+    // o agotar los pools disponibles.
     const pts = section.pointsPerQuestion;
-    for (const q of picked) {
-      if (seen.has(q.id)) continue;
-      seen.add(q.id);
-      built.push({
-        questionId: q.id,
-        order: 0,
-        points: pts ?? q.points,
-        snapshot: buildSnapshot(q, exam.randomizeOptions),
-        sectionTitle: section.title,
+    let remaining = section.questionCount;
+    for (const lvl of levels) {
+      if (remaining <= 0) break;
+      const pool = await prisma.question.findMany({
+        where: {
+          subscriberId: exam.subscriberId,
+          bankId: section.bankId,
+          status: "APPROVED",
+          difficulty: lvl,
+          ...(section.topicFilter ? { topicId: section.topicFilter } : {}),
+          ...(seen.size > 0 ? { id: { notIn: Array.from(seen) } } : {}),
+        },
+        include: { options: true },
       });
+      const take = shuffle(pool).slice(0, remaining);
+      for (const q of take) {
+        if (seen.has(q.id)) continue;
+        seen.add(q.id);
+        built.push({
+          questionId: q.id,
+          order: 0,
+          points: pts ?? q.points,
+          snapshot: buildSnapshot(q, exam.randomizeOptions),
+          sectionTitle: section.title,
+        });
+      }
+      remaining -= take.length;
     }
   }
 

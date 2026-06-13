@@ -72,7 +72,29 @@ export async function startAttempt(enrollmentId: string): Promise<void> {
     redirect(`/portal/examen/${finished[0].id}/resultado`);
   }
 
-  const questions = await buildAttemptQuestions(exam.id);
+  // Recolectamos las preguntas que el candidato YA respondió en intentos
+  // previos (esta inscripción) para excluirlas del nuevo intento — anti
+  // repetición que hace los reintentos justos.
+  // Solo aplica desde el 2º intento.
+  const priorQuestionIds = attempts.length > 0
+    ? (await prisma.attemptQuestion.findMany({
+        where: { attempt: { enrollmentId } },
+        select: { questionId: true },
+      })).map((q) => q.questionId)
+    : [];
+
+  // El boost de dificultad crece con cada reintento:
+  //   intento 1 → 0 (sin boost, mezcla equilibrada)
+  //   intento 2 → 1 (descarta BASIC; mezcla INTERMEDIATE + ADVANCED)
+  //   intento 3+ → 2 (solo ADVANCED — con fallback a INTERMEDIATE si no hay
+  //                   suficientes preguntas, para no dejar el examen vacío).
+  const attemptNumber = attempts.length + 1;
+  const difficultyBoost = Math.min(2, Math.max(0, attemptNumber - 1));
+
+  const questions = await buildAttemptQuestions(exam.id, {
+    excludeQuestionIds: priorQuestionIds,
+    difficultyBoost,
+  });
   if (questions.length === 0) throw new Error("La evaluación no tiene preguntas disponibles.");
 
   const meta = await reqMeta();
@@ -85,7 +107,7 @@ export async function startAttempt(enrollmentId: string): Promise<void> {
       enrollmentId,
       examId: exam.id,
       candidateId,
-      attemptNumber: attempts.length + 1,
+      attemptNumber,
       status: "IN_PROGRESS",
       startedAt: new Date(),
       dueAt,
@@ -102,7 +124,13 @@ export async function startAttempt(enrollmentId: string): Promise<void> {
           snapshot: q.snapshot as unknown as Prisma.InputJsonValue,
         })),
       },
-      events: { create: { type: "started", ip: meta.ip } },
+      events: {
+        create: {
+          type: "started",
+          ip: meta.ip,
+          data: { attemptNumber, difficultyBoost, excludedPriorQuestions: priorQuestionIds.length },
+        },
+      },
     },
   });
 
@@ -111,6 +139,79 @@ export async function startAttempt(enrollmentId: string): Promise<void> {
   }
   await audit(ctx, { action: "attempt.start", entity: "ExamAttempt", entityId: attempt.id, subscriberId, after: { examId: exam.id, questions: questions.length } });
   redirect(`/portal/examen/${attempt.id}`);
+}
+
+/**
+ * Reintenta el examen tras un intento NO APROBADO.
+ *
+ * Reglas:
+ *  - Solo el candidato dueño del intento puede reintentar.
+ *  - El intento referenciado debe estar TERMINADO y NO aprobado
+ *    (passed=false) o haber sido RECHAZADO por el comité.
+ *  - El conteo total de intentos terminados debe ser MENOR a
+ *    `exam.attemptsAllowed`.
+ *  - El nuevo intento usará `excludeQuestionIds` con todas las
+ *    preguntas que ya vio el candidato en intentos previos de esta
+ *    inscripción, y un `difficultyBoost` mayor en cada reintento
+ *    (1 en el 2º, 2 en el 3º+).
+ *
+ * Implementación: re-evalúa el journey, fuerza el status del
+ * enrollment a READY (porque tras un FAIL queda en GRADING/REJECTED)
+ * y delega en startAttempt(enrollmentId) que ya implementa el resto.
+ */
+export async function retryAttempt(attemptId: string): Promise<void> {
+  const { ctx, candidateId } = await requireCandidateAction();
+  const attempt = await prisma.examAttempt.findUnique({
+    where: { id: attemptId },
+    include: {
+      exam: { select: { attemptsAllowed: true } },
+      enrollment: { select: { id: true, status: true } },
+    },
+  });
+  if (!attempt || attempt.candidateId !== candidateId) throw new Error("NOT_FOUND");
+
+  // Solo se reintenta tras un fallo o un rechazo del comité.
+  const canRetry =
+    attempt.passed === false ||
+    attempt.status === "FAILED" ||
+    attempt.enrollment.status === "REJECTED";
+  if (!canRetry) {
+    throw new Error("Este intento no es susceptible de reintento.");
+  }
+
+  const allFinished = await prisma.examAttempt.count({
+    where: { enrollmentId: attempt.enrollmentId, status: { in: FINISHED as never } },
+  });
+  if (allFinished >= attempt.exam.attemptsAllowed) {
+    throw new Error(
+      `Agotó los ${attempt.exam.attemptsAllowed} intento(s) permitido(s) para esta evaluación.`,
+    );
+  }
+
+  // Reactivamos la inscripción para que startAttempt acepte iniciar.
+  // El status terminal queda registrado en el ExamAttempt — la
+  // inscripción vuelve a READY para el siguiente intento.
+  await prisma.enrollment.update({
+    where: { id: attempt.enrollmentId },
+    data: { status: "READY" },
+  });
+
+  await audit(ctx, {
+    action: "attempt.retry",
+    entity: "ExamAttempt",
+    entityId: attempt.id,
+    subscriberId: attempt.subscriberId,
+    after: {
+      previousAttemptNumber: attempt.attemptNumber,
+      previousStatus: attempt.status,
+      previousScore: attempt.scorePercent?.toString() ?? null,
+    },
+  });
+
+  // Delega en startAttempt: re-sincroniza el journey, crea el nuevo
+  // ExamAttempt con exclusión de preguntas previas + boost de
+  // dificultad y redirige al runner del examen (HonestyGate primero).
+  await startAttempt(attempt.enrollmentId);
 }
 
 async function loadOwnedAttempt(candidateId: string, attemptId: string) {

@@ -23,7 +23,8 @@
     "db:reset": "prisma migrate reset --force",
     "add:uiaf-doc": "tsx prisma/scripts/add-uiaf-required-doc.ts",
     "fix:roe-to-roi": "tsx prisma/scripts/fix-roe-to-roi.ts",
-    "sync:stale-enrollments": "tsx prisma/scripts/sync-stale-enrollments.ts"
+    "sync:stale-enrollments": "tsx prisma/scripts/sync-stale-enrollments.ts",
+    "set:attempts": "tsx prisma/scripts/set-attempts-allowed.ts"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"

@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, Badge, StatTile } from "@/components/ui";
+import { SubmitButton } from "@/components/form";
+import { retryAttempt } from "@/lib/actions/attempt";
 import { dateTime } from "@/lib/format";
 
 export const metadata = { title: "Resultado del examen" };
@@ -25,11 +27,26 @@ export default async function ResultPage({
   const attempt = await prisma.examAttempt.findUnique({
     where: { id: attemptId },
     include: {
-      exam: { select: { name: true, passingScore: true, allowReview: true, showResultImmediately: true } },
+      exam: { select: { name: true, passingScore: true, allowReview: true, showResultImmediately: true, attemptsAllowed: true } },
       enrollment: { select: { id: true, code: true } },
     },
   });
   if (!attempt || attempt.candidateId !== candidateId) notFound();
+
+  // Conteo de intentos terminados de esta inscripción — para decidir
+  // si todavía puede reintentar.
+  const FINISHED = [
+    "SUBMITTED", "AUTO_GRADED", "MANUAL_GRADING", "GRADED",
+    "PASSED", "FAILED", "PENDING_COMMITTEE", "VOID",
+  ];
+  const attemptsUsed = await prisma.examAttempt.count({
+    where: { enrollmentId: attempt.enrollment.id, status: { in: FINISHED as never } },
+  });
+  const attemptsLeft = Math.max(0, attempt.exam.attemptsAllowed - attemptsUsed);
+  const canRetry =
+    !attempt.passed &&
+    attempt.passed !== null &&     // ya está calificado
+    attemptsLeft > 0;
 
   const focusLost = await prisma.attemptEvent.count({ where: { attemptId, type: "focus_lost" } });
   const st = STATUS[attempt.status] ?? { label: attempt.status, tone: "blue" as const };
@@ -74,9 +91,34 @@ export default async function ResultPage({
         ) : null}
 
         {!pending && attempt.passed === false ? (
-          <p className="mt-4 text-sm text-slate-500">
-            No alcanzó el puntaje mínimo aprobatorio. Si su esquema permite reintentos, podrá presentarlo nuevamente según las políticas de la entidad.
-          </p>
+          <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50/40 p-4">
+            <p className="text-sm font-semibold text-rose-900">
+              No alcanzó el puntaje mínimo aprobatorio ({passing}%).
+            </p>
+            {canRetry ? (
+              <>
+                <p className="mt-1 text-xs text-rose-800">
+                  Le quedan <strong>{attemptsLeft}</strong> reintento(s).
+                  El nuevo intento tendrá <strong>preguntas distintas</strong> a las
+                  que ya respondió y un <strong>mayor grado de dificultad</strong>
+                  {" "}para evaluar más a fondo sus competencias.
+                </p>
+                {/* Server action: crea un nuevo ExamAttempt con
+                    excludeQuestionIds + difficultyBoost y redirige al
+                    runner del examen (HonestyGate primero). */}
+                <form action={retryAttempt.bind(null, attempt.id)} className="mt-3">
+                  <SubmitButton pendingText="Preparando el nuevo intento…">
+                    ↻ Reintentar el examen ahora
+                  </SubmitButton>
+                </form>
+              </>
+            ) : (
+              <p className="mt-1 text-xs text-rose-800">
+                Agotó los {attempt.exam.attemptsAllowed} intento(s) permitidos para esta evaluación.
+                Puede presentar una apelación si considera que hubo un error en la calificación.
+              </p>
+            )}
+          </div>
         ) : null}
 
         {focusLost > 0 ? (
