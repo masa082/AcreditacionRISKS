@@ -4,6 +4,7 @@ import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { readFileByKey, extFromName } from "@/lib/storage";
 import { resolveTheme, hexToRgb01 } from "@/lib/theme";
 import { safeText } from "@/lib/pdf-text";
+import { buildPdfFilename } from "@/lib/pdf-filename";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -203,6 +204,20 @@ export async function GET(
   } catch { /* tolerante */ }
 
   const bytes = await pdf.save();
+  // Nombre del archivo dinámico — incluye titular, identificación y
+  // estado efectivo (VIGENTE/VENCIDO/...) para que el archivo en disco
+  // sea autodescriptivo. Mantiene el código del certificado al final
+  // como referencia única para verificación.
+  // Ej: Certificado_PEDRO-MUJICA_CC-79924561_VIGENTE_PRES-2026-BC128BA1.pdf
+  const certType = cert.type === "CERTIFICATION" ? "Certificado" : "Constancia";
+  const fileName = buildPdfFilename({
+    prefix: certType,
+    holderName: cert.holderName,
+    documentType: "DOC",
+    documentNumber: cert.documentNumber ?? undefined,
+    status: effectiveStatus, // VALID → VIGENTE, EXPIRED → VENCIDO, etc.
+    suffix: cert.code,
+  });
   // Content-Disposition: inline — permite que el PDF se vea embebido en
   // <iframe> en la pantalla "Mis certificados" del candidato. El botón
   // "Descargar" del cliente usa el atributo HTML download="" para forzar
@@ -210,7 +225,7 @@ export async function GET(
   return new Response(new Uint8Array(bytes), {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `inline; filename="certificado-${cert.code}.pdf"`,
+      "Content-Disposition": `inline; filename="${fileName}"`,
       "Cache-Control": "private, no-store",
       // Indicamos a los buscadores que no indexen este recurso
       "X-Robots-Tag": "noindex, nofollow",
