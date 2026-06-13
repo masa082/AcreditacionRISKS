@@ -91,11 +91,26 @@ export default async function CandidatesListPage({
         enrollments: {
           orderBy: { createdAt: "desc" },
           include: {
+            scheme: { select: { name: true } },
+            exam: { select: { name: true, passingScore: true } },
             payments: {
               orderBy: [{ status: "asc" }, { paidAt: "desc" }],
               select: { status: true, amount: true, currency: true },
             },
             documents: { select: { status: true, fileName: true } },
+            // Attempts del candidato para esta inscripción — para mostrar
+            // los puntajes obtenidos por evaluación.
+            attempts: {
+              orderBy: { createdAt: "desc" },
+              select: {
+                status: true,
+                scorePercent: true,
+                passed: true,
+                submittedAt: true,
+              },
+              take: 1,
+            },
+            certificates: { select: { id: true, status: true } },
           },
         },
       },
@@ -157,17 +172,53 @@ export default async function CandidatesListPage({
   const rows: CandidateRow[] = candidates.map((c) => {
     const last = c.enrollments[0];
     const lastPayment = last?.payments[0];
-    const docs = last?.documents ?? [];
-    const docsApproved = docs.filter((d) => d.status === "APPROVED").length;
-    const docsPending = docs.filter((d) => d.status === "SUBMITTED").length;
-    const docsRejected = docs.filter((d) => d.status === "REJECTED").length;
-    // Conteos por tipo de archivo (solo de la última inscripción visible).
-    const docsPdf = docs.filter((d) => /\.pdf$/i.test(d.fileName ?? "")).length;
-    const docsImg = docs.filter((d) => /\.(png|jpe?g)$/i.test(d.fileName ?? "")).length;
+
+    // CONTEO AGREGADO de documentos: antes solo se contaban los de la
+    // última inscripción, lo que daba 0/0/0 falso cuando una nueva
+    // inscripción del programa reusaba docs aprobados de otra anterior
+    // (caso de Samuel Sánchez: 9 APPROVED en Examen Teórico, 0 en Caso
+    // Práctico porque están heredados). Ahora sumamos los docs APROBADOS
+    // distintos por requiredDocument a través de TODAS las inscripciones.
+    const allDocs = c.enrollments.flatMap((e) => e.documents ?? []);
+    const docsApproved = allDocs.filter((d) => d.status === "APPROVED").length;
+    const docsPending = allDocs.filter((d) => d.status === "SUBMITTED").length;
+    const docsRejected = allDocs.filter((d) => d.status === "REJECTED").length;
+    const docsPdf = allDocs.filter((d) => /\.pdf$/i.test(d.fileName ?? "")).length;
+    const docsImg = allDocs.filter((d) => /\.(png|jpe?g)$/i.test(d.fileName ?? "")).length;
+
     const paymentLabel: CandidateRow["paymentLabel"] = lastPayment?.status === "APPROVED" ? "approved"
       : lastPayment?.status === "PENDING" ? "pending"
       : lastPayment?.status === "REJECTED" ? "rejected"
       : "none";
+
+    // PROGRAMA del candidato — nombre del esquema más reciente.
+    // (Suele ser el mismo entre evaluaciones del mismo programa.)
+    const programName = last?.scheme?.name ?? null;
+
+    // PUNTAJES por evaluación — recorre todas las inscripciones y
+    // saca el último attempt de cada una. Para la tabla mostramos
+    // máximo 2 chips (Teórico / Caso Práctico) que cubren el flujo OCP.
+    const scores: CandidateRow["scores"] = [];
+    for (const e of c.enrollments) {
+      const att = e.attempts[0];
+      if (!att) continue;
+      const examName = e.exam?.name ?? "Evaluación";
+      const examShort = /teórico|teorico/i.test(examName)
+        ? "Teórico"
+        : /caso/i.test(examName)
+        ? "Caso"
+        : examName.slice(0, 12);
+      const pct = att.scorePercent ? Number(att.scorePercent.toString()) : null;
+      scores.push({
+        examShort,
+        scorePercent: pct,
+        passed: att.passed,
+        status: att.status,
+      });
+    }
+    // ¿Tiene certificado emitido?
+    const hasCert = c.enrollments.some((e) => e.certificates.some((cert) => cert.status === "VALID"));
+
     return {
       id: c.id,
       fullName: `${c.firstName} ${c.lastName}`,
@@ -187,6 +238,9 @@ export default async function CandidatesListPage({
       docsRejected,
       docsPdf,
       docsImg,
+      programName,
+      scores,
+      hasCert,
       lastLoginLabel: c.user?.lastLoginAt ? dateTime(c.user.lastLoginAt) : null,
       lastLoginIp: c.user?.lastLoginIp ?? null,
       loginCount: c.user?.id ? loginsByUser.get(c.user.id) ?? 0 : 0,

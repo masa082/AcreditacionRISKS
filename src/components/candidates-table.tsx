@@ -24,6 +24,17 @@ export interface CandidateRow {
   /** Conteo por tipo de archivo, para mostrar iconos. */
   docsPdf: number;
   docsImg: number;
+  /** Nombre del programa/esquema en el que está el candidato. */
+  programName: string | null;
+  /** Puntajes obtenidos por cada evaluación (máx. 2 visibles: Teórico/Caso). */
+  scores: Array<{
+    examShort: string;
+    scorePercent: number | null;
+    passed: boolean | null;
+    status: string;
+  }>;
+  /** ¿Tiene certificado emitido (cualquier inscripción)? */
+  hasCert: boolean;
   lastLoginLabel: string | null;
   lastLoginIp: string | null;
   loginCount: number;
@@ -170,7 +181,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                 <th className="px-3 py-2"><SortHeader label="Candidato" sortKey="fullName" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Documento" sortKey="documentLabel" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Insc." sortKey="enrollments" current={sort} onSort={onSort} /></th>
-                <th className="px-3 py-2"><SortHeader label="Último estado" sortKey="lastStatus" current={sort} onSort={onSort} /></th>
+                <th className="px-3 py-2 min-w-[280px]"><SortHeader label="Programa · estado · puntajes" sortKey="lastStatus" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Pago" sortKey="payment" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Autoriz." sortKey="consent" current={sort} onSort={onSort} /></th>
                 <th className="px-3 py-2"><SortHeader label="Archivos" sortKey="docs" current={sort} onSort={onSort} /></th>
@@ -232,8 +243,53 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                     <td className="px-3 py-2 align-top text-xs text-slate-600">{c.documentLabel}</td>
                     <td className="px-3 py-2 align-top text-center text-xs text-slate-700">{c.enrollments}</td>
                     <td className="px-3 py-2 align-top text-xs">
+                      {c.programName ? (
+                        <div className="font-semibold text-brand-900" title={c.programName}>
+                          {c.programName.length > 42 ? `${c.programName.slice(0, 42)}…` : c.programName}
+                        </div>
+                      ) : null}
                       <div className="text-slate-700">{c.lastStatusLabel}</div>
                       {c.lastCreatedAt ? <div className="text-[10px] text-slate-400">{c.lastCreatedAt}</div> : null}
+                      {c.scores.length > 0 ? (
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {c.scores.map((s, i) => {
+                            const tone =
+                              s.passed === true
+                                ? "bg-emerald-50 text-emerald-700 ring-emerald-200"
+                                : s.passed === false
+                                ? "bg-rose-50 text-rose-700 ring-rose-200"
+                                : s.status === "PENDING_COMMITTEE" || s.status === "SUBMITTED"
+                                ? "bg-blue-50 text-blue-700 ring-blue-200"
+                                : "bg-slate-50 text-slate-500 ring-slate-200";
+                            const label =
+                              s.scorePercent != null
+                                ? `${s.examShort}: ${s.scorePercent.toLocaleString("es-CO", {
+                                    maximumFractionDigits: 1,
+                                  })}%${s.passed === true ? " ✓" : s.passed === false ? " ✗" : ""}`
+                                : s.status === "PENDING_COMMITTEE"
+                                ? `${s.examShort}: en comité`
+                                : s.status === "SUBMITTED"
+                                ? `${s.examShort}: por calificar`
+                                : s.status === "IN_PROGRESS"
+                                ? `${s.examShort}: en curso`
+                                : `${s.examShort}: pendiente`;
+                            return (
+                              <span
+                                key={i}
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ring-1 ${tone}`}
+                                title={`Estado del intento: ${s.status}`}
+                              >
+                                {label}
+                              </span>
+                            );
+                          })}
+                          {c.hasCert ? (
+                            <span className="inline-flex items-center rounded-full bg-gold-50 px-2 py-0.5 text-[10px] font-bold text-gold-700 ring-1 ring-gold-200">
+                              🎓 Certificado
+                            </span>
+                          ) : null}
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-3 py-2 align-top">
                       <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold ${pay.cls}`}>{pay.label}</span>
