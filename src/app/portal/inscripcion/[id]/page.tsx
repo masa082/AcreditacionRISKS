@@ -9,7 +9,7 @@ import { DocumentUpload } from "@/components/document-upload";
 import { EnrollmentNotes } from "@/components/enrollment-notes";
 import { PaymentMethodSelector } from "@/components/payment-method-selector";
 import { PaymentReceiptUpload } from "@/components/payment-receipt-upload";
-import { computeJourney, computeEnrollmentFees, type JourneyStep } from "@/lib/enrollment";
+import { computeJourney, computeEnrollmentFees, syncEnrollmentStatus, type JourneyStep } from "@/lib/enrollment";
 import { bookSlot, cancelEnrollment } from "@/lib/actions/enrollment";
 import { startAttempt } from "@/lib/actions/attempt";
 import { money, dateTime } from "@/lib/format";
@@ -66,6 +66,15 @@ export default async function EnrollmentProcessPage({
 }) {
   const { id } = await params;
   const { subscriberId, candidateId } = await requireCandidatePage();
+
+  // AUTO-SYNC al visitar: el campo enrollment.status se queda congelado
+  // si no hay escritura (subir doc, pagar, etc.). En el caso del Caso
+  // Práctico que reutiliza documentos APROBADOS de otra inscripción
+  // (anti-reproceso), no hay escritura — y sin esta sincronización el
+  // badge mostraba "DOCS_PENDING" aunque computeJourney ya considera los
+  // docs heredados como completos. Al sincronizar al renderizar, el
+  // status SIEMPRE refleja el journey real.
+  await syncEnrollmentStatus(id).catch(() => undefined);
 
   const enrollment = await prisma.enrollment.findUnique({
     where: { id },
