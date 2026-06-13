@@ -7,6 +7,10 @@ import { SubmitButton } from "@/components/form";
 import { retryAttempt } from "@/lib/actions/attempt";
 import { dateTime } from "@/lib/format";
 import { PostExamSurveyAndReferral } from "@/components/post-exam-survey";
+import {
+  CandidateInfoRequests,
+  type CandidateInfoRequest,
+} from "@/components/info-request-candidate";
 
 export const metadata = { title: "Resultado del examen" };
 
@@ -54,6 +58,19 @@ export default async function ResultPage({
     where: { attemptId },
     select: { id: true },
   });
+  const infoRequestsDb = await prisma.attemptInfoRequest.findMany({
+    where: { attemptId },
+    orderBy: { createdAt: "desc" },
+  });
+  const infoRequests: CandidateInfoRequest[] = infoRequestsDb.map((r) => ({
+    id: r.id,
+    status: r.status,
+    message: r.message,
+    candidateResponse: r.candidateResponse,
+    respondedAt: r.respondedAt ? r.respondedAt.toISOString() : null,
+    createdAt: r.createdAt.toISOString(),
+  }));
+  const hasPendingInfoRequest = infoRequests.some((r) => r.status === "PENDING");
   const st = STATUS[attempt.status] ?? { label: attempt.status, tone: "blue" as const };
   const pending = attempt.status === "MANUAL_GRADING" || attempt.status === "PENDING_COMMITTEE";
   const percent = attempt.scorePercent != null ? Number(attempt.scorePercent.toString()) : null;
@@ -84,8 +101,13 @@ export default async function ResultPage({
 
         {pending ? (
           <p className="mt-6 rounded-lg bg-amber-50 px-4 py-3 text-sm text-amber-700 ring-1 ring-amber-200">
-            Su examen fue enviado y está {attempt.status === "PENDING_COMMITTEE" ? "en revisión del comité evaluador" : "en proceso de calificación"}.
-            Le notificaremos el resultado.
+            Su examen fue enviado y está {
+              hasPendingInfoRequest
+                ? "en espera — el equipo evaluador le solicitó información adicional. Vea el detalle abajo y responda para continuar la calificación."
+                : attempt.status === "PENDING_COMMITTEE"
+                  ? "en revisión del comité evaluador"
+                  : "en proceso de calificación por el equipo evaluador. Le notificaremos el resultado por correo."
+            }
           </p>
         ) : percent != null ? (
           <div className="mt-6 grid gap-4 sm:grid-cols-3">
@@ -132,6 +154,8 @@ export default async function ResultPage({
           </p>
         ) : null}
       </Card>
+
+      <CandidateInfoRequests requests={infoRequests} />
 
       <PostExamSurveyAndReferral
         attemptId={attempt.id}

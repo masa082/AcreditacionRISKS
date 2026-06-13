@@ -8,6 +8,9 @@ import {
   certificateIssuedEmail,
   examScoreEmail,
   habeasReceiptEmail,
+  manualGradingRequiredEmail,
+  infoRequestToCandidateEmail,
+  candidateAnsweredInfoRequestEmail,
 } from "./templates";
 
 // ============================================================================
@@ -451,4 +454,36 @@ export async function sendExamScoreEmail(
 ): Promise<SendResult> {
   const brand = await loadBrand(subscriberId);
   return dispatch(to, subscriberId, examScoreEmail(brand, data));
+}
+
+/// Aviso al equipo evaluador (admin del suscriptor + comité) de que un
+/// caso práctico quedó "Por calificar". Se envía un correo por destinatario
+/// para que el From/Reply-To se mantengan coherentes con la marca.
+export async function sendManualGradingRequiredEmail(
+  subscriberId: string,
+  to: string,
+  data: { candidateName: string; examName: string; enrollmentCode: string; submittedAt: Date; panelUrl: string },
+): Promise<SendResult> {
+  const brand = await loadBrand(subscriberId);
+  return dispatch(to, subscriberId, manualGradingRequiredEmail(brand, data));
+}
+
+/// Aviso al candidato cuando el equipo solicita información adicional.
+export async function sendInfoRequestToCandidateEmail(
+  subscriberId: string,
+  to: string,
+  data: { holderName: string; examName: string; message: string; portalUrl: string },
+): Promise<SendResult> {
+  const brand = await loadBrand(subscriberId);
+  return dispatch(to, subscriberId, infoRequestToCandidateEmail(brand, data));
+}
+
+/// Aviso al equipo cuando el candidato responde una solicitud de info.
+export async function sendCandidateAnsweredInfoRequestEmail(
+  subscriberId: string,
+  to: string,
+  data: { candidateName: string; examName: string; enrollmentCode: string; panelUrl: string },
+): Promise<SendResult> {
+  const brand = await loadBrand(subscriberId);
+  return dispatch(to, subscriberId, candidateAnsweredInfoRequestEmail(brand, data));
 }

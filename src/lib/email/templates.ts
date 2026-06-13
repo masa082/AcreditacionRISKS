@@ -305,3 +305,86 @@ export function certificateIssuedEmail(brand: Brand, data: { holderName: string;
     text: `${data.holderName}, su certificado "${data.title}" (código ${data.code}) fue emitido por ${brand.orgName}. Verifíquelo: ${data.verifyUrl}`,
   };
 }
+
+/// Aviso al equipo evaluador (admin del suscriptor + comité) cuando un
+/// candidato envía un examen que requiere calificación manual (caso
+/// práctico, abiertas, archivos). El correo lleva el folio + un enlace
+/// directo al panel de calificación.
+export function manualGradingRequiredEmail(
+  brand: Brand,
+  data: { candidateName: string; examName: string; enrollmentCode: string; submittedAt: Date; panelUrl: string },
+): RenderedEmail {
+  const color = brand.primaryColor || "#1e3a8a";
+  const html = layout(brand, `
+    <h1 style="margin:0 0 8px;font-size:20px">Caso práctico por calificar</h1>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      El candidato <b>${escapeHtml(data.candidateName)}</b> envió la evaluación
+      <b>${escapeHtml(data.examName)}</b> (folio ${escapeHtml(data.enrollmentCode)}).
+      El sistema lo dejó en estado <b>Por calificar</b> a la espera de la
+      revisión del equipo evaluador.
+    </p>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      Por favor revise la respuesta, asigne la nota de 0 a 100 con sus
+      comentarios, o solicite información adicional al candidato si lo
+      considera necesario. Si se solicita información el intento quedará
+      en espera hasta que el candidato responda.
+    </p>
+    ${button(data.panelUrl, "Abrir panel de calificación", color)}
+    <p style="margin:8px 0 0;font-size:12px;color:#64748b">Recibido ${data.submittedAt.toISOString()}</p>`);
+  return {
+    subject: `Caso práctico por calificar — ${data.candidateName} (${data.enrollmentCode})`,
+    html,
+    text: `Caso práctico por calificar — ${data.candidateName} (${data.enrollmentCode}) en ${brand.orgName}. Panel: ${data.panelUrl}`,
+  };
+}
+
+/// Aviso al candidato cuando el equipo evaluador le solicita información
+/// adicional para poder culminar la calificación del caso práctico.
+export function infoRequestToCandidateEmail(
+  brand: Brand,
+  data: { holderName: string; examName: string; message: string; portalUrl: string },
+): RenderedEmail {
+  const color = brand.primaryColor || "#1e3a8a";
+  const html = layout(brand, `
+    <h1 style="margin:0 0 8px;font-size:20px">Información adicional solicitada</h1>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      ${escapeHtml(data.holderName)}, el equipo evaluador necesita información
+      adicional para poder culminar la calificación de su examen
+      <b>${escapeHtml(data.examName)}</b>:
+    </p>
+    <blockquote style="margin:14px 0;padding:14px 16px;background:#fffbeb;border-left:4px solid #f59e0b;border-radius:6px;font-size:14px;color:#92400e;white-space:pre-wrap">${escapeHtml(data.message)}</blockquote>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      Su examen quedará <b>en espera</b> hasta que envíe su respuesta. Por
+      favor ingrese al portal y responda lo antes posible para que el
+      equipo pueda completar la calificación.
+    </p>
+    ${button(data.portalUrl, "Responder en el portal", color)}`);
+  return {
+    subject: `Necesitamos información adicional — ${brand.orgName}`,
+    html,
+    text: `${data.holderName}, el equipo evaluador le solicita información adicional. Responda en: ${data.portalUrl}`,
+  };
+}
+
+/// Aviso al equipo evaluador cuando el candidato responde una solicitud
+/// de información adicional. Reabre la calificación.
+export function candidateAnsweredInfoRequestEmail(
+  brand: Brand,
+  data: { candidateName: string; examName: string; enrollmentCode: string; panelUrl: string },
+): RenderedEmail {
+  const color = brand.primaryColor || "#1e3a8a";
+  const html = layout(brand, `
+    <h1 style="margin:0 0 8px;font-size:20px">El candidato respondió</h1>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      <b>${escapeHtml(data.candidateName)}</b> respondió la solicitud de
+      información adicional sobre la evaluación
+      <b>${escapeHtml(data.examName)}</b> (folio ${escapeHtml(data.enrollmentCode)}).
+      Puede continuar con la calificación.
+    </p>
+    ${button(data.panelUrl, "Abrir panel de calificación", color)}`);
+  return {
+    subject: `Respuesta del candidato — ${data.candidateName} (${data.enrollmentCode})`,
+    html,
+    text: `${data.candidateName} respondió la solicitud de información. Panel: ${data.panelUrl}`,
+  };
+}

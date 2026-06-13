@@ -8,6 +8,7 @@ import { PageHeader, Card, Badge } from "@/components/ui";
 import { SubmitButton } from "@/components/form";
 import { GradeAnswerForm } from "@/components/grade-answer-form";
 import { finalizeManualGrading } from "@/lib/actions/grading";
+import { InfoRequestPanel, type InfoRequestRow } from "@/components/info-request-panel";
 
 export const metadata = { title: "Calificar evaluación" };
 
@@ -39,6 +40,22 @@ export default async function GradeAttemptPage({
   const manualQuestions = attempt.questions.filter((q) => (q.snapshot as { needsManual?: boolean }).needsManual);
   const allGraded = manualQuestions.every((q) => q.answers[0]?.status === "MANUALLY_SCORED");
   const isOpen = attempt.status === "MANUAL_GRADING";
+
+  const infoRequestsDb = await prisma.attemptInfoRequest.findMany({
+    where: { attemptId },
+    orderBy: { createdAt: "desc" },
+  });
+  const infoRequests: InfoRequestRow[] = infoRequestsDb.map((r) => ({
+    id: r.id,
+    status: r.status,
+    message: r.message,
+    candidateResponse: r.candidateResponse,
+    candidateFileUrl: r.candidateFileUrl,
+    candidateFileName: r.candidateFileName,
+    respondedAt: r.respondedAt ? r.respondedAt.toISOString() : null,
+    createdAt: r.createdAt.toISOString(),
+  }));
+  const pendingInfoRequests = infoRequests.some((r) => r.status === "PENDING");
 
   return (
     <>
@@ -110,9 +127,23 @@ export default async function GradeAttemptPage({
         })}
       </div>
 
+      {isOpen ? (
+        <div className="mt-6">
+          <InfoRequestPanel
+            attemptId={attempt.id}
+            requests={infoRequests}
+            canManage={canGrade}
+          />
+        </div>
+      ) : null}
+
       {canGrade && isOpen ? (
         <Card className="mt-6 p-5">
-          {allGraded ? (
+          {pendingInfoRequests ? (
+            <p className="text-sm text-amber-700">
+              ⏸ Hay una solicitud de información pendiente al candidato. No se puede finalizar la calificación hasta que el candidato responda o se cierre la solicitud.
+            </p>
+          ) : allGraded ? (
             <form action={finalizeManualGrading.bind(null, attempt.id)} className="flex items-center justify-between gap-3">
               <p className="text-sm text-slate-600">Todas las respuestas están calificadas. Consolide el resultado.</p>
               <SubmitButton pendingText="Procesando…">Finalizar calificación</SubmitButton>

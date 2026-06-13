@@ -334,6 +334,7 @@ model Subscriber {
   emailLogs          EmailLog[]
   processIncidents   ProcessIncident[]
   satisfactionSurveys SatisfactionSurvey[]
+  attemptInfoRequests AttemptInfoRequest[]
 
   @@index([status])
 }
@@ -1028,6 +1029,7 @@ model ExamAttempt {
   reviews   CommitteeReview[]
   certificates Certificate[]
   satisfactionSurvey SatisfactionSurvey?
+  infoRequests AttemptInfoRequest[]
 
   @@unique([enrollmentId, attemptNumber])
   @@index([subscriberId, status])
@@ -1714,4 +1716,50 @@ model SatisfactionSurvey {
 
   @@index([subscriberId, createdAt])
   @@index([candidateId])
+}
+
+// ─── AttemptInfoRequest ───────────────────────────────────────────────
+//
+// Durante la calificación manual del Caso Práctico el comité o el admin
+// del suscriptor puede pedirle al candidato información adicional
+// (aclaración del análisis, archivo de respaldo que faltó, evidencias).
+// Mientras existan solicitudes en estado PENDING el intento NO se puede
+// finalizar — queda "esperando respuesta del candidato".
+//
+// Estados:
+//   PENDING    — el equipo pidió algo; el candidato aún no responde
+//   ANSWERED   — el candidato envió su respuesta; el equipo decide si
+//                cierra (DISMISSED) o vuelve a calificar
+//   DISMISSED  — el equipo cerró la solicitud (ya sea porque obtuvo
+//                lo que necesitaba o porque desestimó la petición)
+model AttemptInfoRequest {
+  id            String   @id @default(cuid())
+  subscriberId  String
+  subscriber    Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  attemptId     String
+  attempt       ExamAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  requestedById String
+  message       String   @db.Text
+  status        InfoRequestStatus @default(PENDING)
+
+  candidateResponse String?  @db.Text
+  candidateFileUrl  String?
+  candidateFileName String?
+  respondedAt       DateTime?
+
+  closedById        String?
+  closedAt          DateTime?
+  closingNote       String?  @db.Text
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([attemptId, status])
+  @@index([subscriberId, status])
+}
+
+enum InfoRequestStatus {
+  PENDING
+  ANSWERED
+  DISMISSED
 }

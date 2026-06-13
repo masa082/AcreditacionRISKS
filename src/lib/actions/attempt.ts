@@ -18,7 +18,8 @@ import {
 import { saveUpload, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
 import { syncEnrollmentStatus } from "@/lib/enrollment";
 import { issuePresentationCertificate } from "@/lib/certificate";
-import { sendExamScoreEmail } from "@/lib/email";
+import { sendExamScoreEmail, sendManualGradingRequiredEmail } from "@/lib/email";
+import { getGradingTeamRecipients } from "@/lib/grading-team";
 import { BRAND } from "@/lib/brand";
 import { EXAM_CONSENT_TEXT } from "@/lib/exam-consent";
 import type { ActionResult } from "@/lib/actions/schemes";
@@ -684,6 +685,39 @@ export async function submitAttempt(attemptId: string): Promise<void> {
     }
   } catch {
     /* el correo se reintenta de oficio o por acción del operador */
+  }
+
+  // Si el intento quedó en calificación manual (caso práctico / abiertas /
+  // archivos), notificamos al equipo evaluador del suscriptor para que
+  // entre al panel de calificación. Toleramos fallos del proveedor de
+  // correo — el intento ya está creado y el panel se actualiza solo.
+  if (attemptStatus === "MANUAL_GRADING") {
+    try {
+      const candidate = await prisma.candidate.findUnique({
+        where: { id: candidateId },
+        select: { firstName: true, lastName: true },
+      });
+      const candidateName = candidate ? `${candidate.firstName} ${candidate.lastName}`.trim() : "Candidato";
+      const enrollment = await prisma.enrollment.findUnique({
+        where: { id: attempt.enrollmentId },
+        select: { code: true },
+      });
+      const recipients = await getGradingTeamRecipients(subscriberId);
+      const panelUrl = `${BRAND.appUrl}/panel/calificacion/${attemptId}`;
+      await Promise.all(
+        recipients.map((r) =>
+          sendManualGradingRequiredEmail(subscriberId, r.email, {
+            candidateName,
+            examName: attempt.exam.name,
+            enrollmentCode: enrollment?.code ?? "",
+            submittedAt: new Date(),
+            panelUrl,
+          }).catch(() => undefined),
+        ),
+      );
+    } catch {
+      /* notificación tolerante — no debe bloquear el cierre del intento */
+    }
   }
 
   await audit(ctx, {

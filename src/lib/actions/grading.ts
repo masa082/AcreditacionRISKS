@@ -78,6 +78,14 @@ export async function finalizeManualGrading(attemptId: string): Promise<void> {
   if (!attempt || attempt.subscriberId !== subscriberId) return;
   if (attempt.status !== "MANUAL_GRADING") return;
 
+  // No se puede consolidar la calificación mientras existan solicitudes
+  // de información adicional pendientes — el examen queda en espera de
+  // la respuesta del candidato.
+  const pendingInfo = await prisma.attemptInfoRequest.count({
+    where: { attemptId, status: "PENDING" },
+  });
+  if (pendingInfo > 0) return;
+
   // Todas las respuestas manuales deben estar calificadas.
   const pending = attempt.questions.some((q) => {
     const snap = q.snapshot as { needsManual?: boolean };
