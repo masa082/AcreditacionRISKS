@@ -333,6 +333,7 @@ model Subscriber {
   scheduledEmails    ScheduledEmail[]
   emailLogs          EmailLog[]
   processIncidents   ProcessIncident[]
+  satisfactionSurveys SatisfactionSurvey[]
 
   @@index([status])
 }
@@ -525,6 +526,7 @@ model Candidate {
   referrals    Referral[]
   emailLogs    EmailLog[]
   processIncidents ProcessIncident[]
+  satisfactionSurveys SatisfactionSurvey[]
 
   @@unique([subscriberId, documentNumber])
   @@index([subscriberId])
@@ -882,6 +884,7 @@ model Enrollment {
   reviews      CommitteeReview[]
   appeals      Appeal[]
   referrals    Referral[]
+  satisfactionSurveys SatisfactionSurvey[]
 
   @@unique([subscriberId, code])
   @@index([subscriberId, status])
@@ -1024,6 +1027,7 @@ model ExamAttempt {
   events    AttemptEvent[]
   reviews   CommitteeReview[]
   certificates Certificate[]
+  satisfactionSurvey SatisfactionSurvey?
 
   @@unique([enrollmentId, attemptNumber])
   @@index([subscriberId, status])
@@ -1669,4 +1673,45 @@ model ProcessIncident {
   @@index([subscriberId, resolvedAt])
   @@index([candidateId, resolvedAt])
   @@index([enrollmentId])
+}
+
+// ─── SatisfactionSurvey ──────────────────────────────────────────────
+//
+// Encuesta corta que el candidato responde al ver el resultado de un
+// examen (especialmente el Caso Práctico). Sirve para medir NPS y
+// satisfacción operacional + recoger comentarios cualitativos.
+//
+// Un único registro por intento (attemptId @unique) — si responde dos
+// veces, sobrescribimos los valores en lugar de duplicar.
+//
+// npsScore: 0-10  · "¿Qué tan probable es que recomiende el proceso?"
+// overallRating: 1-5 estrellas · satisfacción global
+// difficultyRating, clarityRating, platformRating: 1-5, opcionales
+// comment: texto libre, máx 1000 caracteres
+// allowFollowup: el candidato autoriza que el equipo lo contacte
+model SatisfactionSurvey {
+  id            String   @id @default(cuid())
+  subscriberId  String
+  subscriber    Subscriber @relation(fields: [subscriberId], references: [id], onDelete: Cascade)
+  candidateId   String
+  candidate     Candidate  @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  enrollmentId  String?
+  enrollment    Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  attemptId     String?    @unique
+  attempt       ExamAttempt? @relation(fields: [attemptId], references: [id], onDelete: SetNull)
+
+  examType         String?
+  npsScore         Int?
+  overallRating    Int?
+  difficultyRating Int?
+  clarityRating    Int?
+  platformRating   Int?
+  comment          String?  @db.Text
+  allowFollowup    Boolean  @default(false)
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([subscriberId, createdAt])
+  @@index([candidateId])
 }

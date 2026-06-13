@@ -6,6 +6,7 @@ import { PageHeader, Card, Badge, StatTile } from "@/components/ui";
 import { SubmitButton } from "@/components/form";
 import { retryAttempt } from "@/lib/actions/attempt";
 import { dateTime } from "@/lib/format";
+import { PostExamSurveyAndReferral } from "@/components/post-exam-survey";
 
 export const metadata = { title: "Resultado del examen" };
 
@@ -49,6 +50,10 @@ export default async function ResultPage({
     attemptsLeft > 0;
 
   const focusLost = await prisma.attemptEvent.count({ where: { attemptId, type: "focus_lost" } });
+  const existingSurvey = await prisma.satisfactionSurvey.findUnique({
+    where: { attemptId },
+    select: { id: true },
+  });
   const st = STATUS[attempt.status] ?? { label: attempt.status, tone: "blue" as const };
   const pending = attempt.status === "MANUAL_GRADING" || attempt.status === "PENDING_COMMITTEE";
   const percent = attempt.scorePercent != null ? Number(attempt.scorePercent.toString()) : null;
@@ -127,6 +132,11 @@ export default async function ResultPage({
           </p>
         ) : null}
       </Card>
+
+      <PostExamSurveyAndReferral
+        attemptId={attempt.id}
+        alreadySubmittedSurvey={!!existingSurvey}
+      />
     </>
   );
 }
