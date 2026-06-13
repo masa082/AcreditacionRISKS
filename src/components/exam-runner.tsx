@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { createPortal } from "react-dom";
 import {
   saveAnswer,
   saveTextAnswer,
@@ -47,6 +48,14 @@ function IncidentReporter({ attemptId }: { attemptId: string }) {
   const [text, setText] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, startTx] = useTransition();
+  // El botón vive dentro del header sticky con `backdrop-blur`. Cualquier
+  // ancestro con backdrop-filter ancla los `position: fixed` descendientes a
+  // ese contenedor (no al viewport), por eso el modal aparecía atrapado en
+  // la barra y dejaba ver el contenido detrás sin oscurecer. Lo renderizamos
+  // por createPortal directamente en <body> para que el modal sí cubra toda
+  // la pantalla y quede por encima del resto de overlays del examen.
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => { setMounted(true); }, []);
 
   function send() {
     const detail = text.trim();
@@ -69,53 +78,56 @@ function IncidentReporter({ attemptId }: { attemptId: string }) {
       >
         🚩 Reportar novedad
       </button>
-      {open ? (
-        <div role="dialog" aria-modal className="fixed inset-0 z-40 grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
-          <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
-            <div className="border-b border-slate-200 bg-amber-50 px-5 py-3">
-              <h2 className="text-sm font-bold text-amber-900">🚩 Reportar novedad</h2>
-              <p className="text-[11px] text-amber-800">Su reporte queda registrado con fecha y hora en el expediente del intento.</p>
-            </div>
-            <div className="p-5">
-              {sent ? (
-                <p className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">
-                  ✓ Novedad registrada. Puede continuar con la prueba.
-                </p>
-              ) : (
-                <>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
-                    Describa la novedad
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={text}
-                    onChange={(e) => setText(e.target.value)}
-                    placeholder="Ej. Se cortó el internet por 30 segundos. Tuve que recargar la página."
-                    className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-100"
-                    maxLength={600}
-                  />
-                  <p className="mt-1 text-[10px] text-slate-400">Máximo 600 caracteres.</p>
-                </>
-              )}
-            </div>
-            {!sent ? (
-              <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
-                <button type="button" onClick={() => setOpen(false)} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  disabled={busy || text.trim().length === 0}
-                  onClick={send}
-                  className="rounded-md bg-amber-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-800 disabled:opacity-50"
-                >
-                  {busy ? "Enviando…" : "Enviar reporte"}
-                </button>
+      {open && mounted
+        ? createPortal(
+            <div role="dialog" aria-modal className="fixed inset-0 z-[200] grid place-items-center bg-slate-950/70 p-4 backdrop-blur-sm">
+              <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+                <div className="border-b border-slate-200 bg-amber-50 px-5 py-3">
+                  <h2 className="text-sm font-bold text-amber-900">🚩 Reportar novedad</h2>
+                  <p className="text-[11px] text-amber-800">Su reporte queda registrado con fecha y hora en el expediente del intento.</p>
+                </div>
+                <div className="p-5">
+                  {sent ? (
+                    <p className="rounded-lg bg-emerald-50 px-3 py-3 text-sm text-emerald-800 ring-1 ring-emerald-200">
+                      ✓ Novedad registrada. Puede continuar con la prueba.
+                    </p>
+                  ) : (
+                    <>
+                      <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600">
+                        Describa la novedad
+                      </label>
+                      <textarea
+                        rows={4}
+                        value={text}
+                        onChange={(e) => setText(e.target.value)}
+                        placeholder="Ej. Se cortó el internet por 30 segundos. Tuve que recargar la página."
+                        className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-700 focus:ring-2 focus:ring-brand-100"
+                        maxLength={600}
+                      />
+                      <p className="mt-1 text-[10px] text-slate-400">Máximo 600 caracteres.</p>
+                    </>
+                  )}
+                </div>
+                {!sent ? (
+                  <div className="flex justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+                    <button type="button" onClick={() => setOpen(false)} className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                      Cancelar
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy || text.trim().length === 0}
+                      onClick={send}
+                      className="rounded-md bg-amber-700 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-800 disabled:opacity-50"
+                    >
+                      {busy ? "Enviando…" : "Enviar reporte"}
+                    </button>
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
+            </div>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
