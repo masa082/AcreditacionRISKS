@@ -3,7 +3,7 @@ import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card, EmptyState, Badge } from "@/components/ui";
 import { SubmitButton } from "@/components/form";
-import { startEnrollment } from "@/lib/actions/enrollment";
+import { startEnrollment, startCasoPracticoAndAttempt } from "@/lib/actions/enrollment";
 import { money, dateOnly } from "@/lib/format";
 import { isSchemeComingSoon } from "@/lib/brand";
 import { ProcessSteps } from "@/components/process-steps";
@@ -395,6 +395,7 @@ function ProgramCard({
             <ProcessStatusPanel
               consolidated={consolidated}
               yearsLabel={yearsLabel}
+              schemeId={group.schemeId}
             />
           ) : (
             // No pagó todavía → panel comercial con precio y CTA.
@@ -499,9 +500,13 @@ function PricePanel({
 function ProcessStatusPanel({
   consolidated,
   yearsLabel,
+  schemeId,
 }: {
   consolidated: ReturnType<typeof consolidateProgress>;
   yearsLabel: string;
+  /** Necesario para que `Iniciar Caso Práctico` cree la inscripción
+   *  correcta del programa con la action startCasoPracticoAndAttempt. */
+  schemeId: string;
 }) {
   // Buscamos UN enrollment "pagado" para llevar al candidato cuando
   // pulse el botón principal del siguiente paso. Si todas las
@@ -524,7 +529,7 @@ function ProcessStatusPanel({
   const casoProg = caso?.progress ?? null;
 
   // Decidir el "siguiente paso" más útil para guiar al candidato.
-  const next = computeNextStep({ teorProg, casoProg });
+  const next = computeNextStep({ teorProg, casoProg, schemeId });
 
   // Documentos consolidados: si hay más de un enrollment, tomamos el
   // peor (lo que más falta) para que el checklist refleje "lo pendiente".
@@ -622,7 +627,17 @@ function ProcessStatusPanel({
           </div>
           <p className="mt-0.5 text-[12.5px] font-semibold text-emerald-900">{next.title}</p>
           {next.detail ? <p className="text-[11px] text-emerald-800">{next.detail}</p> : null}
-          {next.href ? (
+          {/* Si la acción es "iniciar Caso Práctico", usamos la server
+              action que crea la inscripción + hereda docs/pago y arranca
+              el examen en un solo paso (con HonestyGate previo). */}
+          {next.startCasoAction ? (
+            <form
+              action={startCasoPracticoAndAttempt.bind(null, next.startCasoAction.schemeId)}
+              className="mt-2"
+            >
+              <SubmitButton pendingText="Preparando la prueba…">{next.cta}</SubmitButton>
+            </form>
+          ) : next.href ? (
             <Link
               href={next.href}
               className="mt-2 block rounded-lg btn-grad-navy px-3 py-2 text-center text-sm font-bold text-white shadow-sm"
@@ -682,13 +697,27 @@ function ChecklistItem({
 
 /// Calcula el "siguiente paso" guiado según el estado de las dos
 /// evaluaciones del programa.
+///
+/// `startCasoAction` indica que el CTA debe usar la server action
+/// startCasoPracticoAndAttempt(schemeId) en vez de un Link a la
+/// inscripción — para que el candidato vaya directo al runner del
+/// examen (con HonestyGate) si todos los requisitos están cubiertos
+/// por herencia.
 function computeNextStep({
   teorProg,
   casoProg,
+  schemeId,
 }: {
   teorProg: ExamProgress | null;
   casoProg: ExamProgress | null;
-}): { title: string; detail?: string; cta: string; href?: string } | null {
+  schemeId: string;
+}): {
+  title: string;
+  detail?: string;
+  cta: string;
+  href?: string;
+  startCasoAction?: { schemeId: string };
+} | null {
   // Teórico no presentado → presentarlo.
   if (teorProg && !teorProg.attempt) {
     return {
@@ -717,21 +746,29 @@ function computeNextStep({
     };
   }
   // Teórico aprobado y Caso Práctico no inscrito todavía.
+  // → 1-click: la action crea la inscripción, hereda docs/pago y, si
+  //   todo está cubierto, lanza el ExamAttempt directamente (con
+  //   HonestyGate antes de las preguntas, igual que el Teórico).
   if (teorProg?.attempt?.passed && !casoProg) {
     return {
-      title: "Inscríbase al Caso Práctico",
-      detail: "Aprobó el Examen Teórico. Avance al Caso Práctico — sin costo adicional.",
-      cta: "Ir a inscripción del Caso Práctico →",
-      href: `/portal/inscripcion/${teorProg.enrollmentId}`,
+      title: "Inicie el Caso Práctico",
+      detail:
+        "Aprobó el Examen Teórico. Sin costo adicional. Si todos sus documentos están aprobados, la prueba arranca al instante con el consentimiento previo.",
+      cta: "▶ Iniciar Caso Práctico ahora →",
+      startCasoAction: { schemeId },
     };
   }
   // Caso práctico inscrito pero no presentado.
+  // → 1-click también: la action revalida el journey y arranca el
+  //   intento si está READY (típicamente sí, porque los docs son
+  //   heredados del Teórico).
   if (casoProg && !casoProg.attempt) {
     return {
       title: "Presente el Caso Práctico",
-      detail: "Es la última evaluación. Al aprobarla se emitirá su certificado.",
-      cta: "Continuar al Caso Práctico →",
-      href: `/portal/inscripcion/${casoProg.enrollmentId}`,
+      detail:
+        "Es la última evaluación. Al aprobarla se emitirá su certificado. Aceptará el consentimiento previo antes de empezar.",
+      cta: "▶ Iniciar Caso Práctico ahora →",
+      startCasoAction: { schemeId },
     };
   }
   if (casoProg?.attempt?.status === "IN_PROGRESS") {

@@ -103,6 +103,126 @@ export async function startEnrollment(examId: string): Promise<void> {
 }
 
 // ----------------------------------------------------------------------------
+//  "Completar el proceso" — atajo que crea/reutiliza la inscripción del
+//  segundo examen del programa (típicamente Caso Práctico) y, si todos
+//  los requisitos están cubiertos por herencia (docs aprobados y pago
+//  confirmado en la inscripción previa del mismo esquema), lanza el
+//  intento inmediatamente para que el candidato vea el HonestyGate +
+//  arranque la prueba sin pasos intermedios.
+// ----------------------------------------------------------------------------
+
+/**
+ * Crea la inscripción del Caso Práctico y, si está LISTA, inicia la
+ * prueba en el mismo flujo. Si falta algo (docs no heredados, pago no
+ * cubierto), redirige a la inscripción para que el candidato vea
+ * exactamente qué le falta.
+ *
+ * Pensado para el botón "Completar el proceso · Iniciar Caso Práctico"
+ * del panel "Estado de su proceso". El candidato pasa de un click en
+ * `/portal/evaluaciones` directamente al runner del examen, sin tener
+ * que navegar por la inscripción intermedia.
+ *
+ * @param schemeId   El esquema del programa (e.g. SARLAFT/SAGRILAFT).
+ *                   Buscamos el examen tipo CASE en ese esquema.
+ */
+export async function startCasoPracticoAndAttempt(schemeId: string): Promise<void> {
+  const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+
+  // 1) Resolver el examen Caso Práctico (type=PRACTICAL) publicado
+  //    en este esquema. Si no encontramos por type, fallback a buscar
+  //    por nombre que contenga "caso" (defensivo si el seed lo creó
+  //    como CERTIFICATION con nombre Caso Práctico).
+  let exam = await prisma.exam.findFirst({
+    where: {
+      subscriberId,
+      schemeId,
+      status: "PUBLISHED",
+      type: "PRACTICAL",
+    },
+    select: { id: true, schemeId: true, type: true },
+  });
+  if (!exam) {
+    exam = await prisma.exam.findFirst({
+      where: {
+        subscriberId,
+        schemeId,
+        status: "PUBLISHED",
+        name: { contains: "caso", mode: "insensitive" },
+      },
+      select: { id: true, schemeId: true, type: true },
+    });
+  }
+  if (!exam) {
+    throw new Error("No hay Caso Práctico publicado para este programa.");
+  }
+
+  // 2) Reusar la inscripción activa del Caso Práctico si ya existe, o
+  //    crearla. Misma lógica que startEnrollment, pero sin redirect a
+  //    /portal/inscripcion al final — queremos seguir hasta el examen.
+  let enrollmentId: string;
+  const existing = await prisma.enrollment.findFirst({
+    where: {
+      candidateId,
+      examId: exam.id,
+      status: { notIn: ["CANCELLED", "REJECTED", "EXPIRED"] },
+    },
+    select: { id: true },
+  });
+  if (existing) {
+    enrollmentId = existing.id;
+  } else {
+    const code = await generateEnrollmentCode(subscriberId);
+    const created = await prisma.enrollment.create({
+      data: {
+        subscriberId,
+        candidateId,
+        schemeId: exam.schemeId,
+        examId: exam.id,
+        type: enrollmentTypeFromExam(exam.type),
+        status: "CONSENT_PENDING",
+        code,
+      },
+    });
+    enrollmentId = created.id;
+    await audit(ctx, {
+      action: "enrollment.start",
+      entity: "Enrollment",
+      entityId: created.id,
+      subscriberId,
+      after: { code, examId: exam.id, fromCta: "completar-proceso" },
+    });
+  }
+
+  // 3) Sincronizar el status real del journey — esto evalúa la herencia
+  //    de documentos APROBADOS y pagos APROBADOS del mismo programa, y
+  //    sube el status a READY si todo está cubierto.
+  await syncEnrollmentStatus(enrollmentId);
+
+  // 4) Releer status del enrollment después del sync.
+  const fresh = await prisma.enrollment.findUnique({
+    where: { id: enrollmentId },
+    select: { status: true },
+  });
+  if (!fresh) throw new Error("Inscripción no encontrada.");
+
+  // 5) Si todo está listo → lanzar el intento inmediatamente. startAttempt
+  //    a su vez sincroniza, crea el ExamAttempt y redirige al runner del
+  //    examen (que monta HonestyGate antes de mostrar las preguntas).
+  if (fresh.status === "READY" || fresh.status === "IN_PROGRESS") {
+    const { startAttempt } = await import("@/lib/actions/attempt");
+    // startAttempt termina con redirect, así que ESTO no retorna.
+    await startAttempt(enrollmentId);
+    return; // por TS — startAttempt nunca regresa
+  }
+
+  // 6) Si falta algo (consentimiento, docs no heredados, pago no
+  //    cubierto, agendamiento), llevarlo a la inscripción donde el
+  //    detalle muestra exactamente qué resta.
+  revalidatePath("/portal");
+  redirect(`/portal/inscripcion/${enrollmentId}`);
+}
+
+// ----------------------------------------------------------------------------
 //  Autorización de tratamiento de datos personales.
 // ----------------------------------------------------------------------------
 export async function giveConsent(
