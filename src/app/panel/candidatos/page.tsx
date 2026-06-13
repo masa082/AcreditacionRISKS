@@ -171,7 +171,6 @@ export default async function CandidatesListPage({
 
   const rows: CandidateRow[] = candidates.map((c) => {
     const last = c.enrollments[0];
-    const lastPayment = last?.payments[0];
 
     // CONTEO AGREGADO de documentos: antes solo se contaban los de la
     // última inscripción, lo que daba 0/0/0 falso cuando una nueva
@@ -186,9 +185,22 @@ export default async function CandidatesListPage({
     const docsPdf = allDocs.filter((d) => /\.pdf$/i.test(d.fileName ?? "")).length;
     const docsImg = allDocs.filter((d) => /\.(png|jpe?g)$/i.test(d.fileName ?? "")).length;
 
-    const paymentLabel: CandidateRow["paymentLabel"] = lastPayment?.status === "APPROVED" ? "approved"
-      : lastPayment?.status === "PENDING" ? "pending"
-      : lastPayment?.status === "REJECTED" ? "rejected"
+    // PAGO REPRESENTATIVO del candidato — mismo bug que con docs: antes
+    // se miraba solo last?.payments[0]. Caso Samuel: el Caso Práctico
+    // no requiere pago (requirePayment=false), por eso enrollments[0]
+    // no tiene pagos, pero el Examen Teórico SÍ tiene un pago APROBADO
+    // de $650.000 que cubre el programa entero. Recorremos TODAS las
+    // inscripciones y elegimos el "mejor" pago: APPROVED > PENDING >
+    // REJECTED > none. Dentro de la misma categoría, el más reciente.
+    const allPayments = c.enrollments.flatMap((e) => e.payments ?? []);
+    const rank = (s: string) => (s === "APPROVED" ? 0 : s === "PENDING" ? 1 : s === "REJECTED" ? 2 : 3);
+    const bestPayment =
+      allPayments.length === 0
+        ? null
+        : [...allPayments].sort((a, b) => rank(a.status) - rank(b.status))[0];
+    const paymentLabel: CandidateRow["paymentLabel"] = bestPayment?.status === "APPROVED" ? "approved"
+      : bestPayment?.status === "PENDING" ? "pending"
+      : bestPayment?.status === "REJECTED" ? "rejected"
       : "none";
 
     // PROGRAMA del candidato — nombre del esquema más reciente.
@@ -229,8 +241,8 @@ export default async function CandidatesListPage({
       lastStatusLabel: last ? (ENROLL_STATUS_ES[last.status] ?? last.status) : "Sin inscripciones",
       lastCreatedAt: last ? dateOnly(last.createdAt) : null,
       paymentLabel,
-      paymentAmount: lastPayment && Number(lastPayment.amount.toString()) > 0
-        ? money(lastPayment.amount, lastPayment.currency)
+      paymentAmount: bestPayment && Number(bestPayment.amount.toString()) > 0
+        ? money(bestPayment.amount, bestPayment.currency)
         : null,
       consentGiven: c.consents.length > 0,
       docsApproved,
