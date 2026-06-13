@@ -334,6 +334,22 @@ const DICTIONARY: Dict = {
     de: "Das Komitee prüft Ihren Werdegang und stellt Ihr per öffentlichem QR überprüfbares Zertifikat aus.",
   },
 
+  // Tooltip de cada paso del stepper — etiqueta de estado que aparece
+  // al pasar el mouse encima del paso.
+  "process.tooltip.statusDone": {
+    es: "Paso completado", en: "Step completed", pt: "Etapa concluída",
+    fr: "Étape terminée", it: "Passo completato", de: "Schritt abgeschlossen",
+  },
+  "process.tooltip.statusCurrent": {
+    es: "Está aquí — siga avanzando", en: "You are here — keep going",
+    pt: "Você está aqui — continue", fr: "Vous êtes ici — continuez",
+    it: "Sei qui — continua", de: "Sie sind hier — weiter geht's",
+  },
+  "process.tooltip.statusUpcoming": {
+    es: "Paso próximo", en: "Upcoming step", pt: "Próxima etapa",
+    fr: "Étape à venir", it: "Prossimo passo", de: "Nächster Schritt",
+  },
+
   // Landing — hero ampliado
   "land.hero.note": {
     es: "↘ su próximo aumento empieza aquí",

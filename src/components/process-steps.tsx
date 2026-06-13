@@ -84,6 +84,7 @@ export function ProcessSteps({
             step.n < currentStep ? "completed" : step.n === currentStep ? "current" : "upcoming";
           const isLast = i === PROCESS_STEPS.length - 1;
           const href = stepHrefs?.[step.n as 1 | 2 | 3 | 4] ?? step.defaultHref;
+          const description = tr(step.descKey);
           // Estilo común del bloque interno (las clases visuales no cambian
           // por estado link/no-link — solo el wrapper varía).
           const inner = (
@@ -120,13 +121,13 @@ export function ProcessSteps({
                   {tr(step.titleKey)}
                 </h4>
                 {!compact ? (
-                  <p className="mt-1 text-[11.5px] leading-snug text-slate-500">{tr(step.descKey)}</p>
+                  <p className="mt-1 text-[11.5px] leading-snug text-slate-500">{description}</p>
                 ) : null}
               </div>
             </div>
           );
           return (
-            <li key={step.n} className="relative">
+            <li key={step.n} className="group relative">
               {/* Conector horizontal (desktop) */}
               {!isLast ? (
                 <span
@@ -140,11 +141,47 @@ export function ProcessSteps({
               <Link
                 href={href}
                 aria-current={status === "current" ? "step" : undefined}
+                aria-describedby={`step-tip-${step.n}`}
                 title={`${tr("process.step")} ${step.n}: ${tr(step.titleKey)} — ${tr("process.gotoAction")}`}
-                className="group block rounded-xl p-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-300 hover:bg-white/60"
+                className="block rounded-xl p-1 outline-none transition focus-visible:ring-2 focus-visible:ring-brand-300 hover:bg-white/60"
               >
                 {inner}
               </Link>
+
+              {/* Tooltip explicativo — aparece al pasar el mouse sobre el
+                  paso (o al hacer focus por teclado). Usamos `group` en el
+                  <li/> y `group-hover` / `group-focus-within` en este div
+                  para que CSS solo controle la visibilidad. `pointer-events-none`
+                  evita que el tooltip interfiera con clics sobre el Link. */}
+              <div
+                id={`step-tip-${step.n}`}
+                role="tooltip"
+                className={
+                  "pointer-events-none invisible absolute left-1/2 z-30 mt-2 w-64 -translate-x-1/2 translate-y-1 " +
+                  "rounded-xl bg-slate-900 px-3 py-2.5 text-left text-[12px] leading-snug text-slate-100 " +
+                  "opacity-0 shadow-xl ring-1 ring-slate-700 transition " +
+                  "group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 " +
+                  "group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 " +
+                  (compact ? "top-full" : "top-full")
+                }
+              >
+                {/* Pequeña flecha que apunta al paso */}
+                <span
+                  aria-hidden
+                  className="absolute -top-1.5 left-1/2 h-3 w-3 -translate-x-1/2 rotate-45 bg-slate-900 ring-1 ring-slate-700"
+                />
+                <p className="font-bold text-white">
+                  {tr("process.step")} {step.n} · {tr(step.titleKey)}
+                </p>
+                <p className="mt-1 text-slate-200">{description}</p>
+                <p className="mt-2 text-[10.5px] font-semibold uppercase tracking-wider text-gold-300">
+                  {status === "completed"
+                    ? "✓ " + tr("process.tooltip.statusDone")
+                    : status === "current"
+                    ? "● " + tr("process.tooltip.statusCurrent")
+                    : "○ " + tr("process.tooltip.statusUpcoming")}
+                </p>
+              </div>
             </li>
           );
         })}
