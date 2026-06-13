@@ -16,6 +16,7 @@ import {
   type QuestionSnapshot,
 } from "@/lib/exam-attempt";
 import { saveUpload, extFromName, MAX_UPLOAD_BYTES } from "@/lib/storage";
+import { syncEnrollmentStatus } from "@/lib/enrollment";
 import { issuePresentationCertificate } from "@/lib/certificate";
 import { sendExamScoreEmail } from "@/lib/email";
 import { BRAND } from "@/lib/brand";
@@ -37,6 +38,17 @@ async function reqMeta() {
 // ----------------------------------------------------------------------------
 export async function startAttempt(enrollmentId: string): Promise<void> {
   const { ctx, candidateId, subscriberId } = await requireCandidateAction();
+
+  // PRE-SYNC: el campo `enrollment.status` se actualiza solo tras
+  // escrituras (subir doc, pagar, etc.). En el caso del Caso Práctico
+  // que reutiliza documentos APROBADOS de la inscripción del Examen
+  // Teórico (anti-reproceso), el candidato no SUBE nada nuevo, así que
+  // sin esta sincronización el status quedaría en DOCS_PENDING aunque
+  // computeJourney ya considere los docs heredados como completos.
+  // syncEnrollmentStatus re-evalúa el journey y persiste el status
+  // derivado real, incluyendo la herencia de documentos y pagos.
+  await syncEnrollmentStatus(enrollmentId);
+
   const enrollment = await prisma.enrollment.findUnique({
     where: { id: enrollmentId },
     include: { exam: true },
