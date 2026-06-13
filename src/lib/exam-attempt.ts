@@ -1,6 +1,7 @@
 import "server-only";
 import { Prisma } from "@prisma/client";
 import { prisma } from "./prisma";
+import { resolveRubric } from "./default-rubric";
 
 // ============================================================================
 //  Dominio de presentación y calificación de intentos de examen.
@@ -28,7 +29,11 @@ export interface QuestionSnapshot {
   rubric?: unknown;
 }
 
-/// Versión del snapshot segura para el candidato (sin la respuesta correcta ni la rúbrica).
+/// Versión del snapshot segura para el candidato (sin la respuesta
+/// correcta). La rúbrica SÍ se expone — política nueva: el candidato
+/// debe ver cómo será calificado antes y durante la presentación.
+/// Para preguntas manuales sin rúbrica configurada, devolvemos la
+/// rúbrica por defecto del tipo (defaultRubricForType).
 export function publicSnapshot(s: QuestionSnapshot) {
   return {
     type: s.type,
@@ -38,6 +43,7 @@ export function publicSnapshot(s: QuestionSnapshot) {
     options: s.options,
     multiple: s.multiple,
     manual: s.needsManual,
+    rubric: s.needsManual ? resolveRubric(s.rubric, s.type) : null,
   };
 }
 
@@ -92,13 +98,16 @@ export function buildSnapshot(q: QuestionWithOptions, randomizeOptions: boolean)
   }
 
   // OPEN, CASE_STUDY, FILE_UPLOAD, MATCHING, ORDERING, SCALE -> revisión manual.
+  // Si la pregunta no trae rúbrica configurada, congelamos la rúbrica por
+  // defecto del tipo dentro del snapshot — así el candidato siempre ve
+  // los criterios al presentar y el evaluador trabaja con la misma.
   return {
     ...base,
     options: [],
     multiple: false,
     needsManual: true,
     correctKeys: [],
-    rubric: q.rubric ?? null,
+    rubric: resolveRubric(q.rubric, q.type as string),
   };
 }
 

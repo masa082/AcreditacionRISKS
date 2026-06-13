@@ -28,6 +28,10 @@ export interface RunnerQuestion {
   options: { key: string; text: string }[];
   multiple: boolean;
   manual: boolean;
+  /// Rúbrica de calificación (criterios + puntos). Se muestra al
+  /// candidato durante la presentación para que sepa cómo será
+  /// evaluado. Para preguntas no manuales viene null.
+  rubric: { criterios: { nombre: string; puntos: number; descripcion?: string }[] } | null;
   saved: { key?: string; keys?: string[]; text?: string; fileName?: string };
 }
 
@@ -129,6 +133,52 @@ function IncidentReporter({ attemptId }: { attemptId: string }) {
           )
         : null}
     </>
+  );
+}
+
+/// Tarjeta de Rúbrica de calificación que se muestra al candidato
+/// durante la presentación de una pregunta manual (caso práctico,
+/// abierta, archivo). Lista los criterios con sus puntos y, si la
+/// rúbrica los incluye, la descripción de qué se espera para cada
+/// criterio. El candidato sabe de antemano cómo será evaluado.
+function RubricCard({
+  rubric,
+}: {
+  rubric: { criterios: { nombre: string; puntos: number; descripcion?: string }[] };
+}) {
+  const total = rubric.criterios.reduce((acc, c) => acc + (Number(c.puntos) || 0), 0);
+  return (
+    <details
+      className="mt-3 rounded-lg border border-brand-200 bg-brand-50/40 p-3 open:bg-brand-50/60"
+      open
+    >
+      <summary className="cursor-pointer select-none text-sm font-semibold text-brand-900">
+        📋 Rúbrica de calificación · esta evaluación se calificará así
+        {total > 0 ? <span className="ml-2 text-xs font-medium text-brand-700">({total} pts)</span> : null}
+      </summary>
+      <ul className="mt-3 space-y-2">
+        {rubric.criterios.map((c, i) => (
+          <li
+            key={i}
+            className="rounded-md border border-brand-100 bg-white px-3 py-2 text-sm"
+          >
+            <div className="flex items-start justify-between gap-2">
+              <span className="font-medium text-slate-800">{c.nombre}</span>
+              <span className="shrink-0 rounded-full bg-brand-100 px-2 py-0.5 text-[11px] font-bold text-brand-800">
+                {c.puntos} pts
+              </span>
+            </div>
+            {c.descripcion ? (
+              <p className="mt-1 text-xs text-slate-600">{c.descripcion}</p>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+      <p className="mt-3 text-[11px] text-brand-700">
+        La calificación final se asigna sobre 100. El evaluador puede pedirle información
+        adicional antes de cerrar la nota.
+      </p>
+    </details>
   );
 }
 
@@ -263,6 +313,7 @@ export function ExamRunner({
                 multiple: newQ.multiple,
                 manual: newQ.manual,
                 contextText: newQ.contextText,
+                rubric: newQ.rubric ?? null,
                 saved: {},
               }
             : q,
@@ -458,6 +509,10 @@ export function ExamRunner({
                   </button>
                 ) : null}
               </div>
+
+              {q.manual && q.rubric && q.rubric.criterios.length > 0 ? (
+                <RubricCard rubric={q.rubric} />
+              ) : null}
 
               {q.manual ? (
                 <ManualAnswer attemptId={attemptId} q={q} onFilled={onFilled} />

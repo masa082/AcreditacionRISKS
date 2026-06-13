@@ -152,7 +152,7 @@ export function QuestionEditor({
       trueFalseAnswer: meta.editor === "trueFalse" ? trueFalse : null,
       scaleConfig: meta.editor === "scale" ? { ...scale, minLabel: scale.minLabel || null, maxLabel: scale.maxLabel || null } : null,
       rubric:
-        meta.editor === "text" && rubric.some((r) => r.nombre.trim())
+        (meta.editor === "text" || meta.editor === "fileOnly") && rubric.some((r) => r.nombre.trim())
           ? { criterios: rubric.filter((r) => r.nombre.trim()).map((r) => ({ nombre: r.nombre, puntos: Number(r.puntos) })) }
           : null,
     };
@@ -281,7 +281,7 @@ export function QuestionEditor({
         </div>
       )}
 
-      {meta.editor === "text" && (
+      {(meta.editor === "text" || meta.editor === "fileOnly") && (
         <RubricEditor rubric={rubric} setRubric={setRubric} />
       )}
 

@@ -48,6 +48,7 @@ export default async function ExamPage({
       options: snap.options,
       multiple: snap.multiple,
       manual: snap.manual,
+      rubric: snap.rubric ?? null,
       saved: { key: ans?.key, keys: ans?.keys, text: ans?.text, fileName: ans?.fileName },
     };
   });

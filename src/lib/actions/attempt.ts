@@ -412,7 +412,7 @@ export async function acceptExamConsent(
 export async function swapAttemptQuestion(
   attemptId: string,
   attemptQuestionId: string,
-): Promise<{ ok: boolean; error?: string; newQuestion?: { statement: string; options: { key: string; text: string }[]; multiple: boolean; manual: boolean; contextText: string | null } }> {
+): Promise<{ ok: boolean; error?: string; newQuestion?: { statement: string; options: { key: string; text: string }[]; multiple: boolean; manual: boolean; contextText: string | null; rubric: { criterios: { nombre: string; puntos: number; descripcion?: string }[] } | null } }> {
   const { ctx, candidateId, subscriberId } = await requireCandidateAction();
   const attempt = await prisma.examAttempt.findUnique({
     where: { id: attemptId },
@@ -529,6 +529,7 @@ export async function swapAttemptQuestion(
       multiple: pub.multiple,
       manual: pub.manual,
       contextText: pub.contextText,
+      rubric: pub.rubric,
     },
   };
 }
