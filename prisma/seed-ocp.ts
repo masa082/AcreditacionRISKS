@@ -39,7 +39,7 @@ const THEMES: { code: string; name: string }[] = [
   { code: "T2", name: "Enfoque Basado en Riesgo" },
   { code: "T3", name: "Debida Diligencia" },
   { code: "T4", name: "Monitoreo Transaccional" },
-  { code: "T5", name: "Reportes ROS y ROE" },
+  { code: "T5", name: "Reportes ROS y ROI" },
   { code: "T6", name: "Rol del Oficial de Cumplimiento" },
   { code: "T7", name: "Ética y Confidencialidad" },
 ];
@@ -69,7 +69,7 @@ const CERTS: CertConfig[] = [
       description:
         "Certificación de idoneidad de competencias para Oficiales de Cumplimiento Principal y Suplente del Sistema de Administración del Riesgo LA/FT (SARLAFT) en empresas vigiladas por la Superintendencia de Transporte. Categorías: Principal (mín. 3 años de experiencia) y Suplente (mín. 1 año).",
       scope:
-        "Marco normativo SARLAFT del sector transporte, enfoque basado en riesgo, debida diligencia, monitoreo transaccional, reportes ROS/ROE a la UIAF, rol e inhabilidades del Oficial de Cumplimiento y código de ética.",
+        "Marco normativo SARLAFT del sector transporte, enfoque basado en riesgo, debida diligencia, monitoreo transaccional, reportes ROS/ROI a la UIAF, rol e inhabilidades del Oficial de Cumplimiento y código de ética.",
       normReference: "ISO/IEC 17024; Decreto 830 de 2021; Circular Externa 027 de 2020 (Supertransporte)",
     },
     bank: { code: "ST-BANK-OCP", name: "Banco de Preguntas — Oficial de Cumplimiento SARLAFT (Supertransporte)", normReference: "Anexo B P-OCP-01" },
@@ -87,7 +87,7 @@ const CERTS: CertConfig[] = [
       description:
         "Certificación de idoneidad de competencias para Oficiales de Cumplimiento del Sistema de Autocontrol y Gestión del Riesgo Integral LA/FT/FPADM (SAGRILAFT) en empresas del sector real vigiladas por la Superintendencia de Sociedades. Incluye fundamentos del Programa de Transparencia y Ética Empresarial (PTEE).",
       scope:
-        "Marco normativo SAGRILAFT (Capítulo X de la Circular Básica Jurídica), enfoque basado en riesgo, debida diligencia y beneficiario final, monitoreo transaccional, reportes ROS/ROE a la UIAF, rol del Oficial de Cumplimiento y código de ética.",
+        "Marco normativo SAGRILAFT (Capítulo X de la Circular Básica Jurídica), enfoque basado en riesgo, debida diligencia y beneficiario final, monitoreo transaccional, reportes ROS/ROI a la UIAF, rol del Oficial de Cumplimiento y código de ética.",
       normReference: "ISO/IEC 17024; Circular Externa 100-000016 de 2020 (Supersociedades); Ley 1778 de 2016 (PTEE)",
     },
     bank: { code: "SG-BANK-OCP", name: "Banco de Preguntas — Oficial de Cumplimiento SAGRILAFT (Supersociedades)", normReference: "Adaptado de Anexo B P-OCP-01" },

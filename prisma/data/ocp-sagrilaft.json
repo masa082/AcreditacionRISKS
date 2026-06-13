@@ -187,7 +187,7 @@
   "options": [
    "Nada",
    "El Reporte de Ausencia de Operaciones Sospechosas",
-   "Un ROE",
+   "Un ROI",
    "Un informe a Supersociedades"
   ],
   "answerIndex": 1,
@@ -1061,7 +1061,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P077",
@@ -1075,7 +1075,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P078",
@@ -1089,7 +1089,7 @@
   "answerIndex": 1,
   "difficulty": "BASIC",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P079",
@@ -1103,11 +1103,11 @@
   "answerIndex": 2,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P080",
-  "statement": "¿Cuál es el plazo para reportar un ROE?",
+  "statement": "¿Cuál es el plazo para reportar un ROI?",
   "options": [
    "5 días hábiles",
    "10 días calendario",
@@ -1117,7 +1117,7 @@
   "answerIndex": 2,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P081",
@@ -1131,7 +1131,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P082",
@@ -1145,7 +1145,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P083",
@@ -1159,7 +1159,7 @@
   "answerIndex": 1,
   "difficulty": "ADVANCED",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P084",
@@ -1173,7 +1173,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P085",
@@ -1187,7 +1187,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P086",
@@ -1201,7 +1201,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P087",
@@ -1215,7 +1215,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P088",
@@ -1229,7 +1229,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P089",
@@ -1243,7 +1243,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P090",
@@ -1257,7 +1257,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P091",
@@ -2811,21 +2811,21 @@
   "answerIndex": 1,
   "difficulty": "BASIC",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P202",
-  "statement": "¿Qué significa ROE?",
+  "statement": "¿Qué significa ROI?",
   "options": [
    "Reporte Operación Exitosa",
-   "Reporte de Operación Intentada",
+   "Reporte de Operaciones Inusuales",
    "Registro Operación Especial",
    "Reporte Operación Externa"
   ],
   "answerIndex": 1,
   "difficulty": "BASIC",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P203",
@@ -2839,7 +2839,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P204",
@@ -2853,7 +2853,7 @@
   "answerIndex": 1,
   "difficulty": "BASIC",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P205",
@@ -2867,7 +2867,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P206",
@@ -2881,7 +2881,7 @@
   "answerIndex": 1,
   "difficulty": "ADVANCED",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P207",
@@ -2895,7 +2895,7 @@
   "answerIndex": 1,
   "difficulty": "BASIC",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P208",
@@ -2909,7 +2909,7 @@
   "answerIndex": 0,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P209",
@@ -2923,7 +2923,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P210",
@@ -2937,7 +2937,7 @@
   "answerIndex": 0,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P211",
@@ -2951,7 +2951,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P212",
@@ -2965,7 +2965,7 @@
   "answerIndex": 1,
   "difficulty": "ADVANCED",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P213",
@@ -2979,7 +2979,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P214",
@@ -2993,7 +2993,7 @@
   "answerIndex": 0,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P215",
@@ -3007,7 +3007,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P216",
@@ -3021,7 +3021,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P217",
@@ -3035,7 +3035,7 @@
   "answerIndex": 1,
   "difficulty": "ADVANCED",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P218",
@@ -3049,7 +3049,7 @@
   "answerIndex": 0,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P219",
@@ -3063,7 +3063,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P220",
@@ -3077,7 +3077,7 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P221",
@@ -3091,7 +3091,7 @@
   "answerIndex": 1,
   "difficulty": "ADVANCED",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P222",
@@ -3105,11 +3105,11 @@
   "answerIndex": 1,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P223",
-  "statement": "¿Cuál es el propósito del ROE?",
+  "statement": "¿Cuál es el propósito del ROI?",
   "options": [
    "Reportar operación sospechosa no ejecutada",
    "Reportar ventas",
@@ -3119,7 +3119,7 @@
   "answerIndex": 0,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P224",
@@ -3133,7 +3133,7 @@
   "answerIndex": 0,
   "difficulty": "ADVANCED",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P225",
@@ -3147,7 +3147,7 @@
   "answerIndex": 0,
   "difficulty": "INTERMEDIATE",
   "topicCode": "T5",
-  "topicName": "Reportes ROS y ROE"
+  "topicName": "Reportes ROS y ROI"
  },
  {
   "code": "SG-P226",
