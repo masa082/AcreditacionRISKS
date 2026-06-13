@@ -28,11 +28,28 @@ const ENROLL_STATUS_KEY: Record<string, string> = {
 
 function toneFor(status: string): "green" | "amber" | "blue" | "slate" {
   if (status === "CERTIFIED" || status === "APPROVED") return "green";
+  if (status === "GRADING" || status === "COMMITTEE") return "blue";
   if (status.endsWith("PENDING") || status === "SCHEDULING") return "amber";
   if (status === "CANCELLED" || status === "REJECTED" || status === "EXPIRED") return "slate";
   return "blue";
 }
 
+/**
+ * Mi proceso — vista resumen para el candidato.
+ *
+ * Cambios respecto a la versión anterior:
+ *  - El stepper se calcula a partir del avance REAL: si tiene un
+ *    intento aprobado se mueve a Paso 3; si tiene certificado a Paso 4.
+ *    Antes solo miraba enrollment.status del más reciente, lo que
+ *    "retrocedía" al candidato cuando creaba una nueva inscripción en
+ *    DOCS_PENDING aunque ya hubiera aprobado el examen anterior.
+ *  - Tarjeta "Estado actual y próximo paso" antes de la lista — muestra
+ *    el puntaje obtenido (cuando ya presentó), checklist mini y un
+ *    botón claro para AVANZAR (presentar Caso Práctico / ver
+ *    resultado / esperar comité / descargar certificado).
+ *  - Cada fila de "Mis procesos" muestra ahora puntaje + tiempo desde
+ *    creación + atajo a la siguiente acción.
+ */
 export default async function CandidatePortal() {
   const { candidateId } = await requireCandidatePage();
   const locale = await getServerLocale();
@@ -42,7 +59,23 @@ export default async function CandidatePortal() {
     prisma.enrollment.findMany({
       where: { candidateId },
       orderBy: { createdAt: "desc" },
-      include: { exam: { select: { name: true } }, scheme: { select: { name: true } } },
+      include: {
+        exam: { select: { id: true, name: true, passingScore: true, requirePayment: true } },
+        scheme: { select: { id: true, name: true } },
+        attempts: {
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            status: true,
+            scorePercent: true,
+            passed: true,
+            submittedAt: true,
+            gradedAt: true,
+          },
+        },
+        payments: { select: { status: true } },
+        certificates: { select: { id: true, status: true } },
+      },
     }),
     prisma.certificate.findMany({
       where: { candidateId },
@@ -54,27 +87,18 @@ export default async function CandidatePortal() {
     }),
   ]);
 
-  // Determinar el paso "actual" del candidato según el estado de la
-  // inscripción más reciente. Esto le da feedback claro de dónde está.
-  const latest = enrollments[0];
-  const stepFromStatus = (s: string | undefined): 1 | 2 | 3 | 4 => {
-    if (!s) return 1;
-    if (s === "CERTIFIED" || s === "APPROVED") return 4;
-    if (s === "GRADING" || s === "COMMITTEE") return 4;
-    if (s === "IN_PROGRESS" || s === "READY" || s === "SCHEDULING") return 3;
-    if (s === "DOCS_PENDING" || s === "PAYMENT_PENDING" || s === "CONSENT_PENDING") return 2;
-    return 2;
-  };
-  const currentStep = stepFromStatus(latest?.status);
-
   const activeCerts = certificates.filter((c) => c.status === "VALID");
-  const pending = enrollments.filter(
-    (e) => e.status.endsWith("PENDING") || e.status === "SCHEDULING",
-  ).length;
 
-  // Si hay una inscripción "viva" (no cancelada ni vencida), el paso 2
-  // del wizard debe llevar a ESA inscripción específica para continuar
-  // donde la dejó. Si no, va a la lista de evaluaciones disponibles.
+  // Step REAL del candidato: tomamos el MÁS ALTO de todos los procesos,
+  // no el más reciente. Si tiene un examen aprobado o un certificado,
+  // el stepper avanza aunque haya creado una nueva inscripción que está
+  // en DOCS_PENDING para la siguiente evaluación.
+  const currentStep = computeOverallStep(enrollments, activeCerts.length > 0);
+
+  // "Pendientes" reales del candidato — algo que requiere su acción.
+  const pendingActions = enrollments.filter((e) => candidateActionRequired(e)).length;
+
+  // Inscripción "viva" para enlazar el stepper.
   const liveEnrollment = enrollments.find(
     (e) => e.status !== "CANCELLED" && e.status !== "EXPIRED" && e.status !== "REJECTED",
   );
@@ -84,9 +108,13 @@ export default async function CandidatePortal() {
   const stepHrefs: Partial<Record<1 | 2 | 3 | 4, string>> = {
     1: "/portal/perfil",
     2: step2Href,
-    3: "/portal/agenda",
-    4: activeCerts.length > 0 ? "/portal/certificados" : "/portal/certificados",
+    3: liveEnrollment ? `/portal/inscripcion/${liveEnrollment.id}` : "/portal/evaluaciones",
+    4: "/portal/certificados",
   };
+
+  // Programas agrupados — para mostrar "su Caso Práctico" debajo del
+  // Examen Teórico de la misma certificación con un único panel guiado.
+  const programs = groupBySchemeOrEnrollment(enrollments);
 
   return (
     <>
@@ -103,11 +131,6 @@ export default async function CandidatePortal() {
         }
       />
 
-      {/* Wizard guiado:
-          - Si el candidato aún no se ha inscrito, mostramos el bienvenida
-            grande con CTA principal a /portal/evaluaciones y los 4 pasos.
-          - Si ya está en proceso, mostramos un stepper compacto con el
-            paso actual resaltado para ubicarlo y motivarlo. */}
       {enrollments.length === 0 ? (
         <div className="mb-5">
           <WelcomeWizard
@@ -131,9 +154,23 @@ export default async function CandidatePortal() {
       <div className="grid gap-4 sm:grid-cols-3">
         <StatTile label={tr("portal.mi.stat.enrollments")} value={enrollments.length} />
         <StatTile label={tr("portal.mi.stat.certs")} value={activeCerts.length} tone="good" />
-        <StatTile label={tr("portal.mi.stat.pending")} value={pending} tone="warn" />
+        <StatTile
+          label={tr("portal.mi.stat.pending")}
+          value={pendingActions}
+          tone={pendingActions > 0 ? "warn" : undefined}
+        />
       </div>
 
+      {/* ─── Panel guiado: estado actual + próximo paso ─────────────── */}
+      {programs.length > 0 ? (
+        <div className="mt-6 space-y-4">
+          {programs.map((p) => (
+            <ProgramStatusCard key={p.key} program={p} tr={tr} />
+          ))}
+        </div>
+      ) : null}
+
+      {/* ─── Tarjeta de procesos (más simple, con score inline) ────── */}
       <Card className="mt-6">
         <div className="border-b border-slate-200 px-5 py-4">
           <h2 className="font-semibold text-slate-900">{tr("portal.mi.processes")}</h2>
@@ -149,24 +186,42 @@ export default async function CandidatePortal() {
             </EmptyState>
           ) : (
             <ul className="divide-y divide-slate-100">
-              {enrollments.map((e) => (
-                <li key={e.id} className="flex items-center justify-between gap-3 py-3">
-                  <div className="min-w-0">
-                    <Link
-                      href={`/portal/inscripcion/${e.id}`}
-                      className="font-medium text-slate-800 hover:text-brand-800 hover:underline"
-                    >
-                      {e.exam?.name ?? e.scheme?.name ?? tr("portal.mi.processFallback")}
-                    </Link>
-                    <div className="text-xs text-slate-400">
-                      {tr("portal.mi.folio")} {e.code} · {dateOnly(e.createdAt)}
+              {enrollments.map((e) => {
+                const latestAttempt = e.attempts[0] ?? null;
+                const scorePct = latestAttempt?.scorePercent
+                  ? Number(latestAttempt.scorePercent.toString())
+                  : null;
+                return (
+                  <li key={e.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
+                    <div className="min-w-0 flex-1">
+                      <Link
+                        href={`/portal/inscripcion/${e.id}`}
+                        className="font-medium text-slate-800 hover:text-brand-800 hover:underline"
+                      >
+                        {e.exam?.name ?? e.scheme?.name ?? tr("portal.mi.processFallback")}
+                      </Link>
+                      <div className="text-xs text-slate-400">
+                        {tr("portal.mi.folio")} {e.code} · {dateOnly(e.createdAt)}
+                        {scorePct != null ? (
+                          <span
+                            className={`ml-2 inline-flex rounded-full px-2 py-0.5 text-[10.5px] font-bold ${
+                              latestAttempt?.passed
+                                ? "bg-emerald-100 text-emerald-700"
+                                : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            📊 {scorePct.toLocaleString("es-CO", { maximumFractionDigits: 1 })}% ·{" "}
+                            {latestAttempt?.passed ? "Aprobado" : "No aprobado"}
+                          </span>
+                        ) : null}
+                      </div>
                     </div>
-                  </div>
-                  <Badge tone={toneFor(e.status)}>
-                    {ENROLL_STATUS_KEY[e.status] ? tr(ENROLL_STATUS_KEY[e.status]) : e.status}
-                  </Badge>
-                </li>
-              ))}
+                    <Badge tone={toneFor(e.status)}>
+                      {ENROLL_STATUS_KEY[e.status] ? tr(ENROLL_STATUS_KEY[e.status]) : e.status}
+                    </Badge>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>
@@ -187,7 +242,15 @@ export default async function CandidatePortal() {
                     <div className="font-medium text-slate-800">{c.title}</div>
                     <div className="text-xs text-slate-400">{tr("portal.mi.code")} {c.code}</div>
                   </div>
-                  <Badge tone={c.status === "VALID" ? "green" : "slate"}>{c.status}</Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge tone={c.status === "VALID" ? "green" : "slate"}>{c.status}</Badge>
+                    <Link
+                      href="/portal/certificados"
+                      className="rounded-md border border-brand-200 bg-white px-2.5 py-1 text-[11px] font-semibold text-brand-800 hover:bg-brand-50"
+                    >
+                      Ver / Descargar
+                    </Link>
+                  </div>
                 </li>
               ))}
             </ul>
@@ -196,4 +259,355 @@ export default async function CandidatePortal() {
       </Card>
     </>
   );
+}
+
+// ============================================================================
+//  Helpers
+// ============================================================================
+
+type EnrollmentRow = Awaited<
+  ReturnType<typeof prisma.enrollment.findMany<{
+    include: {
+      exam: { select: { id: true; name: true; passingScore: true; requirePayment: true } };
+      scheme: { select: { id: true; name: true } };
+      attempts: {
+        orderBy: { createdAt: "desc" };
+        select: {
+          id: true; status: true; scorePercent: true; passed: true;
+          submittedAt: true; gradedAt: true;
+        };
+      };
+      payments: { select: { status: true } };
+      certificates: { select: { id: true; status: true } };
+    };
+  }>>
+>[number];
+
+/**
+ * Calcula el paso "más alto" alcanzado por el candidato considerando
+ * TODAS sus inscripciones + sus certificados. Antes la función solo
+ * miraba el status de la inscripción más reciente, lo que hacía
+ * retroceder el stepper cuando el candidato pre-inscribía una nueva
+ * evaluación (status=DOCS_PENDING) tras haber aprobado otra.
+ */
+function computeOverallStep(
+  enrollments: EnrollmentRow[],
+  hasAnyValidCert: boolean,
+): 1 | 2 | 3 | 4 {
+  let max: 1 | 2 | 3 | 4 = 1;
+  if (hasAnyValidCert) return 4;
+  for (const e of enrollments) {
+    const s = stepFromStatus(e.status, e.attempts);
+    if (s > max) max = s;
+  }
+  return max;
+}
+
+function stepFromStatus(
+  status: string,
+  attempts: { status: string; passed: boolean | null }[],
+): 1 | 2 | 3 | 4 {
+  // Paso 4: comité / aprobado / certificado emitido.
+  if (status === "CERTIFIED" || status === "APPROVED" || status === "GRADING" || status === "COMMITTEE") return 4;
+  // Paso 3: ya presentó al menos un intento (aprobado o pendiente de
+  // calificación) o está listo/curso para presentar.
+  if (attempts.some((a) => a.passed === true)) return 3;
+  if (attempts.some((a) => ["SUBMITTED", "AUTO_GRADED", "PENDING_COMMITTEE", "GRADED", "PASSED", "FAILED"].includes(a.status))) return 3;
+  if (status === "IN_PROGRESS" || status === "READY" || status === "SCHEDULING") return 3;
+  // Paso 2: documentos + pago.
+  if (status === "DOCS_PENDING" || status === "PAYMENT_PENDING" || status === "CONSENT_PENDING") return 2;
+  return 2;
+}
+
+/**
+ * Hay una acción pendiente del candidato cuando:
+ *  - Falta presentar un examen (READY / IN_PROGRESS no terminado).
+ *  - Faltan documentos para una inscripción nueva.
+ *  - Tiene un intento NO aprobado que requiere repetir / revisar.
+ */
+function candidateActionRequired(e: EnrollmentRow): boolean {
+  if (["CONSENT_PENDING", "DOCS_PENDING", "PAYMENT_PENDING", "SCHEDULING", "READY"].includes(e.status)) {
+    return true;
+  }
+  // Intento en curso sin enviar.
+  if (e.attempts.some((a) => a.status === "IN_PROGRESS" || a.status === "NOT_STARTED")) {
+    return true;
+  }
+  return false;
+}
+
+interface Program {
+  key: string;
+  schemeName: string;
+  enrollments: EnrollmentRow[];
+}
+
+function groupBySchemeOrEnrollment(enrollments: EnrollmentRow[]): Program[] {
+  // Agrupamos por scheme.id (o por enrollment.id si no hay scheme).
+  const map = new Map<string, Program>();
+  for (const e of enrollments) {
+    const key = e.scheme?.id ?? e.id;
+    const name = e.scheme?.name ?? e.exam?.name ?? "Programa";
+    const g = map.get(key) ?? { key, schemeName: name, enrollments: [] };
+    g.enrollments.push(e);
+    map.set(key, g);
+  }
+  // Orden: programas con acciones pendientes primero.
+  return Array.from(map.values()).sort((a, b) => {
+    const aP = a.enrollments.some(candidateActionRequired) ? 0 : 1;
+    const bP = b.enrollments.some(candidateActionRequired) ? 0 : 1;
+    return aP - bP;
+  });
+}
+
+// ============================================================================
+//  Tarjeta "Estado actual + próximo paso" por programa.
+// ============================================================================
+
+function ProgramStatusCard({
+  program,
+  tr,
+}: {
+  program: Program;
+  tr: (k: string) => string;
+}) {
+  // Tomamos los dos exámenes típicos: Teórico y Caso Práctico.
+  const teor = program.enrollments.find((e) => /teórico|teorico/i.test(e.exam?.name ?? ""));
+  const caso = program.enrollments.find((e) => /caso/i.test(e.exam?.name ?? ""));
+
+  const teorAttempt = teor?.attempts[0] ?? null;
+  const casoAttempt = caso?.attempts[0] ?? null;
+
+  const teorScore = teorAttempt?.scorePercent ? Number(teorAttempt.scorePercent.toString()) : null;
+  const casoScore = casoAttempt?.scorePercent ? Number(casoAttempt.scorePercent.toString()) : null;
+
+  const hasCert = program.enrollments.some((e) => e.certificates.length > 0);
+
+  // Próximo paso del programa.
+  const next = computeNextStep({
+    teor,
+    caso,
+    teorAttempt,
+    casoAttempt,
+    hasCert,
+  });
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="grid gap-4 p-5 lg:grid-cols-[1fr_auto]">
+        <div className="min-w-0">
+          <h3 className="text-base font-bold text-brand-900">{program.schemeName}</h3>
+          <p className="mt-0.5 text-xs text-slate-500">Resumen de su avance en este programa</p>
+
+          {/* Checklist mini */}
+          <ul className="mt-3 space-y-1 text-[12.5px]">
+            <Step
+              done={!!teor}
+              pending={false}
+              label="Inscripción registrada"
+              detail={teor ? `Folio ${teor.code}` : null}
+            />
+            <Step
+              done={teorAttempt?.passed === true || teorAttempt?.status === "PASSED" || teorAttempt?.status === "GRADED" || teorAttempt?.status === "PENDING_COMMITTEE"}
+              pending={teorAttempt?.status === "SUBMITTED" || teorAttempt?.status === "AUTO_GRADED"}
+              failed={teorAttempt?.passed === false}
+              label="Examen Teórico"
+              detail={
+                teorScore != null
+                  ? `Puntaje: ${teorScore.toLocaleString("es-CO", { maximumFractionDigits: 1 })}% · ${teorAttempt?.passed ? "Aprobado" : "No aprobado"}`
+                  : teorAttempt?.status === "IN_PROGRESS"
+                  ? "Iniciado, sin enviar"
+                  : teor
+                  ? "Pendiente de presentar"
+                  : null
+              }
+            />
+            <Step
+              done={casoAttempt?.passed === true}
+              pending={casoAttempt?.status === "PENDING_COMMITTEE" || casoAttempt?.status === "SUBMITTED"}
+              failed={casoAttempt?.passed === false}
+              label="Caso Práctico"
+              detail={
+                casoScore != null
+                  ? `Puntaje: ${casoScore.toLocaleString("es-CO", { maximumFractionDigits: 1 })}% · ${casoAttempt?.passed ? "Aprobado" : casoAttempt?.status === "PENDING_COMMITTEE" ? "En revisión del comité" : "No aprobado"}`
+                  : casoAttempt?.status === "IN_PROGRESS"
+                  ? "Iniciado, sin enviar"
+                  : caso
+                  ? "Pendiente de presentar"
+                  : "Tras aprobar el Examen Teórico"
+              }
+            />
+            <Step
+              done={hasCert}
+              pending={false}
+              label="Certificado emitido"
+              detail={hasCert ? "Disponible en Mis Certificados" : "Tras aprobar ambas evaluaciones"}
+            />
+          </ul>
+        </div>
+
+        {/* Próximo paso destacado a la derecha */}
+        {next ? (
+          <aside className="rounded-2xl border-2 border-emerald-300 bg-emerald-50 p-4 lg:max-w-xs">
+            <div className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">
+              ➜ Siguiente paso
+            </div>
+            <p className="mt-1 text-sm font-bold text-emerald-900">{next.title}</p>
+            {next.detail ? <p className="mt-0.5 text-[11.5px] text-emerald-800">{next.detail}</p> : null}
+            {next.href ? (
+              <Link
+                href={next.href}
+                className="mt-3 block rounded-lg btn-grad-navy px-3 py-2 text-center text-sm font-bold text-white shadow-sm"
+              >
+                {next.cta}
+              </Link>
+            ) : null}
+          </aside>
+        ) : null}
+      </div>
+    </Card>
+  );
+}
+
+function Step({
+  done,
+  pending,
+  failed,
+  label,
+  detail,
+}: {
+  done?: boolean;
+  pending?: boolean;
+  failed?: boolean;
+  label: string;
+  detail?: string | null;
+}) {
+  const state = failed ? "failed" : done ? "done" : pending ? "pending" : "todo";
+  const cfg = {
+    done: { icon: "✓", cls: "bg-emerald-100 text-emerald-700" },
+    pending: { icon: "⏳", cls: "bg-blue-100 text-blue-700" },
+    todo: { icon: "○", cls: "bg-slate-100 text-slate-400" },
+    failed: { icon: "✗", cls: "bg-rose-100 text-rose-700" },
+  }[state];
+  return (
+    <li className="flex items-start gap-2">
+      <span className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full text-[11px] font-bold ${cfg.cls}`}>
+        {cfg.icon}
+      </span>
+      <span className="min-w-0">
+        <span className={`font-semibold ${state === "todo" ? "text-slate-500" : "text-slate-800"}`}>{label}</span>
+        {detail ? <span className="ml-1 text-[11px] text-slate-500">— {detail}</span> : null}
+      </span>
+    </li>
+  );
+}
+
+function computeNextStep({
+  teor,
+  caso,
+  teorAttempt,
+  casoAttempt,
+  hasCert,
+}: {
+  teor: EnrollmentRow | undefined;
+  caso: EnrollmentRow | undefined;
+  teorAttempt: { status: string; passed: boolean | null; scorePercent: unknown } | null;
+  casoAttempt: { status: string; passed: boolean | null; scorePercent: unknown } | null;
+  hasCert: boolean;
+}): { title: string; detail?: string; cta: string; href?: string } | null {
+  // Certificado emitido → ya está.
+  if (hasCert) {
+    return {
+      title: "Certificado emitido",
+      detail: "Descárguelo, compártalo o verifíquelo por QR.",
+      cta: "Ver mis certificados →",
+      href: "/portal/certificados",
+    };
+  }
+  // Sin Teórico → ir a inscripción / lista.
+  if (!teor) {
+    return {
+      title: "Inscríbase al Examen Teórico",
+      detail: "Es la primera evaluación del programa.",
+      cta: "Ir a evaluaciones disponibles →",
+      href: "/portal/evaluaciones",
+    };
+  }
+  // Teórico en curso → continuar.
+  if (teorAttempt?.status === "IN_PROGRESS") {
+    return {
+      title: "Continúe el Examen Teórico",
+      detail: "Tiene un intento en curso.",
+      cta: "Volver a la prueba →",
+      href: `/portal/examen/${(teorAttempt as { id?: string }).id ?? ""}`,
+    };
+  }
+  // Teórico no presentado → presentar.
+  if (teor && !teorAttempt) {
+    return {
+      title: "Presente el Examen Teórico",
+      detail: "Cuando esté listo, inicie la prueba desde la inscripción.",
+      cta: "Ir al Examen Teórico →",
+      href: `/portal/inscripcion/${teor.id}`,
+    };
+  }
+  // Teórico no aprobado → revisar / reintentar.
+  if (teorAttempt?.passed === false) {
+    return {
+      title: "Examen Teórico no aprobado",
+      detail: "Revise el resultado del intento y las opciones de reintento.",
+      cta: "Ver detalle del intento →",
+      href: `/portal/inscripcion/${teor.id}`,
+    };
+  }
+  // Teórico aprobado y no hay Caso Práctico → ir a inscribirse / iniciar.
+  if (teorAttempt?.passed && !caso) {
+    return {
+      title: "Inicie el Caso Práctico",
+      detail: "Aprobó el Examen Teórico — sin costo adicional. Los documentos ya aprobados se reutilizan automáticamente.",
+      cta: "Iniciar Caso Práctico →",
+      href: "/portal/evaluaciones",
+    };
+  }
+  // Caso Práctico inscrito sin presentar.
+  if (caso && !casoAttempt) {
+    return {
+      title: "Presente el Caso Práctico",
+      detail: "Última evaluación del programa. Al aprobar se emite su certificado.",
+      cta: "Iniciar Caso Práctico →",
+      href: `/portal/inscripcion/${caso.id}`,
+    };
+  }
+  if (casoAttempt?.status === "IN_PROGRESS") {
+    return {
+      title: "Continúe el Caso Práctico",
+      cta: "Volver a la prueba →",
+      href: `/portal/examen/${(casoAttempt as { id?: string }).id ?? ""}`,
+    };
+  }
+  if (casoAttempt?.status === "PENDING_COMMITTEE" || casoAttempt?.status === "SUBMITTED") {
+    return {
+      title: "Caso Práctico en revisión",
+      detail: "El comité del organismo está evaluando su entrega. Le notificaremos por correo.",
+      cta: "Ver detalle del intento →",
+      href: caso ? `/portal/inscripcion/${caso.id}` : "/portal/evaluaciones",
+    };
+  }
+  if (casoAttempt?.passed === false) {
+    return {
+      title: "Caso Práctico no aprobado",
+      detail: "Revise el resultado y las opciones de reintento.",
+      cta: "Ver detalle del intento →",
+      href: caso ? `/portal/inscripcion/${caso.id}` : "/portal/evaluaciones",
+    };
+  }
+  if (casoAttempt?.passed === true && teorAttempt?.passed === true) {
+    return {
+      title: "Esperando emisión del certificado",
+      detail: "Aprobó ambas evaluaciones. El organismo emite su certificado en breve.",
+      cta: "Ver mis certificados →",
+      href: "/portal/certificados",
+    };
+  }
+  return null;
 }
