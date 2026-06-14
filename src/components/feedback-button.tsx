@@ -342,7 +342,7 @@ function FeedbackModal({
               <button
                 type="submit"
                 disabled={pending}
-                className="rounded-lg bg-violet-700 px-4 py-2 text-sm font-bold text-white hover:bg-violet-800 disabled:opacity-60"
+                className="rounded-lg bg-brand-600 px-4 py-2 text-sm font-bold text-white hover:bg-brand-700 disabled:opacity-60"
               >
                 {pending ? "Enviando…" : "Enviar feedback"}
               </button>
