@@ -2,6 +2,7 @@ import { requireCandidatePage } from "@/lib/guards";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, EmptyState } from "@/components/ui";
 import { CertificateCard, type CertificateRow } from "@/components/certificate-card";
+import { BRAND } from "@/lib/brand";
 
 export const metadata = { title: "Mis certificados" };
 
@@ -43,6 +44,7 @@ export default async function CandidateCertificatesPage() {
           submittedAt: true,
         },
       },
+      subscriber: { select: { tradeName: true, legalName: true } },
     },
   });
 
@@ -50,6 +52,7 @@ export default async function CandidateCertificatesPage() {
     id: c.id,
     code: c.code,
     title: c.title,
+    type: c.type === "CERTIFICATION" ? "CERTIFICATION" : "EXAM_PRESENTATION",
     issuedAtIso: c.issuedAt.toISOString(),
     expiresAtIso: c.expiresAt ? c.expiresAt.toISOString() : null,
     status: c.status,
@@ -58,6 +61,9 @@ export default async function CandidateCertificatesPage() {
     // (verifica por token de 192 bits).
     pdfUrl: `/api/certificate/${c.verifyToken}/pdf`,
     publicViewUrl: `/verificar/${c.code}`,
+    // URL ABSOLUTA para LinkedIn (debe llegarle al server de LinkedIn).
+    publicViewUrlAbsolute: `${BRAND.appUrl}/verificar/${encodeURIComponent(c.code)}`,
+    organizationName: c.subscriber.tradeName ?? c.subscriber.legalName,
     // Puntaje — solo en pantalla.
     score: c.attempt
       ? {

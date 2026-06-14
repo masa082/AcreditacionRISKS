@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { LinkedInShare } from "@/components/linkedin-share";
 
 /**
  * Tarjeta del certificado del candidato.
@@ -34,13 +35,19 @@ export interface CertificateRow {
   id: string;
   code: string;
   title: string;
+  /** Tipo: CERTIFICATION (diploma final) o EXAM_PRESENTATION (constancia). */
+  type: "CERTIFICATION" | "EXAM_PRESENTATION";
   issuedAtIso: string;
   expiresAtIso: string | null;
   status: string;
   /** URL pública del PDF (acepta verifyToken). */
   pdfUrl: string;
-  /** URL de verificación pública (QR). */
+  /** URL de verificación pública (QR), relativa. */
   publicViewUrl: string;
+  /** URL ABSOLUTA de verificación — necesaria para LinkedIn/redes. */
+  publicViewUrlAbsolute: string;
+  /** Razón comercial del organismo — irá como `organizationName` en LinkedIn. */
+  organizationName: string;
   /** Puntaje del intento — solo se muestra en pantalla, NO va al PDF. */
   score: {
     rawScore: string | null;
@@ -160,6 +167,22 @@ export function CertificateCard({ row }: { row: CertificateRow }) {
           🔍 Cargar vista previa del certificado
         </button>
       )}
+
+      {/* ─── Compartir en LinkedIn ─ solo certificados de competencias ── */}
+      {row.type === "CERTIFICATION" && row.status === "VALID" ? (
+        <div className="border-t border-slate-100 px-5 py-4">
+          <LinkedInShare
+            title={row.title}
+            code={row.code}
+            organizationName={row.organizationName}
+            issueYear={new Date(row.issuedAtIso).getFullYear()}
+            issueMonth={new Date(row.issuedAtIso).getMonth() + 1}
+            expirationYear={row.expiresAtIso ? new Date(row.expiresAtIso).getFullYear() : undefined}
+            expirationMonth={row.expiresAtIso ? new Date(row.expiresAtIso).getMonth() + 1 : undefined}
+            publicUrl={row.publicViewUrlAbsolute}
+          />
+        </div>
+      ) : null}
 
       {/* ─── Acciones ───────────────────────────────────────────────── */}
       <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-slate-100 bg-slate-50 px-5 py-3">
