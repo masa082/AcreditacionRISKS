@@ -284,9 +284,15 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                             );
                           })}
                           {c.hasCert ? (
-                            <span className="inline-flex items-center rounded-full bg-gold-50 px-2 py-0.5 text-[10px] font-bold text-gold-700 ring-1 ring-gold-200">
-                              🎓 Certificado
-                            </span>
+                            <Link
+                              href={`/panel/candidatos/${c.id}/certificados`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 rounded-full bg-gold-50 px-2 py-0.5 text-[10px] font-bold text-gold-700 ring-1 ring-gold-200 transition hover:bg-gold-100 hover:ring-gold-300"
+                              title="Ver los certificados del candidato (abre en nueva pestaña)"
+                            >
+                              🎓 Certificado <span aria-hidden>↗</span>
+                            </Link>
                           ) : null}
                         </div>
                       ) : null}
