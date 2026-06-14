@@ -239,31 +239,29 @@ export default async function VerificationResult({
             llamada a acción comercial. */}
         {cert && effectiveStatus === "VALID" ? (
           <section className="mt-8 overflow-hidden rounded-2xl border-2 border-amber-200 bg-gradient-to-br from-amber-50 via-white to-emerald-50 p-6 shadow-sm">
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              <div className="min-w-0 flex-1">
-                <h3 className="text-lg font-bold text-slate-900">
-                  ¿También quiere certificarse en SARLAFT, SAGRILAFT u otro esquema?
-                </h3>
-                <p className="mt-1 text-sm text-slate-700">
-                  Acabamos de verificar el certificado de un profesional. Inicie su propio
-                  proceso de certificación de personas conforme a <strong>ISO/IEC 17024</strong>
-                  con resultado verificable digitalmente como el que está viendo.
-                </p>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Link
-                  href="/registro"
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-brand-700 to-brand-900 px-4 py-2 text-sm font-bold text-white shadow hover:from-brand-800 hover:to-brand-900"
-                >
-                  🎯 Quiero certificarme
-                </Link>
-                <Link
-                  href="/certificaciones"
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
-                >
-                  Ver certificaciones disponibles
-                </Link>
-              </div>
+            <div>
+              <h3 className="text-lg font-bold text-slate-900">
+                ¿También quiere certificarse en SARLAFT, SAGRILAFT u otro esquema?
+              </h3>
+              <p className="mt-1 text-sm text-slate-700">
+                Acabamos de verificar el certificado de un profesional. Inicie su propio
+                proceso de certificación de personas conforme a <strong>ISO/IEC 17024</strong>
+                con resultado verificable digitalmente como el que está viendo.
+              </p>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/registro"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-brand-700 to-brand-900 px-4 py-2 text-sm font-bold text-white shadow hover:from-brand-800 hover:to-brand-900"
+              >
+                🎯 Quiero certificarme
+              </Link>
+              <Link
+                href="/certificaciones"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Ver certificaciones disponibles
+              </Link>
             </div>
           </section>
         ) : null}

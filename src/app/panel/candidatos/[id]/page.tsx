@@ -18,12 +18,12 @@ function isPdfName(name: string | null): boolean {
 
 export const metadata = { title: "Detalle de candidato" };
 
-// Política: la ficha del candidato siempre se renderiza fresca para
-// reflejar inmediatamente cambios de documentos, pagos, intentos y
-// emisión de certificados. Sin esto, Next podría servir versión cacheada
-// y mostrar datos viejos ("inconsistencias" reportadas por el usuario).
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+// La actualización viene de las server actions que llaman
+// `revalidatePath()` al aprobar/rechazar documentos, registrar pagos
+// o emitir certificados. NO usamos `force-dynamic` porque obliga a
+// re-renderizar todo SSR en cada navegación — el usuario lo veía
+// como "todo el tiempo cargando". Quedan vigentes la revalidación
+// puntual desde server actions y la regeneración bajo demanda.
 
 const ENROLL_STATUS_ES: Record<string, string> = {
   STARTED: "Iniciado",
