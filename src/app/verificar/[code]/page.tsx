@@ -18,7 +18,11 @@ export async function generateMetadata({
   const decoded = decodeURIComponent(code);
   const cert = await prisma.certificate.findFirst({
     where: { OR: [{ code: decoded }, { verifyToken: decoded }] },
-    select: { code: true, title: true, holderName: true, status: true, expiresAt: true },
+    select: {
+      code: true, title: true, holderName: true, status: true, expiresAt: true,
+      issuedAt: true,
+      subscriber: { select: { tradeName: true, legalName: true } },
+    },
   });
   const fallbackTitle = "Verificación de certificado";
   if (!cert) {
@@ -28,7 +32,18 @@ export async function generateMetadata({
   const status = isExpired ? "VENCIDO" : cert.status === "VALID" ? "VIGENTE" : cert.status;
   const title = `${cert.holderName} · ${cert.title}`;
   const description = `Certificado ${status} ${cert.code}. Verifique la autenticidad de este certificado emitido conforme a ISO/IEC 17024.`;
-  const ogUrl = `${BRAND.appUrl}/api/certificate/${encodeURIComponent(cert.code)}/og`;
+  // El endpoint OG corre en EDGE runtime y no consulta Prisma — los
+  // datos del certificado entran codificados en query params desde aquí
+  // (donde el lookup a BD ya se hizo). Mantiene el bundle edge minúsculo
+  // y aislado del resto de funciones serverless.
+  const ogParams = new URLSearchParams({
+    n: cert.holderName,
+    t: cert.title,
+    o: cert.subscriber.tradeName ?? cert.subscriber.legalName,
+    y: cert.issuedAt.getFullYear().toString(),
+    s: status,
+  });
+  const ogUrl = `${BRAND.appUrl}/api/certificate/${encodeURIComponent(cert.code)}/og?${ogParams.toString()}`;
   const pageUrl = `${BRAND.appUrl}/verificar/${encodeURIComponent(cert.code)}`;
   return {
     title,
