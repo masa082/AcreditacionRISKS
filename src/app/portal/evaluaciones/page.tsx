@@ -127,20 +127,56 @@ export default async function AvailableExamsPage() {
     reqDocCountByScheme.set(r.schemeId, (reqDocCountByScheme.get(r.schemeId) ?? 0) + 1);
   }
 
+  // ── Consolidación POR ESQUEMA ─────────────────────────────────
+  // Documentos, pagos y certificados se REUSAN entre inscripciones
+  // del mismo esquema (el candidato carga docs y paga UNA vez por
+  // programa, no por cada examen). Pre-calculamos el estado mejor
+  // por esquema y se lo aplicamos a todas sus inscripciones — así
+  // el Caso Práctico no aparece como "0 docs / sin pago" cuando el
+  // candidato ya cubrió todo desde el Examen Teórico.
+  type SchemeState = {
+    paid: boolean;
+    paymentPending: boolean;
+    docsApproved: number;
+    docsSubmitted: number;
+    certificateIssued: boolean;
+  };
+  const schemeState = new Map<string, SchemeState>();
+  for (const e of activeEnrollments) {
+    if (!e.schemeId) continue;
+    const prev = schemeState.get(e.schemeId) ?? {
+      paid: false, paymentPending: false,
+      docsApproved: 0, docsSubmitted: 0,
+      certificateIssued: false,
+    };
+    const ePaid = e.payments.some((p) => p.status === "APPROVED");
+    const ePendingPay = !ePaid && e.payments.some((p) => p.status === "PENDING");
+    const eDocsAppr = e.documents.filter((d) => d.status === "APPROVED").length;
+    const eDocsSub = e.documents.filter(
+      (d) => d.status === "APPROVED" || d.status === "SUBMITTED",
+    ).length;
+    schemeState.set(e.schemeId, {
+      paid: prev.paid || ePaid,
+      paymentPending: prev.paymentPending || ePendingPay,
+      docsApproved: Math.max(prev.docsApproved, eDocsAppr),
+      docsSubmitted: Math.max(prev.docsSubmitted, eDocsSub),
+      certificateIssued: prev.certificateIssued || e.certificates.length > 0,
+    });
+  }
+
   // Mapa examen → progreso + mapa esquema → inscripción activa.
   const progressByExam = new Map<string, ExamProgress>();
   const enrolledSchemes = new Set<string>();
   for (const e of activeEnrollments) {
     if (e.schemeId) enrolledSchemes.add(e.schemeId);
 
-    const paid = e.payments.some((p) => p.status === "APPROVED");
-    const paymentPending = !paid && e.payments.some((p) => p.status === "PENDING");
-    const docsApproved = e.documents.filter((d) => d.status === "APPROVED").length;
-    const docsSubmitted = e.documents.filter(
-      (d) => d.status === "APPROVED" || d.status === "SUBMITTED",
-    ).length;
+    // Estado a nivel ESQUEMA (compartido entre todas las inscripciones).
+    const sState = e.schemeId
+      ? schemeState.get(e.schemeId) ?? {
+          paid: false, paymentPending: false, docsApproved: 0, docsSubmitted: 0, certificateIssued: false,
+        }
+      : { paid: false, paymentPending: false, docsApproved: 0, docsSubmitted: 0, certificateIssued: false };
     const docsRequired = e.schemeId ? reqDocCountByScheme.get(e.schemeId) ?? 0 : 0;
-    const certificateIssued = e.certificates.length > 0;
 
     // El intento del examen (puede no existir aún).
     if (e.examId) {
@@ -150,10 +186,10 @@ export default async function AvailableExamsPage() {
         enrollmentStatus: e.status,
         consentDone: true, // los consentimientos viven en otro nivel; asumimos sí si está inscrito.
         docsRequired,
-        docsApproved,
-        docsSubmitted,
-        paid,
-        paymentPending,
+        docsApproved: sState.docsApproved,
+        docsSubmitted: sState.docsSubmitted,
+        paid: sState.paid,
+        paymentPending: sState.paymentPending,
         attempt: attempt
           ? {
               status: attempt.status,
@@ -162,7 +198,7 @@ export default async function AvailableExamsPage() {
               submittedAt: attempt.submittedAt,
             }
           : null,
-        certificateIssued,
+        certificateIssued: sState.certificateIssued,
       });
     }
   }

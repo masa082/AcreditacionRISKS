@@ -32,10 +32,15 @@ export function SubscriberLogoHeader({
     );
   }
 
+  // Para sidebar y header usamos `w-auto` con un alto fijo: la mayoría
+  // de logos corporativos son wordmarks horizontales (RISKS, por ej.
+  // viene en 4:3). Forzar 48×48 cuadrado los aplastaba al punto de
+  // volverlos ilegibles. Tope de ancho para que no rompa el layout
+  // cuando el logo es muy ancho.
   const imgClass =
     variant === "sidebar"
-      ? "h-12 w-12 rounded-md border border-slate-200 bg-white object-contain p-1"
-      : "h-10 w-auto rounded border border-slate-200 bg-white object-contain p-0.5";
+      ? "h-12 w-auto max-w-[160px] rounded-md border border-slate-200 bg-white object-contain p-1"
+      : "h-10 w-auto max-w-[140px] rounded border border-slate-200 bg-white object-contain p-0.5";
 
   return (
     // eslint-disable-next-line @next/next/no-img-element
