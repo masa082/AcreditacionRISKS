@@ -104,6 +104,14 @@ export default async function CandidateDetailPage({
             <Link href={`/panel/candidatos/${candidate.id}/documentos`} className="rounded-lg border border-brand-300 px-3 py-1.5 text-sm font-semibold text-brand-700 hover:bg-brand-50">
               📁 Carpeta de archivos
             </Link>
+            <Link
+              href={`/panel/candidatos/${candidate.id}/certificados`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded-lg border border-gold-300 bg-gold-50 px-3 py-1.5 text-sm font-semibold text-gold-700 hover:bg-gold-100"
+            >
+              🎓 Certificados obtenidos
+            </Link>
             <a href={`/panel/candidatos/${candidate.id}/cv`} className="rounded-lg bg-violet-700 px-3 py-1.5 text-sm font-semibold text-white hover:bg-violet-800">
               ⬇ Descargar Hoja de Vida (PDF)
             </a>
