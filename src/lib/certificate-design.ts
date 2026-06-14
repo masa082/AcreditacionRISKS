@@ -523,37 +523,58 @@ function drawPresentation(ctx: DrawCtx) {
   const { page, fonts, cert } = ctx;
   const W = PAGE_W, H = PAGE_H, cx = W / 2;
 
-  // Fondo blanco con franja superior navy
-  page.drawRectangle({ x: 0, y: H - 100, width: W, height: 100, color: NAVY });
-  // Borde simple
-  page.drawRectangle({ x: 40, y: 40, width: W - 80, height: H - 80, borderColor: GOLD, borderWidth: 1.5 });
-  page.drawRectangle({ x: 47, y: 47, width: W - 94, height: H - 94, borderColor: GOLD_LIGHT, borderWidth: 0.4 });
+  // ── Marco dorado sobre fondo marfil ──────────────────────────────
+  page.drawRectangle({ x: 36, y: 36, width: W - 72, height: H - 72, borderColor: GOLD, borderWidth: 1.5 });
+  page.drawRectangle({ x: 44, y: 44, width: W - 88, height: H - 88, borderColor: GOLD_LIGHT, borderWidth: 0.5 });
 
-  // Logo en franja superior
+  // ── Encabezado limpio: logo izquierda · organismo centrado ──────
+  const headerTopY = H - 70;
+
   if (ctx.logoImg) {
     const ww = 70;
     const hh = (ctx.logoImg.height / ctx.logoImg.width) * ww;
-    page.drawImage(ctx.logoImg, { x: 70, y: H - 50 - hh / 2, width: ww, height: hh });
+    page.drawImage(ctx.logoImg, { x: 70, y: headerTopY - hh / 2 - 10, width: ww, height: hh });
   }
 
-  page.drawText(safeText("CONSTANCIA DE PRESENTACIÓN"), {
-    x: cx - fonts.sansBold.widthOfTextAtSize("CONSTANCIA DE PRESENTACIÓN", 12) / 2,
-    y: H - 45, size: 12, font: fonts.sansBold, color: rgb(1, 1, 1),
+  // ISO/IEC 17024 a la derecha, pequeño
+  page.drawText(safeText("CONFORME A"), {
+    x: W - 168, y: headerTopY, size: 7, font: fonts.sansBold, color: MUTED,
   });
-  const org = (cert.subscriber.tradeName ?? cert.subscriber.legalName).toUpperCase();
-  page.drawText(safeText(org), {
-    x: cx - fonts.serif.widthOfTextAtSize(org, 11) / 2,
-    y: H - 62, size: 11, font: fonts.serif, color: rgb(0.85, 0.85, 0.92),
-  });
-  page.drawText(safeText("Documento emitido conforme a ISO/IEC 17024"), {
-    x: cx - fonts.serifItalic.widthOfTextAtSize("Documento emitido conforme a ISO/IEC 17024", 8) / 2,
-    y: H - 78, size: 8, font: fonts.serifItalic, color: rgb(0.85, 0.85, 0.92),
+  page.drawText(safeText("ISO/IEC 17024"), {
+    x: W - 168, y: headerTopY - 12, size: 11, font: fonts.serifBold, color: NAVY,
   });
 
-  // Cuerpo
+  // Centro: razón social y "Constancia de presentación"
+  const org = (cert.subscriber.tradeName ?? cert.subscriber.legalName).toUpperCase();
+  page.drawText(safeText(org), {
+    x: cx - fonts.serifBold.widthOfTextAtSize(org, 14) / 2,
+    y: headerTopY, size: 14, font: fonts.serifBold, color: NAVY_DEEP,
+  });
+  if (cert.subscriber.legalName !== org) {
+    page.drawText(safeText(cert.subscriber.legalName), {
+      x: cx - fonts.serifItalic.widthOfTextAtSize(cert.subscriber.legalName, 8.5) / 2,
+      y: headerTopY - 12, size: 8.5, font: fonts.serifItalic, color: MUTED,
+    });
+  }
+
+  // Línea separadora dorada bajo el encabezado
+  page.drawLine({
+    start: { x: 70, y: H - 100 },
+    end: { x: W - 70, y: H - 100 },
+    thickness: 0.6, color: GOLD,
+  });
+
+  // Tipo de documento — discreto, en versalitas con letterspacing simulado
+  const labelText = "Constancia de presentación";
+  page.drawText(safeText(labelText), {
+    x: cx - fonts.serifItalic.widthOfTextAtSize(labelText, 10) / 2,
+    y: H - 118, size: 10, font: fonts.serifItalic, color: GOLD_DEEP,
+  });
+
+  // ── Cuerpo ──────────────────────────────────────────────────────
   page.drawText(safeText("Hace constar que"), {
     x: cx - fonts.serifItalic.widthOfTextAtSize("Hace constar que", 12) / 2,
-    y: H - 150, size: 12, font: fonts.serifItalic, color: MUTED,
+    y: H - 160, size: 12, font: fonts.serifItalic, color: MUTED,
   });
   const holder = cert.holderName.toUpperCase();
   let nameSize = 28;
