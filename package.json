@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "prisma generate && prisma migrate deploy && next build",
-    "postbuild": "tsx prisma/seed-documentation.ts || echo 'seed-documentation skipped'",
+    "_disabled_postbuild": "tsx prisma/seed-documentation.ts || echo 'seed-documentation skipped'",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
