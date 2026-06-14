@@ -141,9 +141,6 @@ function drawDiploma(ctx: DrawCtx) {
   drawCornerFiligree(page, 50, 50, "bl");
   drawCornerFiligree(page, W - 50, 50, "br");
 
-  // ── Patrón guilloche horizontal en el centro inferior ──
-  drawGuillochePattern(page, 110, 168, W - 220, 28);
-
   // ── Logo del suscriptor (centro-superior izq) ──
   if (ctx.logoImg) {
     const ww = 96;
@@ -157,24 +154,35 @@ function drawDiploma(ctx: DrawCtx) {
   // ── Cuerpo del diploma ──
   drawDiplomaBody(page, ctx, cx);
 
-  // ── Sello circular dorado/burgundy (lado izquierdo abajo) ──
-  drawSeal(page, fonts, 130, 245, cert.subscriber.tradeName ?? cert.subscriber.legalName);
+  // ── Banda decorativa guilloche — justo encima de la fila inferior,
+  //    sin invadir el espacio del scope ni de los datos formales.
+  //    Banda angosta y centrada para no solapar columnas. ──
+  drawGuillochePattern(page, 180, 245, W - 360, 14);
 
-  // ── QR de verificación (lado derecho abajo) ──
+  // ════════════════════════════════════════════════════════════════
+  // Fila inferior — CUATRO COLUMNAS CON BANDAS LIMPIAS, SIN SOLAPES
+  //
+  //   Sello       │ Datos formales │ Firma         │ QR
+  //   x=70-160    │ x=200-440      │ x=460-625     │ x=672-742
+  //   (radio 45)  │ (label + value)│ (centro 540)  │ (70×70)
+  // ════════════════════════════════════════════════════════════════
+
+  // 1) SELLO — columna 1
+  drawSeal(page, fonts, 115, 165, cert.subscriber.tradeName ?? cert.subscriber.legalName);
+
+  // 2) DATOS FORMALES — columna 2 (cinta de estado en la parte alta)
+  drawDataBlock(page, fonts, 200, 220, cert);
+
+  // 3) FIRMA — columna 3 (centrada en sigCx=540, separada del QR)
+  drawSignatureBlock(page, ctx, 540, 130);
+
+  // 4) QR DE VERIFICACIÓN — columna 4. El QR queda completamente
+  //    libre: ningún texto ni línea cruza encima.
   if (ctx.qrImg) {
-    page.drawImage(ctx.qrImg, { x: W - 175, y: 195, width: 90, height: 90 });
-    page.drawText(safeText("Verificación pública por QR"), {
-      x: W - 188, y: 182, size: 7.5, font: fonts.serifItalic, color: MUTED,
-    });
-    page.drawText(safeText(`okacreditado.com/verificar/${cert.code}`), {
-      x: W - 188, y: 172, size: 6.5, font: fonts.sans, color: MUTED,
-    });
+    page.drawImage(ctx.qrImg, { x: 672, y: 150, width: 70, height: 70 });
   }
 
-  // ── Firma + datos formales (centro-inferior) ──
-  drawSignatureBlock(page, ctx, cx);
-
-  // ── Pie con token + folio ──
+  // ── Pie: token + ayuda para verificar (el QR queda autodescriptivo) ──
   drawFooter(page, fonts, ctx.cert, ctx.tokenPreview);
 }
 
@@ -449,30 +457,30 @@ function drawTextOnArc(
   }
 }
 
-function drawSignatureBlock(page: PDFPage, ctx: DrawCtx, cx: number) {
+/// Firma — recibe centro X (sigCx) y baseline Y (sigY) para colocarse
+/// con precisión en cualquier columna. Limitamos el ancho de la línea
+/// e imagen para que se mantenga DENTRO de su columna sin tocar el QR.
+function drawSignatureBlock(page: PDFPage, ctx: DrawCtx, sigCx: number, sigY: number) {
   const { cert, fonts, signImg } = ctx;
-  const sigCx = cx + 160; // a la derecha
-  const sigY = 200;
 
   if (signImg) {
-    const ww = 130;
+    const ww = 110;
     const hh = (signImg.height / signImg.width) * ww;
-    page.drawImage(signImg, { x: sigCx - ww / 2, y: sigY + 5, width: ww, height: Math.min(hh, 60) });
+    page.drawImage(signImg, { x: sigCx - ww / 2, y: sigY + 4, width: ww, height: Math.min(hh, 50) });
   }
-  page.drawLine({ start: { x: sigCx - 90, y: sigY }, end: { x: sigCx + 90, y: sigY }, thickness: 0.8, color: NAVY });
+  page.drawLine({ start: { x: sigCx - 85, y: sigY }, end: { x: sigCx + 85, y: sigY }, thickness: 0.8, color: NAVY });
   if (cert.subscriber.authorizedSigner) {
     page.drawText(safeText(cert.subscriber.authorizedSigner), {
       x: sigCx - fonts.serifBold.widthOfTextAtSize(cert.subscriber.authorizedSigner, 10) / 2,
       y: sigY - 14, size: 10, font: fonts.serifBold, color: NAVY,
     });
   }
-  page.drawText(safeText("Director del Organismo de Certificación de Personas"), {
-    x: sigCx - fonts.serifItalic.widthOfTextAtSize("Director del Organismo de Certificación de Personas", 8.5) / 2,
-    y: sigY - 26, size: 8.5, font: fonts.serifItalic, color: MUTED,
+  // Etiqueta más corta para que NUNCA se solape con la columna del QR.
+  const labelText = "Firma autorizada del organismo";
+  page.drawText(safeText(labelText), {
+    x: sigCx - fonts.serifItalic.widthOfTextAtSize(labelText, 8) / 2,
+    y: sigY - 26, size: 8, font: fonts.serifItalic, color: MUTED,
   });
-
-  // Datos formales (izquierda)
-  drawDataBlock(page, fonts, 240, 245, cert);
 }
 
 function drawDataBlock(page: PDFPage, fonts: DrawCtx["fonts"], x: number, y: number, cert: CertificateData) {
@@ -504,13 +512,16 @@ function drawDataBlock(page: PDFPage, fonts: DrawCtx["fonts"], x: number, y: num
 }
 
 function drawFooter(page: PDFPage, fonts: DrawCtx["fonts"], cert: CertificateData, tokenPreview: string) {
+  // Línea 1 (más alta): token + código
   const txt = `Documento digital · token de verificación ${tokenPreview} · código ${cert.code}`;
   page.drawText(safeText(txt), {
     x: PAGE_W / 2 - fonts.sans.widthOfTextAtSize(txt, 7) / 2,
     y: 60, size: 7, font: fonts.sans, color: MUTED,
   });
-  page.drawText(safeText("Este diploma debe acompañarse de la verificación pública en línea (QR) para validar su autenticidad."), {
-    x: PAGE_W / 2 - fonts.serifItalic.widthOfTextAtSize("Este diploma debe acompañarse de la verificación pública en línea (QR) para validar su autenticidad.", 7) / 2,
+  // Línea 2 (más baja): URL pública para validar
+  const verifyLine = `Verifíquelo escaneando el QR o en okacreditado.com/verificar/${cert.code}`;
+  page.drawText(safeText(verifyLine), {
+    x: PAGE_W / 2 - fonts.serifItalic.widthOfTextAtSize(verifyLine, 7) / 2,
     y: 50, size: 7, font: fonts.serifItalic, color: MUTED,
   });
 }
@@ -603,22 +614,24 @@ function drawPresentation(ctx: DrawCtx) {
     drawCenteredWrapped(page, fonts.serifItalic, cert.scope, cx, H - 320, W - 240, 9, INK, 11);
   }
 
-  // Bloque inferior izquierda: datos
-  drawPresentationDataBlock(page, fonts, 100, 170, cert);
+  // ════════════════════════════════════════════════════════════════
+  // Fila inferior — TRES COLUMNAS SIN SOLAPES
+  //
+  //   Datos formales │ Firma            │ QR
+  //   x=80-360       │ centro 470       │ x=620-695
+  //                  │ (ancho 170)      │ (75×75)
+  // ════════════════════════════════════════════════════════════════
 
-  // QR derecha
+  // 1) DATOS FORMALES — izquierda
+  drawPresentationDataBlock(page, fonts, 80, 200, cert);
+
+  // 2) FIRMA — centro
+  drawPresentationSignature(page, ctx, 470, 140);
+
+  // 3) QR — derecha. Ningún texto cruza encima.
   if (ctx.qrImg) {
-    page.drawImage(ctx.qrImg, { x: W - 165, y: 130, width: 80, height: 80 });
-    page.drawText(safeText("Verificación pública"), {
-      x: W - 170, y: 116, size: 7, font: fonts.serifItalic, color: MUTED,
-    });
-    page.drawText(safeText(`okacreditado.com/verificar/${cert.code}`), {
-      x: W - 170, y: 106, size: 6.5, font: fonts.sans, color: MUTED,
-    });
+    page.drawImage(ctx.qrImg, { x: 620, y: 140, width: 75, height: 75 });
   }
-
-  // Firma
-  drawPresentationSignature(page, ctx, cx);
 
   // Pie
   drawFooter(page, fonts, cert, ctx.tokenPreview);
@@ -641,16 +654,14 @@ function drawPresentationDataBlock(page: PDFPage, fonts: DrawCtx["fonts"], x: nu
   }
 }
 
-function drawPresentationSignature(page: PDFPage, ctx: DrawCtx, cx: number) {
+function drawPresentationSignature(page: PDFPage, ctx: DrawCtx, sigCx: number, sigY: number) {
   const { fonts, cert, signImg } = ctx;
-  const sigCx = cx + 180;
-  const sigY = 175;
   if (signImg) {
-    const ww = 110;
+    const ww = 100;
     const hh = (signImg.height / signImg.width) * ww;
-    page.drawImage(signImg, { x: sigCx - ww / 2, y: sigY + 5, width: ww, height: Math.min(hh, 50) });
+    page.drawImage(signImg, { x: sigCx - ww / 2, y: sigY + 4, width: ww, height: Math.min(hh, 46) });
   }
-  page.drawLine({ start: { x: sigCx - 80, y: sigY }, end: { x: sigCx + 80, y: sigY }, thickness: 0.6, color: NAVY });
+  page.drawLine({ start: { x: sigCx - 75, y: sigY }, end: { x: sigCx + 75, y: sigY }, thickness: 0.6, color: NAVY });
   if (cert.subscriber.authorizedSigner) {
     page.drawText(safeText(cert.subscriber.authorizedSigner), {
       x: sigCx - fonts.serifBold.widthOfTextAtSize(cert.subscriber.authorizedSigner, 9) / 2,

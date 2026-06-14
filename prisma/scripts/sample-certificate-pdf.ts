@@ -1,8 +1,10 @@
 /// Genera dos PDFs de muestra (diploma + constancia) usando el nuevo
 /// diseño y los guarda en /tmp para revisión visual.
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, readFileSync, existsSync } from "node:fs";
 import { renderCertificatePdf } from "../../src/lib/certificate-design";
+
+const qrBytes = existsSync("/tmp/qr-sample.png") ? new Uint8Array(readFileSync("/tmp/qr-sample.png")) : null;
 
 async function main() {
   const baseSubscriber = {
@@ -27,7 +29,7 @@ async function main() {
       subscriber: baseSubscriber,
       scheme: baseScheme,
     },
-    qrPngBytes: null,
+    qrPngBytes: qrBytes,
     logoBytes: null,
     logoIsPng: true,
     signatureBytes: null,
@@ -51,7 +53,7 @@ async function main() {
       subscriber: baseSubscriber,
       scheme: baseScheme,
     },
-    qrPngBytes: null,
+    qrPngBytes: qrBytes,
     logoBytes: null,
     logoIsPng: true,
     signatureBytes: null,
