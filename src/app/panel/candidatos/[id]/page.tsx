@@ -18,6 +18,13 @@ function isPdfName(name: string | null): boolean {
 
 export const metadata = { title: "Detalle de candidato" };
 
+// Política: la ficha del candidato siempre se renderiza fresca para
+// reflejar inmediatamente cambios de documentos, pagos, intentos y
+// emisión de certificados. Sin esto, Next podría servir versión cacheada
+// y mostrar datos viejos ("inconsistencias" reportadas por el usuario).
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 const ENROLL_STATUS_ES: Record<string, string> = {
   STARTED: "Iniciado",
   CONSENT_PENDING: "Autorización pendiente",
@@ -80,6 +87,94 @@ export default async function CandidateDetailPage({
   if (!candidate || candidate.subscriberId !== subscriberId) notFound();
 
   const lastConsent = candidate.consents[0];
+
+  // ─── Consolidación documentos + pagos por esquema ──────────────
+  //
+  // Problema: cada inscripción guarda sus propios `documents` y
+  // `payments`. Cuando el candidato genera una segunda inscripción
+  // del mismo esquema (ej. Caso Práctico tras el Teórico) la vista
+  // mostraba "Sin documentos / Sin pagos" porque los archivos y el
+  // pago se entregaron en la PRIMERA inscripción.
+  //
+  // Solución: agrupar por `schemeId` y exponer en cada inscripción
+  // el set agregado de TODAS las inscripciones del mismo esquema.
+  // Para documentos, deduplicamos por `requiredDocumentId` (cuando
+  // existe) prefiriendo APROBADOS y, de no haberlos, el más reciente.
+  // Cada doc lleva un flag `_originEnrollmentCode` para indicar de
+  // qué folio viene cuando NO es el actual.
+
+  type EnrollmentItem = typeof candidate.enrollments[number];
+  type DocItem = EnrollmentItem["documents"][number] & {
+    _originEnrollmentId: string;
+    _originEnrollmentCode: string;
+  };
+  type PaymentItem = EnrollmentItem["payments"][number] & {
+    _originEnrollmentId: string;
+    _originEnrollmentCode: string;
+  };
+
+  const docsByScheme = new Map<string, DocItem[]>();
+  const paymentsByScheme = new Map<string, PaymentItem[]>();
+  for (const e of candidate.enrollments) {
+    const key = e.schemeId ?? `__no_scheme__${e.id}`;
+    const dArr = docsByScheme.get(key) ?? [];
+    for (const d of e.documents) {
+      dArr.push({ ...d, _originEnrollmentId: e.id, _originEnrollmentCode: e.code });
+    }
+    docsByScheme.set(key, dArr);
+    const pArr = paymentsByScheme.get(key) ?? [];
+    for (const p of e.payments) {
+      pArr.push({ ...p, _originEnrollmentId: e.id, _originEnrollmentCode: e.code });
+    }
+    paymentsByScheme.set(key, pArr);
+  }
+
+  // Para cada esquema, deduplicar docs por requiredDocumentId:
+  //  - si hay APROBADO: tomar el más reciente APROBADO
+  //  - sino: el más reciente sin importar status
+  // Los que no tienen requiredDocumentId quedan como están (libres).
+  const docsForEnrollment = new Map<string, DocItem[]>();
+  for (const e of candidate.enrollments) {
+    const key = e.schemeId ?? `__no_scheme__${e.id}`;
+    const pool = docsByScheme.get(key) ?? [];
+    const byReq = new Map<string, DocItem[]>();
+    const free: DocItem[] = [];
+    for (const d of pool) {
+      if (d.requiredDocumentId) {
+        const arr = byReq.get(d.requiredDocumentId) ?? [];
+        arr.push(d);
+        byReq.set(d.requiredDocumentId, arr);
+      } else free.push(d);
+    }
+    const dedupe: DocItem[] = [];
+    for (const arr of byReq.values()) {
+      const approved = arr.filter((x) => x.status === "APPROVED");
+      const winner = (approved.length > 0 ? approved : arr).sort(
+        (a, b) => new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime(),
+      )[0];
+      if (winner) dedupe.push(winner);
+    }
+    dedupe.push(...free);
+    // Orden final: aprobados primero, luego por fecha desc.
+    dedupe.sort((a, b) => {
+      if (a.status === "APPROVED" && b.status !== "APPROVED") return -1;
+      if (b.status === "APPROVED" && a.status !== "APPROVED") return 1;
+      return new Date(b.uploadedAt).getTime() - new Date(a.uploadedAt).getTime();
+    });
+    docsForEnrollment.set(e.id, dedupe);
+  }
+
+  // Para pagos, mostramos TODOS los del esquema (sin dedupe) — un
+  // pago de inscripción y un pago de retake pueden coexistir.
+  const paymentsForEnrollment = new Map<string, PaymentItem[]>();
+  for (const e of candidate.enrollments) {
+    const key = e.schemeId ?? `__no_scheme__${e.id}`;
+    const pool = paymentsByScheme.get(key) ?? [];
+    const sorted = [...pool].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
+    paymentsForEnrollment.set(e.id, sorted);
+  }
 
   // Logs de auditoría e ingresos para el candidato.
   const [recentLogs, loginCount] = candidate.user
@@ -196,14 +291,19 @@ export default async function CandidateDetailPage({
                   </Badge>
                 </div>
                 <div className="space-y-4 p-5">
-                  {/* Documentos */}
+                  {/* Documentos (agregados del esquema — se reutilizan entre inscripciones) */}
                   <section>
-                    <h3 className="text-sm font-medium text-slate-700">Documentos</h3>
-                    {e.documents.length === 0 ? (
+                    <h3 className="text-sm font-medium text-slate-700">
+                      Documentos
+                      <span className="ml-2 text-[10px] font-normal text-slate-400">
+                        (compartidos en el proceso del esquema)
+                      </span>
+                    </h3>
+                    {(docsForEnrollment.get(e.id) ?? []).length === 0 ? (
                       <p className="mt-1 text-sm text-slate-400">Sin documentos entregados.</p>
                     ) : (
                       <ul className="mt-2 space-y-2">
-                        {e.documents.map((d) => {
+                        {(docsForEnrollment.get(e.id) ?? []).map((d) => {
                           const st = DOC_STATUS[d.status] ?? DOC_STATUS.PENDING;
                           return (
                             <li key={d.id} className="rounded-lg border border-slate-200 p-3">
@@ -241,6 +341,11 @@ export default async function CandidateDetailPage({
                                   <div className="min-w-0">
                                     <div className="text-sm font-medium text-slate-800">{d.requiredDocument?.name ?? d.fileName ?? "Documento"}</div>
                                     <a href={`/api/files/${d.id}`} target="_blank" rel="noopener noreferrer" className="break-all text-xs text-brand-700 hover:underline">{d.fileName ?? "Ver documento"}</a>
+                                    {d._originEnrollmentId !== e.id ? (
+                                      <div className="mt-1 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200">
+                                        ⤴ Entregado en folio <span className="font-mono">{d._originEnrollmentCode}</span>
+                                      </div>
+                                    ) : null}
                                   </div>
                                 </div>
                                 <Badge tone={st.tone}>{st.label}</Badge>
@@ -260,16 +365,29 @@ export default async function CandidateDetailPage({
                     )}
                   </section>
 
-                  {/* Pagos */}
+                  {/* Pagos (agregados del esquema — el candidato puede pagar en
+                       cualquier inscripción del mismo programa) */}
                   <section>
-                    <h3 className="text-sm font-medium text-slate-700">Pagos</h3>
-                    {e.payments.length === 0 ? (
+                    <h3 className="text-sm font-medium text-slate-700">
+                      Pagos
+                      <span className="ml-2 text-[10px] font-normal text-slate-400">
+                        (compartidos en el proceso del esquema)
+                      </span>
+                    </h3>
+                    {(paymentsForEnrollment.get(e.id) ?? []).length === 0 ? (
                       <p className="mt-1 text-sm text-slate-400">Sin pagos registrados.</p>
                     ) : (
                       <ul className="mt-2 space-y-1 text-sm">
-                        {e.payments.map((p) => (
-                          <li key={p.id} className="flex items-center justify-between">
-                            <span className="text-slate-600">{p.description ?? p.concept}</span>
+                        {(paymentsForEnrollment.get(e.id) ?? []).map((p) => (
+                          <li key={p.id} className="flex items-center justify-between gap-2">
+                            <span className="min-w-0 text-slate-600">
+                              {p.description ?? p.concept}
+                              {p._originEnrollmentId !== e.id ? (
+                                <span className="ml-2 inline-flex items-center gap-1 rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200">
+                                  ⤴ Pagado en folio <span className="font-mono">{p._originEnrollmentCode}</span>
+                                </span>
+                              ) : null}
+                            </span>
                             <span className="flex items-center gap-2">
                               <span className="font-medium text-slate-800">{money(p.amount, p.currency)}</span>
                               <Badge tone={p.status === "APPROVED" ? "green" : p.status === "PENDING" ? "amber" : "slate"}>{p.status}</Badge>
