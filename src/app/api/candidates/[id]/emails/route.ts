@@ -79,7 +79,7 @@ export async function GET(
   // mostrarlo como PERSONALIZADO.
   const logsWithKind = logs.map(l => ({
     ...l,
-    displayKind: l.kind === "BULK" && groupCounts.get(l.groupId) === 1 ? "PERSONALIZADO" : l.kind,
+    displayKind: l.kind === "BULK" && l.groupId && groupCounts.get(l.groupId) === 1 ? "PERSONALIZADO" : l.kind,
   }));
 
   return Response.json({ candidate, logs: logsWithKind, count: logsWithKind.length });
