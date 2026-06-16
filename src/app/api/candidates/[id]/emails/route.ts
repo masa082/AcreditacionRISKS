@@ -59,5 +59,28 @@ export async function GET(
     },
   });
 
-  return Response.json({ candidate, logs, count: logs.length });
+  // Contar cuántos candidatos recibieron correos de cada groupId para
+  // distinguir entre PERSONALIZADO (1 candidato) vs MASIVO (> 1).
+  const groupIds = [...new Set(logs.map(l => l.groupId).filter(Boolean))] as string[];
+  const groupCounts = new Map<string, number>();
+  if (groupIds.length > 0) {
+    const counts = await prisma.emailLog.groupBy({
+      by: ["groupId"],
+      where: { groupId: { in: groupIds } },
+      _count: { candidateId: true },
+    });
+    for (const c of counts) {
+      const count = (c._count as { candidateId?: number })?.candidateId ?? 1;
+      if (c.groupId) groupCounts.set(c.groupId, count);
+    }
+  }
+
+  // Añadir `displayKind` a cada log: si fue BULK pero solo 1 destinatario,
+  // mostrarlo como PERSONALIZADO.
+  const logsWithKind = logs.map(l => ({
+    ...l,
+    displayKind: l.kind === "BULK" && groupCounts.get(l.groupId) === 1 ? "PERSONALIZADO" : l.kind,
+  }));
+
+  return Response.json({ candidate, logs: logsWithKind, count: logsWithKind.length });
 }

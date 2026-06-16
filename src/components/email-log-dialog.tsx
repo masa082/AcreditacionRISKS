@@ -18,6 +18,7 @@ interface EmailRow {
   bodyPreview: string;
   bodyHtml?: string | null;
   kind: string;
+  displayKind?: string; // PERSONALIZADO si fue BULK a 1 candidato, else kind
   template: string | null;
   status: string;
   providerId: string | null;
@@ -29,6 +30,7 @@ interface EmailRow {
 
 const KIND_LABEL: Record<string, { label: string; tone: string }> = {
   BULK: { label: "Masivo", tone: "bg-brand-50 text-brand-800 ring-brand-100" },
+  PERSONALIZADO: { label: "Personalizado", tone: "bg-emerald-50 text-emerald-800 ring-emerald-100" },
   SCHEDULED: { label: "Programado", tone: "bg-violet-50 text-violet-800 ring-violet-100" },
   TRANSACTIONAL: { label: "Sistema", tone: "bg-slate-100 text-slate-700 ring-slate-200" },
 };
@@ -130,7 +132,8 @@ export function EmailLogDialog({
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {logs.map((l) => {
-                  const kind = KIND_LABEL[l.kind] ?? { label: l.kind, tone: "bg-slate-100 text-slate-700 ring-slate-200" };
+                  const displayKind = l.displayKind || l.kind;
+                  const kind = KIND_LABEL[displayKind] ?? { label: displayKind, tone: "bg-slate-100 text-slate-700 ring-slate-200" };
                   const isOpen = expanded === l.id;
                   return (
                     <Fragment key={l.id}>
