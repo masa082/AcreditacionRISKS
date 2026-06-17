@@ -431,11 +431,11 @@ export function ExamRunner({
       {/*
         Guardia de foco: oculta INMEDIATAMENTE el examen al cambiar de
         pestaña / abrir otra app + cuenta cada salida + cierra el intento
-        como `forced_abandon` al llegar a 3.
+        como `forced_abandon` al llegar a 12.
       */}
       <FocusGuard
         attemptId={attemptId}
-        maxIncidents={3}
+        maxIncidents={12}
         onAbandon={() => {
           // Auto-submit del intento. El backend marcará el ExamAttempt
           // como SUBMITTED y la traza incluirá `forced_abandon`.

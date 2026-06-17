@@ -118,7 +118,7 @@ export function HonestyGate({
                   <ul className="mt-1.5 ml-3 list-disc space-y-0.5 text-[12px] text-amber-900">
                     <li><strong>No es posible salir de la sesión</strong> — cambiar de pestaña,
                     abrir otra ventana o aplicación se considerará <strong>abandono de la
-                    prueba</strong>. Tras 3 salidas el intento se cierra automáticamente.</li>
+                    prueba</strong>. Tras 12 salidas el intento se cierra automáticamente.</li>
                     <li><strong>Prohibido grabar video, capturar pantalla, fotografiar o
                     reproducir el contenido</strong> por cualquier medio (atajos del SO,
                     aplicaciones de terceros, dispositivos externos). El intento se anula y se
