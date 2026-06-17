@@ -1,0 +1,702 @@
+[
+  {
+    "code": "ADV001",
+    "statement": "De acuerdo con la Resolución 2328 de 2025, ¿cuál es el principio fundamental que rige la designación y funciones de un Oficial de Cumplimiento en una entidad vigilada?",
+    "options": [
+      "La asignación de responsabilidades penales individuales directas por incumplimiento normativo",
+      "La independencia funcional y la capacidad de reportar directamente a la máxima junta directiva",
+      "La participación obligatoria en todas las decisiones comerciales de la entidad",
+      "La sustitución de responsabilidades del Representante Legal en materia de ALA/CFT"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV002",
+    "statement": "Bajo el enfoque de Estándares Internacionales GAFI y la normativa colombiana, ¿cuál es el principal objetivo de una evaluación de riesgo LA/FT integral en una entidad financiera?",
+    "options": [
+      "Eliminar completamente toda exposición a riesgo LA/FT",
+      "Identificar, analizar y priorizar los riesgos LA/FT para diseñar controles proporcionales",
+      "Aumentar el número de reportes operacionales sospechosos presentados a la UIAF",
+      "Garantizar que todos los clientes sean automáticamente clasificados como de alto riesgo"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV003",
+    "statement": "¿Cuál es la implicación legal de que un Oficial de Cumplimiento incumpla con sus deberes de reporte ante la UIAF respecto a operaciones sospechosas detectadas?",
+    "options": [
+      "Solo enfrenta sanciones administrativas menores del 1% del patrimonio de la entidad",
+      "No existe consecuencia legal directa, ya que es responsabilidad de la entidad",
+      "Puede incurrir en responsabilidad penal por omisión en reporte de delitos LA/FT",
+      "La UIAF le otorga un periodo de gracia de 90 días sin sanciones"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV004",
+    "statement": "En el contexto de Debida Diligencia Mejorada (EDD), ¿qué documentación debe ser verificada de un cliente de alto riesgo de una PEP (Persona Expuesta Políticamente) que actúa como representante legal?",
+    "options": [
+      "Solo el documento de identidad del PEP",
+      "Documento de identidad, certificado de antecedentes penales, lista de conflictos de interés y fuentes de fondos",
+      "Certificación del banco de la fuente de fondos, sin necesidad de otros documentos",
+      "Solo un poder notariado que acredite su representación"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV005",
+    "statement": "¿Cuál es el marco jurídico que regula el Programa de Autocontrol y Gestión del Riesgo LA/FT para empresas del sector real vigiladas por la Superintendencia de Sociedades?",
+    "options": [
+      "Resolución 1010 de 2019 de la Superintendencia Financiera",
+      "Circular Básica Jurídica — Capítulo X (Circular Externa 100-000016 de 2020)",
+      "Decreto 1223 de 2015 emitido por el Ministerio de Hacienda",
+      "Recomendación 12 del GAFI sin adaptación normativa nacional"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV006",
+    "statement": "En un monitoreo transaccional basado en riesgo, ¿cómo debe diferenciarse el seguimiento de un cliente clasificado como bajo riesgo versus uno de riesgo extremo?",
+    "options": [
+      "Los clientes de bajo riesgo reciben monitoreo mensual; los de riesgo extremo, anual",
+      "No hay diferencia; todos reciben idéntico monitoreo para garantizar equidad",
+      "Bajo riesgo: monitoreo anual o por demanda; Riesgo extremo: monitoreo en tiempo real con alertas automáticas",
+      "Los clientes de riesgo extremo son automáticamente rechazados y no pueden ser atendidos"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T4",
+    "topicName": "Monitoreo Transaccional"
+  },
+  {
+    "code": "ADV007",
+    "statement": "¿Cuál es la diferencia fundamental entre un Reporte de Operación Sospechosa (ROS) y un Reporte de Operación Inusual (ROI) bajo la normativa UIAF?",
+    "options": [
+      "El ROS es para operaciones de bajo monto; el ROI es para montos mayores a USD 100.000",
+      "ROS: hay indicios de LA/FT; ROI: operación inusual pero sin indicios aparentes de ilicitud, con fines estadísticos",
+      "No hay diferencia material; ambos términos son sinónimos",
+      "El ROS debe reportarse en 2 horas; el ROI puede reportarse en 30 días"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T5",
+    "topicName": "Reportes ROS y ROI"
+  },
+  {
+    "code": "ADV008",
+    "statement": "Según la normativa, ¿cuáles son los requisitos mínimos de experiencia para ser designado como Oficial de Cumplimiento Principal en una entidad del sector transporte vigilada por Supertransporte?",
+    "options": [
+      "Título profesional en cualquier disciplina, sin requisito de experiencia",
+      "Mínimo 1 año de experiencia en cumplimiento normativo",
+      "Mínimo 3 años de experiencia en funciones de cumplimiento, control o auditoría",
+      "Mínimo 5 años de experiencia como abogado litigante"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV009",
+    "statement": "¿Cuál es la obligación de una entidad respecto a la retención de documentación sobre clientes y operaciones conforme a estándares ALA/CFT?",
+    "options": [
+      "Retener registros por 5 años posteriores a la terminación de la relación comercial",
+      "Retener indefinidamente toda la documentación sin límite de tiempo",
+      "Retener registros por 3 años, renovables a criterio del Oficial de Cumplimiento",
+      "No existe obligación de retención; los registros pueden destruirse tras 6 meses"
+    ],
+    "answerIndex": 0,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV010",
+    "statement": "En el contexto de Personas Expuestas Políticamente (PEP), ¿cuál es el período de revisión después del cual un cliente puede dejar de ser considerado PEP según la normativa UIAF?",
+    "options": [
+      "Inmediatamente después de dejar el cargo público",
+      "Luego de 1 año de haber cesado en el cargo",
+      "Luego de 5 años de haber cesado en el cargo, con certificación oficial",
+      "Nunca cesa la clasificación de PEP durante la vida de la persona"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV011",
+    "statement": "¿Cuál es el propósito principal del control de personas sancionadas bajo resoluciones de OFAC, ONU y otras listas vinculantes en el contexto de ALA/CFT?",
+    "options": [
+      "Discriminar clientes por nacionalidad o origen geográfico",
+      "Prevenir que la entidad participe en operaciones con actores vinculados a terrorismo, lavado de activos o sanciones internacionales",
+      "Aumentar artificialmente el número de ROS generados por la entidad",
+      "Validar que todos los clientes tengan antecedentes penales nulos"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV012",
+    "statement": "En caso de que el Oficial de Cumplimiento detecte que la máxima junta directiva está tomando decisiones que incrementan materialmente el riesgo LA/FT sin mitigadores, ¿cuál es su obligación?",
+    "options": [
+      "Aceptar silenciosamente la decisión y no intervenir",
+      "Presentar un informe documentado de las implicaciones, recomendaciones de control y, si persisten, escalar o renunciar",
+      "Reportar directamente a la Superintendencia sin agotar procesos internos",
+      "Solicitar indemnización por el riesgo reputacional asumido"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV013",
+    "statement": "¿Qué es el beneficiario final (UBO) y por qué su identificación es crítica en procesos de Debida Diligencia Mejorada?",
+    "options": [
+      "Es la persona que recibe la ganancia de una transacción; su identificación no es relevante",
+      "Es la persona natural que en última instancia posee o controla una entidad; es crítico prevenir estructuras opacas que faciliten LA/FT",
+      "Es el abogado que representa a la entidad; solo se requiere en casos de litigio",
+      "Es un término sinónimo de 'cliente', sin significado operacional específico"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV014",
+    "statement": "¿Cuáles son los factores de riesgo que indican que una operación podría ser sospechosa de LA/FT en el sector financiero? (Seleccione la respuesta más completa)",
+    "options": [
+      "Solo transferencias internacionales de alto monto",
+      "Inconsistencia entre el perfil del cliente y el tipo de operación, múltiples transacciones en efectivo sin justificación, operaciones con jurisdicciones no cooperantes",
+      "Cualquier operación que exceda USD 50.000",
+      "Operaciones realizadas en horarios inusuales"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T4",
+    "topicName": "Monitoreo Transaccional"
+  },
+  {
+    "code": "ADV015",
+    "statement": "De conformidad con la Recomendación 15 del GAFI, ¿cuál es la obligación de los proveedores de servicios de activos virtuales (VASP) respecto a ALA/CFT?",
+    "options": [
+      "No tienen obligaciones específicas, ya que los activos virtuales no están regulados",
+      "Deben estar regulados/autorizados, implementar ALA/CFT, mantener registros, reportar a autoridades",
+      "Solo deben congelar fondos de usuarios en listas de sanciones",
+      "No necesitan identificar a sus clientes, solo registrar direcciones de cartera"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV016",
+    "statement": "¿Cuál es el enfoque 'proporcional' en la aplicación de medidas ALA/CFT y cómo debe reflejarse en el diseño de controles de un Oficial de Cumplimiento?",
+    "options": [
+      "Aplicar controles idénticos a todos los clientes sin considerar su perfil de riesgo",
+      "No aplicar controles a clientes de bajo riesgo",
+      "Calibrar la intensidad de controles según el nivel de riesgo: cliente bajo riesgo = controles básicos; cliente alto riesgo = controles mejorados y continuo",
+      "Aplicar solo controles que no generen fricción operacional"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV017",
+    "statement": "En contextos de sanciones internacionales, ¿cuál es la diferencia entre una 'sanción bloqueante' (blocking sanction) y una sanción de 'prohibición de transacciones' (transaction prohibitions)?",
+    "options": [
+      "No hay diferencia; son términos intercambiables",
+      "Bloqueante: congela bienes de la persona; Prohibición: impide transacciones con/desde terceros relacionados con esa persona",
+      "Bloqueante: es temporal; Prohibición: es permanente",
+      "Bloqueante: solo afecta al gobierno; Prohibición: solo afecta a entidades privadas"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV018",
+    "statement": "¿Cuál es la responsabilidad del Oficial de Cumplimiento respecto a la capacitación del personal de la entidad en materia de ALA/CFT y detección de riesgos?",
+    "options": [
+      "No es responsabilidad del OC; corresponde únicamente al área de Talento Humano",
+      "Diseñar, coordinar y verificar capacitaciones periódicas (mínimo anuales) adaptadas por área, con evaluación de aprendizaje",
+      "Hacer capacitación una sola vez al inicio del año",
+      "Capacitar solo a gerentes; el personal operativo no requiere entrenamiento"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV019",
+    "statement": "¿Cómo debe proceder un Oficial de Cumplimiento si un cliente importante para la entidad es incluido en una lista de sanciones internacionales después de 6 meses de relación?",
+    "options": [
+      "Continuar sirviendo al cliente sin cambios, ya que fue vinculado legalmente",
+      "Congelar inmediatamente fondos/operaciones, reportar a autoridades, documentar y notificar internamente; no congelar activos primero",
+      "Informar al cliente privadamente para que retire sus fondos",
+      "Esperar a que finalice el período de sanciones para reactivar operaciones"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T4",
+    "topicName": "Monitoreo Transaccional"
+  },
+  {
+    "code": "ADV020",
+    "statement": "¿Cuál es la 'debida diligencia continua' (Ongoing Due Diligence) y cuándo debe aplicarse conforme a la normativa?",
+    "options": [
+      "Una revisión única al momento de vinculación del cliente",
+      "Monitoreo continuo de operaciones, actualización periódica de información de cliente, verificación contra listas; debe ser permanente durante toda la relación",
+      "Un proceso anual obligatorio sin excepción",
+      "Solo se aplica a clientes con operaciones sospechosas detectadas"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV021",
+    "statement": "¿Qué es una 'estructura económica opaca' y cómo debe evaluarse en el proceso de identificación del UBO?",
+    "options": [
+      "Cualquier empresa que tenga múltiples accionistas",
+      "Una estructura donde se utilizan niveles innecesarios de intermediarios, jurisdicciones no cooperantes o entidades offshore para ocultar el control final; requiere investigación y documentación",
+      "Una empresa pequeña con pocos empleados",
+      "Un sinónimo de 'fraude corporativo'"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV022",
+    "statement": "En el contexto de oficiales que actúan como Personas Expuestas Políticamente (PEP), ¿cuál es el protocolo recomendado para la aprobación de una nueva cuenta?",
+    "options": [
+      "Seguir el proceso normal de vinculación sin consideraciones especiales",
+      "Rechazar automáticamente al candidato",
+      "Requerir aprobación de junta directiva/máxima autoridad, EDD completa, identificación de fuentes de fondos, monitoreo mejorado",
+      "Solicitar un depósito inicial mayor como garantía"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV023",
+    "statement": "¿Cuál es la implicación regulatoria de que una entidad utilice intermediarios o terceros para realizar Debida Diligencia en nombre propio?",
+    "options": [
+      "La entidad se libera completamente de responsabilidad por la calidad de la DD",
+      "La entidad mantiene responsabilidad integral; puede delegar ejecución pero no supervisión ni validación",
+      "Solo es permitido en entidades muy grandes",
+      "Requiere autorización previa de la Superintendencia"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV024",
+    "statement": "¿Cuál es la diferencia operacional entre un 'cliente de riesgo extremo' y un 'cliente rechazado' en política de cumplimiento?",
+    "options": [
+      "No hay diferencia; el término es redundante",
+      "Riesgo extremo: se vincula pero con máximos controles y monitoreo mejorado; Rechazado: la entidad no puede asumir ese riesgo, se requiere rechazo explícito",
+      "Riesgo extremo: se rechaza automáticamente",
+      "Rechazado: se puede servir con advertencia verbal"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV025",
+    "statement": "¿Cuál es el plazo máximo para reportar una Operación Sospechosa a la UIAF desde que fue detectada por la entidad?",
+    "options": [
+      "Inmediatamente (sin demora innecesaria), conforme a protocolos internos",
+      "Máximo 10 días hábiles",
+      "Máximo 30 días calendarios",
+      "El plazo varía según el monto de la operación"
+    ],
+    "answerIndex": 0,
+    "difficulty": "ADVANCED",
+    "topicCode": "T5",
+    "topicName": "Reportes ROS y ROI"
+  },
+  {
+    "code": "ADV026",
+    "statement": "¿Qué es una 'operación estructurada' (layering o structuring) y cuál es la obligación de reporte en caso de sospechas de estructuración?",
+    "options": [
+      "Una operación realizada en múltiples divisiones de la entidad; no requiere reporte especial",
+      "Dividir deliberadamente operaciones grandes en transacciones pequeñas para evadir umbrales de reporte; debe reportarse como ROS",
+      "Un servicio de organización contable de operaciones menores",
+      "Operaciones que se realizan en horarios sucesivos"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T4",
+    "topicName": "Monitoreo Transaccional"
+  },
+  {
+    "code": "ADV027",
+    "statement": "De acuerdo con estándares de gobierno corporativo y la Resolución 2328, ¿qué debe incluir el informe trimestral del Oficial de Cumplimiento a la junta directiva?",
+    "options": [
+      "Solo el número de ROS generados en el período",
+      "Evaluación de riesgos detectados, ROS generados, hallazgos de auditoría interna, deficiencias en controles, y recomendaciones de acción",
+      "Información confidencial que no debe compartirse con la junta",
+      "Un reporte sin recomendaciones, solo descriptivo de actividades"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV028",
+    "statement": "¿Cuál es la prohibición absoluta respecto a un Oficial de Cumplimiento designado en una entidad según la normativa?",
+    "options": [
+      "No puede ser accionista de la entidad",
+      "No puede participar en operaciones comerciales de alto riesgo",
+      "No puede ser simultáneamente responsable de funciones operativas que creen conflicto con su labor de cumplimiento (ej: jefe de ventas y OC)",
+      "No puede asistir a reuniones de junta directiva"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV029",
+    "statement": "¿Cuál es el objetivo de una 'auditoría interna independiente' de la función de cumplimiento conforme a mejores prácticas internacionales?",
+    "options": [
+      "Evaluar la efectividad del programa ALA/CFT, identificar brechas, validar cumplimiento normativo e independencia del OC",
+      "Reemplazar completamente la supervisión del Oficial de Cumplimiento",
+      "Auditar solo operaciones de clientes de bajo riesgo",
+      "Generar un reporte confidencial que no sea compartido con reguladores"
+    ],
+    "answerIndex": 0,
+    "difficulty": "ADVANCED",
+    "topicCode": "T6",
+    "topicName": "Rol del Oficial de Cumplimiento"
+  },
+  {
+    "code": "ADV030",
+    "statement": "En caso de que la entidad reciba una solicitud de información de un cliente por parte de autoridades investigativas, ¿cuál es el procedimiento adecuado?",
+    "options": [
+      "Notificar al cliente antes de entregar información a la autoridad",
+      "Rechazar la solicitud argumentando confidencialidad de cliente",
+      "Entregar información conforme a la solicitud legal, documentar el procedimiento y notificar internamente sin alertar al cliente (si existe restricción legal)",
+      "Solicitar comisión al cliente por proporcionar información"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T7",
+    "topicName": "Ética y Confidencialidad"
+  },
+  {
+    "code": "ADV031",
+    "statement": "¿Cuál es el riesgo específico de LA/FT que representa una empresa con múltiples transacciones en efectivo diarias sin documentación clara de origen o destino?",
+    "options": [
+      "Ninguno, el efectivo es una forma de pago legal",
+      "Riesgo de colocación (placement): el efectivo podría ser producto de actividades ilícitas siendo integrado al sistema financiero formal",
+      "Riesgo bajo porque el efectivo es fácilmente rastreable",
+      "Riesgo solo si el monto total anual supera USD 1.000.000"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV032",
+    "statement": "¿Cuál es la diferencia entre 'riesgo país' y 'riesgo jurisdicción' en evaluaciones de ALA/CFT para clientes internacionales?",
+    "options": [
+      "Son términos sinónimos sin diferencia operacional",
+      "Riesgo país: evaluación del entorno ALA/CFT general; Riesgo jurisdicción: entorno regulatorio específico de una jurisdicción donde opera el cliente",
+      "Riesgo país es más importante que riesgo jurisdicción",
+      "Solo el riesgo país debe documentarse; el riesgo jurisdicción es implícito"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV033",
+    "statement": "En contexto de financiamiento del terrorismo (CFT), ¿cuál es la característica principal de las transacciones que deben vigilarse intensamente?",
+    "options": [
+      "Siempre son de montos muy altos (mayor a USD 100.000)",
+      "Pueden ser montos pequeños o grandes, pero con patrones que sugieren ocultamiento, destinos sensibles o nexos terroristas identificados",
+      "Solo las realizadas por nacionales de ciertos países",
+      "Las realizadas por entidades gubernamentales nunca pueden estar vinculadas a CFT"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T4",
+    "topicName": "Monitoreo Transaccional"
+  },
+  {
+    "code": "ADV034",
+    "statement": "¿Cuál es el propósito de mantener un registro de 'clientes rechazados' dentro de un programa ALA/CFT?",
+    "options": [
+      "Publicarlos en redes sociales para advertencia pública",
+      "Documentar las razones del rechazo, evaluar patrones de riesgo y evitar re-vinculación inadecuada",
+      "Investigar penalmente al cliente rechazado",
+      "No tiene propósito; los clientes rechazados nunca deben ser registrados"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV035",
+    "statement": "¿Cuál es el significado de 'ciclo de lavado de activos' (colocación, estratificación, integración) y por qué es importante conocerlo para la detección?",
+    "options": [
+      "Son fases sin relevancia operacional para el Oficial de Cumplimiento",
+      "Entender las fases permite diseñar controles específicos: verificar origen (colocación), analizar patrones inusuales (estratificación), detectar integración sin justificación",
+      "Solo es importante para investigadores de la policía, no para cumplimiento",
+      "Son términos usados exclusivamente en operaciones interbancarias"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV036",
+    "statement": "¿Cuál es la obligación de una entidad respecto a la gestión de conflictos de interés en relación con sus funciones ALA/CFT?",
+    "options": [
+      "No existe obligación específica; es responsabilidad del cliente",
+      "Identificar y documentar potenciales conflictos, implementar salvaguardas (separación de funciones, supervisión reforzada) para proteger la integridad",
+      "Los conflictos de interés no aplican en materia ALA/CFT",
+      "Solo en el caso del Oficial de Cumplimiento; otras áreas no están sujetas"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T7",
+    "topicName": "Ética y Confidencialidad"
+  },
+  {
+    "code": "ADV037",
+    "statement": "¿Cómo debe evaluarse la proporcionalidad del programa ALA/CFT de una pequeña empresa (< 50 empleados) versus una grande según estándares internacionales?",
+    "options": [
+      "La pequeña empresa no necesita programa ALA/CFT",
+      "Ambas deben tener idénticos controles independientemente del tamaño",
+      "El programa debe ser proporcional a: complejidad operativa, volumen de transacciones, riesgos identificados, capacidad institucional",
+      "La pequeña empresa solo debe documentar pero no implementar controles"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV038",
+    "statement": "¿Cuál es la responsabilidad de una entidad del sector real vigilada por Supersociedades respecto a reportes de transacciones inusuales (ROI)?",
+    "options": [
+      "No existe obligación de reportar ROI; solo ROS",
+      "Reportar ROI a la UIAF conforme a protocolo, con información detallada de operación y cliente, fines estadísticos",
+      "Reportar solo si el cliente es PEP o está sancionado",
+      "Reportar ROI solo si el monto supera USD 100.000"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T5",
+    "topicName": "Reportes ROS y ROI"
+  },
+  {
+    "code": "ADV039",
+    "statement": "¿Qué es una 'evaluación de riesgo institucional' y cuál es su diferencia con una evaluación de riesgo por cliente?",
+    "options": [
+      "Son términos sinónimos; no hay diferencia",
+      "Evaluación institucional: analiza riesgos LA/FT inherentes al modelo de negocio, geografía, servicios; Por cliente: evalúa riesgo específico de una relación individual",
+      "Evaluación institucional se hace anualmente; por cliente, cada transacción",
+      "Solo se requiere evaluación de riesgo por cliente"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV040",
+    "statement": "¿Cuál es el marco legal que establece inhabilidades para ser Oficial de Cumplimiento en Colombia?",
+    "options": [
+      "No existen inhabilidades específicas en la ley",
+      "Solo condena penal vigente por delitos graves",
+      "Condena penal por LA/FT, incompatibilidad de cargos, inhabilidades por violación de deberes profesionales conforme a normativa aplicable",
+      "Cualquier antecedente de demanda civil"
+    ],
+    "answerIndex": 2,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV041",
+    "statement": "En un caso donde se detecta discrepancia entre información reportada por el cliente y registros públicos (ej: accionariado falso), ¿cuál es el procedimiento recomendado?",
+    "options": [
+      "Continuar sin cambios; la información es responsabilidad del cliente",
+      "Documentar la discrepancia, solicitar explicación/actualización, ampliar DD, considerar ROS si hay indicios de engaño sistemático",
+      "Rechazar inmediatamente al cliente",
+      "Reportar solo a la policía, sin notificar a la UIAF"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV042",
+    "statement": "¿Cuál es la implicación de que una entidad NO cuente con un Oficial de Cumplimiento designado conforme a requisitos normativos?",
+    "options": [
+      "No hay consecuencia; es opcional",
+      "La entidad está en incumplimiento grave; expuesta a sanciones administrativas, penales y riesgo reputacional",
+      "Solo hay consecuencia si los supervisores lo denuncian",
+      "La Superintendencia tiene 2 años de plazo para exigirlo"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV043",
+    "statement": "¿Cuál es el estándar internacional (GAFI) que mejor describe el enfoque 'basado en riesgo' para ALA/CFT?",
+    "options": [
+      "Recomendación 1 del GAFI",
+      "Recomendación 5 del GAFI: 'Diligencia debida del Cliente'",
+      "Recomendación 10 del GAFI: 'Debida Diligencia y Registro de Clientes'",
+      "No existe recomendación GAFI específica sobre enfoque basado en riesgo"
+    ],
+    "answerIndex": 0,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV044",
+    "statement": "¿Cómo debe documentarse la decisión de aceptar a un cliente de 'riesgo extremo' por razones estratégicas?",
+    "options": [
+      "No requiere documentación; es decisión discrecional del gerente",
+      "Aprobación escrita de máxima autoridad, análisis de riesgos residuales, controles mitigadores, y supervisión continua intensificada",
+      "Solo una nota interna sin formalidad",
+      "Documentación solo si es requerida por auditoría externa"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV045",
+    "statement": "¿Cuál es la diferencia en regulación ALA/CFT entre un 'Banco Corresponsal' y un 'Banco Nostro' según estándares internacionales?",
+    "options": [
+      "No hay diferencia material",
+      "Banco Corresponsal: proporciona servicios ALA/CFT a terceros; Banco Nostro: recibe servicios de terceros — ambos sujetos a DD mejorada y monitoreo reforzado",
+      "Solo los Bancos Corresponsales están sujetos a regulación ALA/CFT",
+      "La distinción no es relevante para cumplimiento"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T1",
+    "topicName": "Marco Normativo"
+  },
+  {
+    "code": "ADV046",
+    "statement": "¿Cuál es el procedimiento para que un Oficial de Cumplimiento pueda denunciar públicamente a su propia entidad por incumplimientos ALA/CFT graves sin represalias?",
+    "options": [
+      "No existe protección; debe guardar confidencialidad total",
+      "Denunciar primero internamente; si no hay acción, puede escalar a autoridades supervisoras bajo protecciones de denunciante (whistleblower) conforme a ley",
+      "Publicar inmediatamente en redes sociales",
+      "No puede denunciar; solo recomendar internamente"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T7",
+    "topicName": "Ética y Confidencialidad"
+  },
+  {
+    "code": "ADV047",
+    "statement": "¿Cuál es el objetivo de la 'Nota GAFI sobre Aplicación Proporcional' de 2020 en relación con entidades de menor tamaño?",
+    "options": [
+      "Eliminar obligaciones ALA/CFT para pequeñas entidades",
+      "Permitir que programas ALA/CFT sean simplificados según riesgo, sin reducir estándares de integridad pero adaptando complejidad operativa",
+      "Aumentar requisitos para pequeñas entidades",
+      "La proporcionalidad solo aplica a bancos grandes"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV048",
+    "statement": "En caso de que el Oficial de Cumplimiento de una entidad del sector real tenga conocimiento de que los beneficiarios finales documentados son testaferros, ¿cuál es su obligación inmediata?",
+    "options": [
+      "Guardar confidencialidad del cliente",
+      "Documentar los indicios, ampliar investigación interna, reportar como ROS si se confirman indicios de LA/FT, no permitir continuar la relación hasta aclaración",
+      "Contactar directamente al cliente para advertir",
+      "Comunicar solo al Director Financiero"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  },
+  {
+    "code": "ADV049",
+    "statement": "¿Cuál es el 'factor de riesgo de tecnología' que debe considerarse en un programa ALA/CFT moderno según tendencias internacionales?",
+    "options": [
+      "La tecnología no afecta riesgos LA/FT",
+      "Riesgos de fraude digital, omisión de verificación en plataformas online, uso de criptomonedas, anonimato que facilita lavado; requiere controles e inversión tecnológica compensadora",
+      "Solo aplica a bancos con plataformas digitales muy grandes",
+      "La tecnología reduce automáticamente riesgos LA/FT"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T2",
+    "topicName": "Enfoque Basado en Riesgo"
+  },
+  {
+    "code": "ADV050",
+    "statement": "¿Cuál es la evaluación que debe hacerse respecto a 'Personas Jurídicas de Estructura Accionaria Compleja' (PJEAC) antes de su vinculación como clientes de alto riesgo?",
+    "options": [
+      "No requieren evaluación especial; se tratan como clientes normales",
+      "Análisis profundo del accionariado hasta identificar UBO, evaluación de jurisdicciones intermedias, documentación de controles corporativos, asegurarse de capacidad de reporting ante incidentes",
+      "Solo documentar el nombre de la empresa",
+      "Rechazar automáticamente todas las PJEAC"
+    ],
+    "answerIndex": 1,
+    "difficulty": "ADVANCED",
+    "topicCode": "T3",
+    "topicName": "Debida Diligencia"
+  }
+]

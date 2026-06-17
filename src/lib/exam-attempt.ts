@@ -203,6 +203,7 @@ export async function buildAttemptQuestions(
       });
       const take = shuffle(pool).slice(0, remaining);
       for (const q of take) {
+        // Doble validación: evita cualquier posible duplicado
         if (seen.has(q.id)) continue;
         seen.add(q.id);
         built.push({
@@ -228,7 +229,25 @@ export async function buildAttemptQuestions(
 
   const finalOrder = exam.randomizeQuestions ? shuffle(capped) : capped;
   finalOrder.forEach((b, i) => (b.order = i));
+
+  // VALIDACIÓN FINAL: verificar no hay duplicados (garantía de integridad)
+  validateNoDuplicates(finalOrder);
+
   return finalOrder;
+}
+
+/// Valida que no hay duplicados de pregunta en un intento.
+/// Lanza error si encuentra duplicados (nunca debe ocurrir).
+export function validateNoDuplicates(questions: BuiltQuestion[]): void {
+  const ids = new Set<string>();
+  for (const q of questions) {
+    if (ids.has(q.questionId)) {
+      const msg = `DUPLICADO DETECTADO: pregunta ${q.questionId} aparece múltiples veces en mismo intento`;
+      console.error(`[CRITICAL] ${msg}`);
+      throw new Error(msg);
+    }
+    ids.add(q.questionId);
+  }
 }
 
 /// Califica una respuesta objetiva. Devuelve null si requiere revisión manual.
