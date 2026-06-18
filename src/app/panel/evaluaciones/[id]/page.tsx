@@ -7,6 +7,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { Card, PageHeader, Badge, EmptyState } from "@/components/ui";
 import { ExamForm, type ExamInitial } from "@/components/exam-form";
 import { SectionForm } from "@/components/section-form";
+import { ExamReenableButton } from "@/components/exam-reenable-button";
 import { updateExam, addSection, removeSection, setExamStatus } from "@/lib/actions/exams";
 import { EXAM_STATUS_LABELS } from "@/lib/exam-meta";
 import { DIFFICULTY_LABELS } from "@/lib/question-types";
@@ -92,12 +93,15 @@ export default async function ExamDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Badge tone={STATUS_TONE[exam.status]}>{EXAM_STATUS_LABELS[exam.status]}</Badge>
-            {manage && exam.status !== "PUBLISHED" ? (
+            {manage && exam.disabledAt ? (
+              <ExamReenableButton examId={id} examName={exam.name} disabledAt={exam.disabledAt} />
+            ) : null}
+            {manage && exam.status !== "PUBLISHED" && !exam.disabledAt ? (
               <form action={setExamStatus.bind(null, id, "PUBLISHED")}>
                 <button disabled={!canPublish} title={canPublish ? "" : "Agregue al menos una sección con preguntas"} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-50">Publicar</button>
               </form>
             ) : null}
-            {manage && exam.status === "PUBLISHED" ? (
+            {manage && exam.status === "PUBLISHED" && !exam.disabledAt ? (
               <form action={setExamStatus.bind(null, id, "DRAFT")}>
                 <button className="rounded-lg border border-slate-300 px-4 py-2 text-sm text-slate-600 hover:bg-slate-50">Despublicar</button>
               </form>

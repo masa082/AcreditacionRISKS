@@ -228,3 +228,42 @@ export async function setExamStatus(
   revalidatePath(`/panel/evaluaciones/${id}`);
   revalidatePath("/panel/evaluaciones");
 }
+
+export async function reenabledExam(
+  examId: string,
+  reenableReason: string,
+): Promise<ActionResult> {
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.EXAM_MANAGE);
+  const exam = await prisma.exam.findUnique({ where: { id: examId } });
+  if (!exam || exam.subscriberId !== subscriberId) {
+    return { ok: false, error: "Examen no encontrado" };
+  }
+
+  const reason = reenableReason.trim();
+  if (!reason || reason.length < 10) {
+    return { ok: false, error: "El motivo debe tener al menos 10 caracteres" };
+  }
+  if (reason.length > 500) {
+    return { ok: false, error: "El motivo no puede exceder 500 caracteres" };
+  }
+
+  // Limpiar los flags de deshabilitación y registrar el motivo de habilitación
+  await prisma.exam.update({
+    where: { id: examId },
+    data: {
+      disabledAt: null,
+      disabledReason: null,
+      reenableReason: reason,
+    },
+  });
+
+  await audit(ctx, {
+    action: "exam.reenable",
+    entity: "Exam",
+    entityId: examId,
+    after: { reenableReason: reason },
+  });
+
+  revalidatePath(`/panel/evaluaciones/${examId}`);
+  return { ok: true };
+}

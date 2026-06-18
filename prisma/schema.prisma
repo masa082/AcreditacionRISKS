@@ -770,6 +770,10 @@ model Exam {
   autoCertificate       Boolean @default(false)
   gradingRules          Json    @default("{}")
   instructions          String? @db.Text
+  // Campos para rastrear deshabilitación/habilitación (caso práctico)
+  disabledAt       DateTime?
+  disabledReason   String? @db.Text
+  reenableReason   String? @db.Text
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
