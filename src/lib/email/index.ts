@@ -11,6 +11,7 @@ import {
   manualGradingRequiredEmail,
   infoRequestToCandidateEmail,
   candidateAnsweredInfoRequestEmail,
+  examReenabledEmail,
 } from "./templates";
 
 // ============================================================================
@@ -486,4 +487,15 @@ export async function sendCandidateAnsweredInfoRequestEmail(
 ): Promise<SendResult> {
   const brand = await loadBrand(subscriberId);
   return dispatch(to, subscriberId, candidateAnsweredInfoRequestEmail(brand, data));
+}
+
+/// Notificación al candidato cuando el examen de caso práctico ha sido
+/// habilitado nuevamente por el administrador.
+export async function sendExamReenabledEmail(
+  subscriberId: string,
+  to: string,
+  data: { holderName: string; examName: string; reenableReason: string; portalUrl: string },
+): Promise<SendResult> {
+  const brand = await loadBrand(subscriberId);
+  return dispatch(to, subscriberId, examReenabledEmail(brand, data));
 }

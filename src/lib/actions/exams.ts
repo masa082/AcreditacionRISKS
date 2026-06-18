@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberAction } from "@/lib/guards";
 import { PERMISSIONS } from "@/lib/permissions";
 import { audit } from "@/lib/audit";
+import { sendExamReenabledEmail } from "@/lib/email";
 import type { ActionResult } from "@/lib/actions/schemes";
 
 function clean(v: FormDataEntryValue | null): string | null {
@@ -263,6 +264,33 @@ export async function reenabledExam(
     entityId: examId,
     after: { reenableReason: reason },
   });
+
+  // Buscar todos los candidatos con enrollments para este examen y enviar notificaciones
+  const enrollments = await prisma.enrollment.findMany({
+    where: { schemeId: exam.schemeId },
+    select: { candidateId: true },
+    distinct: ["candidateId"],
+  });
+
+  const candidateIds = enrollments.map((e) => e.candidateId);
+  if (candidateIds.length > 0) {
+    const candidates = await prisma.candidate.findMany({
+      where: { id: { in: candidateIds } },
+      select: { id: true, firstName: true, email: true },
+    });
+
+    // Enviar correo a cada candidato
+    for (const candidate of candidates) {
+      if (candidate.email) {
+        await sendExamReenabledEmail(subscriberId, candidate.email, {
+          holderName: candidate.firstName || "Candidato",
+          examName: exam.name,
+          reenableReason: reason,
+          portalUrl: `${process.env.APP_URL || "https://okacreditado.com"}/portal/mi-proceso`,
+        });
+      }
+    }
+  }
 
   revalidatePath(`/panel/evaluaciones/${examId}`);
   return { ok: true };

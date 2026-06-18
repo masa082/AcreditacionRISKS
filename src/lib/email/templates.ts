@@ -388,3 +388,33 @@ export function candidateAnsweredInfoRequestEmail(
     text: `${data.candidateName} respondió la solicitud de información. Panel: ${data.panelUrl}`,
   };
 }
+
+/// Notificación al candidato cuando el examen ha sido habilitado de nuevo
+/// por el administrador después de haber sido deshabilitado.
+export function examReenabledEmail(
+  brand: Brand,
+  data: { holderName: string; examName: string; reenableReason: string; portalUrl: string },
+): RenderedEmail {
+  const color = brand.primaryColor || "#1e3a8a";
+  const html = layout(brand, `
+    <h1 style="margin:0 0 8px;font-size:20px">Examen habilitado nuevamente</h1>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      Hola ${escapeHtml(data.holderName)}, le informamos que la evaluación
+      <b>${escapeHtml(data.examName)}</b> ha sido habilitada nuevamente y está
+      lista para presentar.
+    </p>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      <b>Motivo de habilitación:</b>
+    </p>
+    <blockquote style="margin:14px 0;padding:14px 16px;background:#ecfdf5;border-left:4px solid #10b981;border-radius:6px;font-size:14px;color:#047857;white-space:pre-wrap">${escapeHtml(data.reenableReason)}</blockquote>
+    <p style="margin:0 0 8px;font-size:14px;line-height:1.6">
+      Puede presentar la evaluación en cualquier momento accediendo a su
+      portal. Si tiene preguntas, no dude en contactarnos.
+    </p>
+    ${button(data.portalUrl, "Acceder al portal", color)}`);
+  return {
+    subject: `Examen habilitado nuevamente — ${data.examName}`,
+    html,
+    text: `${data.holderName}, el examen ${data.examName} ha sido habilitado. Motivo: ${data.reenableReason}. Portal: ${data.portalUrl}`,
+  };
+}
