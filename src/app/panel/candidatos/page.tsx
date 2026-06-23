@@ -92,7 +92,7 @@ export default async function CandidatesListPage({
           orderBy: { createdAt: "desc" },
           include: {
             scheme: { select: { name: true } },
-            exam: { select: { name: true, passingScore: true } },
+            exam: { select: { name: true, passingScore: true, type: true, id: true } },
             payments: {
               orderBy: [{ status: "asc" }, { paidAt: "desc" }],
               select: { status: true, amount: true, currency: true },
@@ -145,6 +145,31 @@ export default async function CandidatesListPage({
     : [];
   const incidentsByCandidate = new Map<string, number>(
     incidentsAgg.map((r) => [r.candidateId as string, r._count._all]),
+  );
+
+  // Enrollments deshabilitados (caso práctico) para mostrar botón de habilitación.
+  const disabledPractical = candidateIds.length
+    ? await prisma.enrollment.findMany({
+        where: {
+          subscriberId,
+          candidateId: { in: candidateIds },
+          practicalCaseDisabledAt: { not: null },
+        },
+        select: {
+          id: true,
+          candidateId: true,
+          exam: { select: { name: true } },
+          _count: { select: { attempts: true } },
+        },
+      })
+    : [];
+  const disabledByEnrollment = new Map<string, { enrollmentId: string; examName: string }[]>(
+    candidateIds.map((id) => [
+      id,
+      disabledPractical
+        .filter((e) => e.candidateId === id && (e._count?.attempts ?? 0) > 0)
+        .map((e) => ({ enrollmentId: e.id, examName: e.exam?.name ?? "Caso Práctico" })),
+    ]),
   );
 
   // Para conteo de logins agregamos AuditLog por actorId.
@@ -231,6 +256,9 @@ export default async function CandidatesListPage({
     // ¿Tiene certificado emitido?
     const hasCert = c.enrollments.some((e) => e.certificates.some((cert) => cert.status === "VALID"));
 
+    // Enrollments deshabilitados para este candidato.
+    const disabledPracticalCases = disabledByEnrollment.get(c.id) ?? [];
+
     return {
       id: c.id,
       fullName: `${c.firstName} ${c.lastName}`,
@@ -259,6 +287,7 @@ export default async function CandidatesListPage({
       isOnline: c.user?.id ? onlineUsers.has(c.user.id) : false,
       emailsCount: emailsByCandidate.get(c.id) ?? 0,
       incidentsCount: incidentsByCandidate.get(c.id) ?? 0,
+      disabledPracticalCases,
     };
   });
 

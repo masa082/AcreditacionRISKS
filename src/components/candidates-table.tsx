@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { CandidatesToolbar } from "@/components/candidates-toolbar";
 import { EmailLogDialog } from "@/components/email-log-dialog";
 import { IncidentsDialog } from "@/components/incidents-dialog";
+import { PracticalCaseEnableDialog } from "@/components/practical-case-enable-dialog";
 
 export interface CandidateRow {
   id: string;
@@ -33,6 +34,8 @@ export interface CandidateRow {
     passed: boolean | null;
     status: string;
   }>;
+  /** Enrollments deshabilitados (caso práctico) con información para habilitar. */
+  disabledPracticalCases: Array<{ enrollmentId: string; examName: string }>;
   /** ¿Tiene certificado emitido (cualquier inscripción)? */
   hasCert: boolean;
   lastLoginLabel: string | null;
@@ -104,6 +107,8 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
   const [emailFor, setEmailFor] = useState<CandidateRow | null>(null);
   // Modal abierto para ver incidencias del proceso del candidato.
   const [incidentsFor, setIncidentsFor] = useState<CandidateRow | null>(null);
+  // Modal abierto para habilitar caso práctico.
+  const [practicalCaseFor, setPracticalCaseFor] = useState<{ enrollmentId: string; candidateName: string; examName: string } | null>(null);
 
   function onSort(key: SortKey) {
     setSort((s) => (s.key === key ? { key, dir: s.dir === "asc" ? "desc" : "asc" } : { key, dir: "asc" }));
@@ -363,6 +368,27 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                     </td>
                     <td className="px-3 py-2 align-top font-mono text-[10px] text-slate-500">{c.lastLoginIp ?? "—"}</td>
                     <td className="px-3 py-2 align-top text-center text-xs text-slate-700">{c.loginCount || "—"}</td>
+                    <td className="px-3 py-2 align-top">
+                      {c.disabledPracticalCases.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {c.disabledPracticalCases.map((pc) => (
+                            <button
+                              key={pc.enrollmentId}
+                              type="button"
+                              onClick={() => setPracticalCaseFor({
+                                enrollmentId: pc.enrollmentId,
+                                candidateName: c.fullName,
+                                examName: pc.examName,
+                              })}
+                              className="rounded border border-green-300 bg-green-50 px-2 py-1 text-[10px] font-semibold text-green-700 hover:bg-green-100 w-full"
+                              title={`Habilitar ${pc.examName}`}
+                            >
+                              🔄 Habilitar
+                            </button>
+                          ))}
+                        </div>
+                      ) : null}
+                    </td>
                   </tr>
                 );
               })}
@@ -386,6 +412,15 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
           candidateName={incidentsFor.fullName}
           candidateEmail={incidentsFor.email}
           onClose={() => setIncidentsFor(null)}
+        />
+      ) : null}
+      {practicalCaseFor ? (
+        <PracticalCaseEnableDialog
+          open={!!practicalCaseFor}
+          enrollmentId={practicalCaseFor.enrollmentId}
+          candidateName={practicalCaseFor.candidateName}
+          examName={practicalCaseFor.examName}
+          onClose={() => setPracticalCaseFor(null)}
         />
       ) : null}
     </div>

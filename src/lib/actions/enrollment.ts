@@ -1008,3 +1008,62 @@ export async function confirmPaymentReceiptUpload(
   revalidatePath("/panel/pagos");
   return { ok: true, message: "Soporte de pago cargado. El organismo lo revisará pronto." };
 }
+
+/// Habilitar el caso práctico para un enrollment específico (por suscriptor admin).
+export async function enablePracticalCase(
+  enrollmentId: string,
+  reenableReason: string,
+): Promise<ActionResult> {
+  const { requireSubscriberAction } = await import("@/lib/guards");
+  const { PERMISSIONS } = await import("@/lib/permissions");
+  const { sendExamReenabledEmail } = await import("@/lib/email");
+
+  const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.ENROLLMENT_MANAGE);
+  const enrollment = await prisma.enrollment.findUnique({
+    where: { id: enrollmentId },
+    include: { candidate: { select: { firstName: true, email: true } }, exam: { select: { name: true } } },
+  });
+
+  if (!enrollment || enrollment.subscriberId !== subscriberId) {
+    return { ok: false, error: "Inscripción no encontrada" };
+  }
+
+  const reason = reenableReason.trim();
+  if (!reason || reason.length < 10) {
+    return { ok: false, error: "El motivo debe tener al menos 10 caracteres" };
+  }
+  if (reason.length > 500) {
+    return { ok: false, error: "El motivo no puede exceder 500 caracteres" };
+  }
+
+  // Limpiar los flags de deshabilitación
+  await prisma.enrollment.update({
+    where: { id: enrollmentId },
+    data: {
+      practicalCaseDisabledAt: null,
+      practicalCaseDisabledReason: null,
+      practicalCaseRenableReason: reason,
+    },
+  });
+
+  await audit(ctx, {
+    action: "practicalCase.enable",
+    entity: "Enrollment",
+    entityId: enrollmentId,
+    subscriberId,
+    after: { practicalCaseRenableReason: reason },
+  });
+
+  // Enviar email al candidato
+  if (enrollment.candidate.email && enrollment.exam) {
+    await sendExamReenabledEmail(subscriberId, enrollment.candidate.email, {
+      holderName: enrollment.candidate.firstName || "Candidato",
+      examName: enrollment.exam.name,
+      reenableReason: reason,
+      portalUrl: `${process.env.APP_URL || "https://okacreditado.com"}/portal/mi-proceso`,
+    });
+  }
+
+  revalidatePath("/panel/candidatos");
+  return { ok: true };
+}
