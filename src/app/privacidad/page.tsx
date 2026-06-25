@@ -2,6 +2,8 @@ import Link from "next/link";
 import { PrivacyAccordion, type PolicySection } from "@/components/privacy-accordion";
 import { BRAND } from "@/lib/brand";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Política de tratamiento de datos personales" };
 
 const APP_NAME = "CIOC";

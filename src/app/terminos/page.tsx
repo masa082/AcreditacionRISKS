@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Términos y condiciones" };
 
 const APP_NAME = "CIOC";

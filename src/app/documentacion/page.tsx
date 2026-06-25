@@ -22,6 +22,8 @@ import { getCurrentUser } from "@/lib/session";
  * controla en la ruta /api/docs-file/[...key].
  */
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Documentación del proceso de certificación",
   description:

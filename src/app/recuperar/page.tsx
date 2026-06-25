@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { ForgotForm } from "@/components/forgot-form";
 import { BRAND } from "@/lib/brand";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = { title: "Recuperar contraseña" };
 
 const APP_NAME = "CIOC";

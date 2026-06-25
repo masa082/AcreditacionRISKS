@@ -4,6 +4,8 @@ import { LandingFooter } from "@/components/landing/footer";
 import { LeadForm } from "@/components/landing/lead-form";
 import { BRAND } from "@/lib/brand";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Contacto y solicitud de información",
   description:

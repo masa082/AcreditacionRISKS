@@ -4,6 +4,8 @@ import { LandingHeader } from "@/components/landing/header";
 import { LandingFooter } from "@/components/landing/footer";
 import { CERTIFICATIONS, BRAND, CTAS, formatCOP } from "@/lib/brand";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Certificaciones profesionales disponibles",
   description:

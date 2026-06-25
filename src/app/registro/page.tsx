@@ -8,6 +8,8 @@ import { getServerLocale } from "@/lib/i18n/server";
 import { t } from "@/lib/i18n/locale";
 import { LanguageSwitcher } from "@/components/language-switcher";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Registro de candidato" };
 
 const APP_NAME = "CIOC";

@@ -7,11 +7,7 @@ import { FAQList } from "@/components/landing/faq";
 import { SchemaJsonLd } from "@/components/landing/schema-jsonld";
 import { CERTIFICATIONS, BRAND, CTAS, formatCOP } from "@/lib/brand";
 
-export const revalidate = 3600; // ISR: regenerate every hour instead of static generation during build
-
-export function generateStaticParams() {
-  return CERTIFICATIONS.map((c) => ({ slug: c.slug }));
-}
+export const dynamic = 'force-dynamic';
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;

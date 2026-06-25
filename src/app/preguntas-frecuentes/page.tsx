@@ -5,6 +5,8 @@ import { LandingFooter } from "@/components/landing/footer";
 import { FAQList } from "@/components/landing/faq";
 import { BRAND, CTAS } from "@/lib/brand";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Preguntas frecuentes sobre certificación de personas",
   description:

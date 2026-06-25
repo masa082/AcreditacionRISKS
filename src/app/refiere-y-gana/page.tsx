@@ -7,6 +7,8 @@ import { ReferrerForm } from "@/components/landing/referrer-form";
 import { REFERRAL_PROGRAM } from "@/lib/referrals";
 import { BRAND, CTAS, formatCOP } from "@/lib/brand";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Refiere y gana — Programa de referidos",
   description:

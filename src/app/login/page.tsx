@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 import { OnacBadge } from "@/components/onac-badge";
 
+
+export const dynamic = 'force-dynamic';
 const APP_NAME = "CIOC";
 const HOME: Record<string, string> = {
   PLATFORM: "/admin",
