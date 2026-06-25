@@ -383,7 +383,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                               className="rounded border border-green-300 bg-green-50 px-2 py-1 text-[10px] font-semibold text-green-700 hover:bg-green-100 w-full"
                               title={`Habilitar ${pc.examName}`}
                             >
-                              🔄 Habilitar
+                              🔄 Habilitar {pc.examName.includes('Teórico') || pc.examName.includes('Teorico') ? 'Examen Teórico' : 'Caso Práctico'}
                             </button>
                           ))}
                         </div>
