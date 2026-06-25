@@ -3,6 +3,8 @@ import { PageHeader, Card } from "@/components/ui";
 import { SubscriberForm } from "@/components/subscriber-form";
 import { SubscribersTable, type SubscriberRow } from "@/components/subscribers-table";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Suscriptores" };
 
 export default async function SubscribersPage() {

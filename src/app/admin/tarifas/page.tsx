@@ -8,6 +8,8 @@ import { FeeEditForm } from "@/components/fee-edit-form";
 import { FeeCreateForm } from "@/components/fee-create-form";
 import { money } from "@/lib/format";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Tarifas y precios" };
 
 const CONCEPT_LABEL: Record<string, string> = {

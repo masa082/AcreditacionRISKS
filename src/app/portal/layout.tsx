@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireCandidatePage } from "@/lib/guards";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 
+export const dynamic = 'force-dynamic';
+
 const NAV: NavItem[] = [
   { href: "/portal", label: "Mi proceso", icon: "■" },
 

@@ -3,6 +3,8 @@ import { PageHeader, Card, Badge } from "@/components/ui";
 import { PlanForm } from "@/components/plan-form";
 import { money } from "@/lib/format";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Planes" };
 
 export default async function PlansPage() {

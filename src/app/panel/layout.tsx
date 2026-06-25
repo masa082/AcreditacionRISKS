@@ -3,6 +3,8 @@ import { prisma } from "@/lib/prisma";
 import { requireSubscriberPage } from "@/lib/guards";
 import { DashboardShell, type NavItem } from "@/components/dashboard-shell";
 
+export const dynamic = 'force-dynamic';
+
 // Menú lateral del SUSCRIPTOR organizado por dominios funcionales
 // siguiendo prácticas de UX: lo más usado arriba, agrupado por intención.
 const NAV: NavItem[] = [

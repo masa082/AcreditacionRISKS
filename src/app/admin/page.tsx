@@ -22,6 +22,8 @@ import { FunnelChart } from "@/components/dashboard/funnel-chart";
 import { RangeSelector } from "@/components/dashboard/range-selector";
 import { Widget, WidgetTogglesBar } from "@/components/dashboard/widget-toggles";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Panel de plataforma" };
 
 const DEFAULT_RANGE: RangePreset = "last-30d";
