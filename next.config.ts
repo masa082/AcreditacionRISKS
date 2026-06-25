@@ -53,26 +53,20 @@ const filesHeaders = [
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  output: 'standalone',
   serverExternalPackages: ["@prisma/client", "bcryptjs", "qrcode", "@aws-sdk/client-s3", "nodemailer"],
-  // ESLint se configura en una fase posterior; no bloquear el build por ahora.
   eslint: { ignoreDuringBuilds: true },
-  // El chequeo de tipos de TypeScript permanece activo (no se ignora).
   async headers() {
     return [
-      // Las rutas que sirven archivos del candidato necesitan permitir
-      // iframe same-origin para las miniaturas en /panel/candidatos y
-      // la vista previa del certificado en /portal/certificados.
       { source: "/api/files/:path*", headers: filesHeaders },
       { source: "/api/payments/:path*", headers: filesHeaders },
       { source: "/api/docs-file/:path*", headers: filesHeaders },
       { source: "/api/certificate/:path*", headers: filesHeaders },
-      // Cualquier otra ruta: bloqueo total de embebido.
       { source: "/:path*", headers: securityHeaders },
     ];
   },
   async redirects() {
     return [
-      // Alias SEO amigable de la verificación pública.
       { source: "/verificar-certificado", destination: "/verificar", permanent: true },
       { source: "/verificar-certificado/:code", destination: "/verificar/:code", permanent: true },
     ];
