@@ -16,10 +16,11 @@ async function handleMigrate(req: NextRequest) {
   try {
     const { execSync } = await import("child_process");
 
-    // Ejecutar migraciones
-    const result = execSync("npx prisma migrate deploy", {
+    // Ejecutar migraciones usando prisma directamente
+    const result = execSync("./node_modules/.bin/prisma migrate deploy", {
       encoding: "utf-8",
       stdio: "pipe",
+      cwd: process.cwd(),
     });
 
     return NextResponse.json({
