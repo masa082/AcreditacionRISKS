@@ -4,6 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { WhatsAppFloat } from "@/components/landing/whatsapp-float";
 import { InviteToCertifyForm } from "@/components/invite-to-certify-form";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: "Verificar certificado | RISKS INTERNATIONAL",
   description: "Verifique la autenticidad y vigencia de un certificado de competencias emitido por RISKS INTERNATIONAL. Búsqueda por código o por número de identificación.",

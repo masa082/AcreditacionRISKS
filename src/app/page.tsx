@@ -20,6 +20,8 @@ import { getBrandAssets } from "@/lib/brand-assets";
 import { getServerLocale } from "@/lib/i18n/server";
 import { t, type Locale } from "@/lib/i18n/locale";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata: Metadata = {
   title: "Certificación profesional que abre puertas — RISKS INTERNATIONAL",
   description:
