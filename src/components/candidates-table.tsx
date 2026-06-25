@@ -321,7 +321,6 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                               </button>
                             );
                           })}
-                          ))}
                         </div>
                       ) : null}
                     </td>
