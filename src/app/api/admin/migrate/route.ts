@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
  * Solo para emergencias de deploy. Eliminar después de usar.
  * Requiere MIGRATION_SECRET en la URL.
  */
-export async function POST(req: NextRequest) {
+async function handleMigrate(req: NextRequest) {
   const secret = req.nextUrl.searchParams.get("secret");
 
   // Validación simple
@@ -34,4 +34,12 @@ export async function POST(req: NextRequest) {
       output: error.stdout?.toString() || "",
     }, { status: 500});
   }
+}
+
+export async function POST(req: NextRequest) {
+  return handleMigrate(req);
+}
+
+export async function GET(req: NextRequest) {
+  return handleMigrate(req);
 }
