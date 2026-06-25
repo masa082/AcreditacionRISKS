@@ -300,6 +300,25 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                             </Link>
                           ) : null}
                         </div>
+                        {c.disabledPracticalCases.length > 0 ? (
+                          <div className="mt-2 flex flex-col gap-1">
+                            {c.disabledPracticalCases.map((pc) => (
+                              <button
+                                key={pc.enrollmentId}
+                                type="button"
+                                onClick={() => setPracticalCaseFor({
+                                  enrollmentId: pc.enrollmentId,
+                                  candidateName: c.fullName,
+                                  examName: pc.examName,
+                                })}
+                                className="rounded border border-green-300 bg-green-50 px-2 py-1 text-[10px] font-semibold text-green-700 hover:bg-green-100 w-full"
+                                title={`Habilitar ${pc.examName}`}
+                              >
+                                🔄 Habilitar {pc.examName.includes('Teórico') || pc.examName.includes('Teorico') ? 'Examen Teórico' : 'Caso Práctico'}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
                       ) : null}
                     </td>
                     <td className="px-3 py-2 align-top">
@@ -368,27 +387,6 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                     </td>
                     <td className="px-3 py-2 align-top font-mono text-[10px] text-slate-500">{c.lastLoginIp ?? "—"}</td>
                     <td className="px-3 py-2 align-top text-center text-xs text-slate-700">{c.loginCount || "—"}</td>
-                    <td className="px-3 py-2 align-top">
-                      {c.disabledPracticalCases.length > 0 ? (
-                        <div className="flex flex-col gap-1">
-                          {c.disabledPracticalCases.map((pc) => (
-                            <button
-                              key={pc.enrollmentId}
-                              type="button"
-                              onClick={() => setPracticalCaseFor({
-                                enrollmentId: pc.enrollmentId,
-                                candidateName: c.fullName,
-                                examName: pc.examName,
-                              })}
-                              className="rounded border border-green-300 bg-green-50 px-2 py-1 text-[10px] font-semibold text-green-700 hover:bg-green-100 w-full"
-                              title={`Habilitar ${pc.examName}`}
-                            >
-                              🔄 Habilitar {pc.examName.includes('Teórico') || pc.examName.includes('Teorico') ? 'Examen Teórico' : 'Caso Práctico'}
-                            </button>
-                          ))}
-                        </div>
-                      ) : null}
-                    </td>
                   </tr>
                 );
               })}
