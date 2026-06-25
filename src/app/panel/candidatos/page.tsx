@@ -160,6 +160,11 @@ export default async function CandidatesListPage({
           candidateId: true,
           exam: { select: { name: true } },
           _count: { select: { attempts: true } },
+          attempts: {
+            orderBy: { createdAt: "desc" },
+            take: 1,
+            select: { scorePercent: true },
+          },
         },
       })
     : [];
@@ -167,7 +172,12 @@ export default async function CandidatesListPage({
     candidateIds.map((id) => [
       id,
       disabledPractical
-        .filter((e) => e.candidateId === id && (e._count?.attempts ?? 0) > 0)
+        .filter((e) => {
+          if (e.candidateId !== id) return false;
+          const hasAttempts = (e._count?.attempts ?? 0) > 0;
+          const hasZeroScore = e.attempts.length > 0 && e.attempts[0].scorePercent === 0;
+          return hasAttempts || hasZeroScore;
+        })
         .map((e) => ({ enrollmentId: e.id, examName: e.exam?.name ?? "Caso Práctico" })),
     ]),
   );
