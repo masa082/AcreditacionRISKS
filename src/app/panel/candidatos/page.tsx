@@ -175,7 +175,7 @@ export default async function CandidatesListPage({
         .filter((e) => {
           if (e.candidateId !== id) return false;
           const hasAttempts = (e._count?.attempts ?? 0) > 0;
-          const hasZeroScore = e.attempts.length > 0 && e.attempts[0].scorePercent === 0;
+          const hasZeroScore = e.attempts.length > 0 && Number(e.attempts[0].scorePercent) === 0;
           return hasAttempts || hasZeroScore;
         })
         .map((e) => ({ enrollmentId: e.id, examName: e.exam?.name ?? "Caso Práctico" })),
