@@ -1013,6 +1013,7 @@ export async function confirmPaymentReceiptUpload(
 export async function enablePracticalCase(
   enrollmentId: string,
   reenableReason: string,
+  sendEmail: boolean = true,
 ): Promise<ActionResult> {
   const { requireSubscriberAction } = await import("@/lib/guards");
   const { PERMISSIONS } = await import("@/lib/permissions");
@@ -1021,7 +1022,7 @@ export async function enablePracticalCase(
   const { ctx, subscriberId } = await requireSubscriberAction(PERMISSIONS.ENROLLMENT_MANAGE);
   const enrollment = await prisma.enrollment.findUnique({
     where: { id: enrollmentId },
-    include: { candidate: { select: { firstName: true, email: true } }, exam: { select: { name: true } } },
+    include: { candidate: { select: { id: true, firstName: true, email: true } }, exam: { select: { name: true } } },
   });
 
   if (!enrollment || enrollment.subscriberId !== subscriberId) {
@@ -1054,13 +1055,26 @@ export async function enablePracticalCase(
     after: { practicalCaseRenableReason: reason },
   });
 
-  // Enviar email al candidato
-  if (enrollment.candidate.email && enrollment.exam) {
+  // Enviar email al candidato si está seleccionado
+  if (sendEmail && enrollment.candidate.email && enrollment.exam) {
     await sendExamReenabledEmail(subscriberId, enrollment.candidate.email, {
       holderName: enrollment.candidate.firstName || "Candidato",
       examName: enrollment.exam.name,
       reenableReason: reason,
       portalUrl: `${process.env.APP_URL || "https://okacreditado.com"}/portal/mi-proceso`,
+    });
+
+    // Registrar el envío en el historial de correos
+    await prisma.emailLog.create({
+      data: {
+        subscriberId,
+        candidateId: enrollment.candidate.id,
+        recipientEmail: enrollment.candidate.email,
+        subject: `${enrollment.exam.name} habilitado nuevamente`,
+        template: "examReenabled",
+        status: "SENT",
+        sentAt: new Date(),
+      },
     });
   }
 

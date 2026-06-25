@@ -18,11 +18,13 @@ export function PracticalCaseEnableDialog({
   onClose: () => void;
 }) {
   const [reason, setReason] = useState("");
+  const [sendEmail, setSendEmail] = useState(true);
   const [state, action, pending] = useActionState<ActionResult, FormData>(
     async (formData) => {
-      const result = await enablePracticalCase(enrollmentId, reason);
+      const result = await enablePracticalCase(enrollmentId, reason, sendEmail);
       if (result.ok) {
         setReason("");
+        setSendEmail(true);
         onClose();
       }
       return result;
@@ -67,6 +69,22 @@ export function PracticalCaseEnableDialog({
             {state.error ? (
               <p className="mt-2 text-sm text-rose-600">{state.error}</p>
             ) : null}
+          </div>
+
+          <div className="space-y-3 border-t border-slate-200 pt-4">
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={sendEmail}
+                onChange={(e) => setSendEmail(e.target.checked)}
+                disabled={pending}
+                className="mt-1 h-4 w-4 rounded border-slate-300 text-green-600 focus:ring-2 focus:ring-green-500"
+              />
+              <div>
+                <span className="block text-sm font-medium text-slate-700">Enviar notificación por correo</span>
+                <span className="block text-xs text-slate-500 mt-0.5">El candidato recibirá un correo informando que su caso práctico ha sido habilitado</span>
+              </div>
+            </label>
           </div>
 
           <div className="flex items-center justify-between gap-3 border-t border-slate-200 pt-4">
