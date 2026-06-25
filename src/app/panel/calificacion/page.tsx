@@ -10,6 +10,8 @@ import {
   type GradingAttemptRow,
 } from "@/components/grading-by-candidate";
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: "Calificación" };
 
 /**
