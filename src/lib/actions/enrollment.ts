@@ -1069,11 +1069,12 @@ export async function enablePracticalCase(
       data: {
         subscriberId,
         candidateId: enrollment.candidate.id,
-        recipientEmail: enrollment.candidate.email,
+        toEmail: enrollment.candidate.email,
         subject: `${enrollment.exam.name} habilitado nuevamente`,
+        bodyPreview: `El caso práctico ha sido habilitado nuevamente`,
         template: "examReenabled",
         status: "SENT",
-        sentAt: new Date(),
+        sentById: ctx.userId,
       },
     });
   }
