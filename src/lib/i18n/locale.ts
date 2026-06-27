@@ -621,6 +621,30 @@ const DICTIONARY: Dict = {
     it: "Una settimana lavorativa e hai già qualcosa da mostrare al datore di lavoro che punti.",
     de: "Eine Werktagwoche, und Sie haben etwas, das Sie Ihrem Zielarbeitgeber zeigen können.",
   },
+  "persona.hr.who": {
+    es: "Gerente de Recursos Humanos",
+    en: "HR Manager / Recruiter",
+    pt: "Gerente de Recursos Humanos",
+    fr: "Gestionnaire RH / Recruteur",
+    it: "Responsabile Risorse Umane",
+    de: "HR-Manager / Recruiter",
+  },
+  "persona.hr.pain": {
+    es: "Mis candidatos en compliance se ven todos iguales en LinkedIn",
+    en: "My compliance candidates all look the same on LinkedIn",
+    pt: "Meus candidatos em compliance parecem todos iguais no LinkedIn",
+    fr: "Mes candidats en conformité se ressemblent tous sur LinkedIn",
+    it: "I miei candidati in compliance sembrano tutti uguali su LinkedIn",
+    de: "Meine Compliance-Kandidaten sehen auf LinkedIn alle gleich aus",
+  },
+  "persona.hr.promise": {
+    es: "La certificación ISO/IEC 17024 con QR es el diferenciador que necesitas",
+    en: "ISO/IEC 17024 certification with QR is the differentiator you need",
+    pt: "A certificação ISO/IEC 17024 com QR é o diferenciador que você precisa",
+    fr: "La certification ISO/IEC 17024 avec QR est le différenciateur dont vous avez besoin",
+    it: "La certificazione ISO/IEC 17024 con QR è il differenziatore di cui hai bisogno",
+    de: "ISO/IEC 17024-Zertifizierung mit QR ist der Unterscheidungsmerkmal, das Sie benötigen",
+  },
 
   // Benefits
   "benefit.salary.title": {
@@ -1045,6 +1069,12 @@ const DICTIONARY: Dict = {
   "testimonial.diana.role": { es: "Consultora", en: "Consultant", pt: "Consultora", fr: "Consultante", it: "Consulente", de: "Beraterin" },
   "testimonial.diana.sector": { es: "Compliance LA/FT", en: "AML compliance", pt: "Conformidade PLD", fr: "Conformité LBC/FT", it: "Compliance antiriciclaggio", de: "Geldwäsche-Compliance" },
   "testimonial.diana.outcome": { es: "Tasa de cierre 4× mayor", en: "Close rate 4× higher", pt: "Taxa de fechamento 4× maior", fr: "Taux de signature 4× supérieur", it: "Tasso di chiusura 4× più alto", de: "Abschlussquote 4× höher" },
+
+  // Video testimonial
+  "video.eyebrow": { es: "Historias reales", en: "Real stories", pt: "Histórias reais", fr: "Histoires réelles", it: "Storie vere", de: "Wahre Geschichten" },
+  "video.title": { es: "Escucha a quienes ya se certificaron", en: "Hear from those already certified", pt: "Ouça quem já se certificou", fr: "Écoutez ceux qui sont déjà certifiés", it: "Ascolta chi si è già certificato", de: "Hören Sie von denen, die bereits zertifiziert sind" },
+  "video.quote": { es: "Pasé de $45M a $52M. La certificación fue el diferenciador que mi empleador buscaba", en: "Jumped from $45k to $52k. Certification was the differentiator my employer needed", pt: "Saí de R$45k para R$52k. Certificação foi o diferencial que meu empregador precisava", fr: "Passé de $45k à $52k. La certification était le différenciel que mon employeur recherchait", it: "Passato da $45k a $52k. La certificazione era il differenziale che il mio datore di lavoro cercava", de: "Von $45k auf $52k gewechselt. Zertifizierung war der Unterscheidungsmerkmal, das mein Arbeitgeber benötigte" },
+  "video.author": { es: "Carolina M., Analista de Cumplimiento", en: "Carolina M., Compliance Analyst", pt: "Carolina M., Analista de Conformidade", fr: "Carolina M., Analyste de Conformité", it: "Carolina M., Analista di Conformità", de: "Carolina M., Compliance-Analystin" },
 
   "land.testimonials.eyebrow": {
     es: "Lo dicen ellos, con números encima",

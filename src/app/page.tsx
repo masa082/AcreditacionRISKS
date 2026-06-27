@@ -8,6 +8,7 @@ import { FAQList } from "@/components/landing/faq";
 import { SchemaJsonLd } from "@/components/landing/schema-jsonld";
 import { UrgencyBanner } from "@/components/landing/urgency-banner";
 import { HeroMicroForm } from "@/components/landing/hero-micro-form";
+import { VideoTestimonialSection } from "@/components/landing/video-testimonial-section";
 import { GuaranteesSection } from "@/components/landing/guarantees-section";
 import { ExamPreview } from "@/components/landing/exam-preview";
 import { WhatsAppFloat } from "@/components/landing/whatsapp-float";
@@ -154,6 +155,7 @@ function buildPersonas(tr: Tr): Array<{
     { icon: "ChartUp", who: tr("persona.analyst.who"), pain: tr("persona.analyst.pain"), promise: tr("persona.analyst.promise") },
     { icon: "Handshake", who: tr("persona.consultant.who"), pain: tr("persona.consultant.pain"), promise: tr("persona.consultant.promise") },
     { icon: "Sparkles", who: tr("persona.transition.who"), pain: tr("persona.transition.pain"), promise: tr("persona.transition.promise") },
+    { icon: "Search", who: tr("persona.hr.who"), pain: tr("persona.hr.pain"), promise: tr("persona.hr.promise") },
   ];
 }
 
@@ -941,6 +943,9 @@ export default async function HomePage() {
           </p>
         </div>
       </section>
+
+      {/* ════════════════════ VIDEO TESTIMONIAL ════════════════════ */}
+      <VideoTestimonialSection locale={locale} />
 
       {/* ════════════════════ FAQ ════════════════════ */}
       <section id="faq" className="bg-premium-light">
