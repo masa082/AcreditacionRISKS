@@ -44,7 +44,7 @@ export async function LandingHeader() {
             {t("nav.home", locale)}
           </Link>
           <NavDropdown label={t("nav.certifications", locale)} items={CERT_ITEMS} />
-          <NavDropdown label={t("nav.info", locale) || "Información"} items={INFO_ITEMS} />
+          <NavDropdown label="Información" items={INFO_ITEMS} />
           <Link href="/refiere-y-gana" className="font-medium hover:text-brand-800">
             {t("nav.referrals", locale)}
           </Link>
