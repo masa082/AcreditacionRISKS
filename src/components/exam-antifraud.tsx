@@ -116,9 +116,8 @@ export function HonestyGate({
                   <strong>4. Acepto el monitoreo, la confidencialidad y la prohibición expresa de
                   grabar/capturar la pantalla.</strong> Durante la evaluación:
                   <ul className="mt-1.5 ml-3 list-disc space-y-0.5 text-[12px] text-amber-900">
-                    <li><strong>No es posible salir de la sesión</strong> — cambiar de pestaña,
-                    abrir otra ventana o aplicación se considerará <strong>abandono de la
-                    prueba</strong>. Tras 12 salidas el intento se cierra automáticamente.</li>
+                    <li><strong>Permitidas 12 salidas de la sesión</strong> — puede cambiar de pestaña o abrir otra ventana hasta <strong>12 veces máximo</strong>. Se recomienda <strong>preparar su documento o archivos antes de iniciar</strong> para no agotar las salidas permitidas. Tras 12 salidas el intento se cierra automáticamente.</li>
+                    <li><strong>Copiar contenido permitido 3 veces</strong> — puede copiar del examen práctico hasta 3 veces para trabajar en su documento externo. Después de eso, la copia será bloqueada.</li>
                     <li><strong>Prohibido grabar video, capturar pantalla, fotografiar o
                     reproducir el contenido</strong> por cualquier medio (atajos del SO,
                     aplicaciones de terceros, dispositivos externos). El intento se anula y se
@@ -270,14 +269,28 @@ export function AntifraudHooks({
     }
 
     // ── 2. Copy / Cut ─────────────────────────────────────────────
+    // Permitir 3 copias del contenido del caso práctico
+    const copyCountRef = useRef(0);
+    const MAX_COPIES = 3;
+
     function onCopy(e: ClipboardEvent) {
-      e.preventDefault();
-      try { e.clipboardData?.setData("text/plain", "[Contenido protegido · CIOC]"); } catch {}
+      if (copyCountRef.current >= MAX_COPIES) {
+        e.preventDefault();
+        try { e.clipboardData?.setData("text/plain", "[Límite de copias alcanzado · Ya has copiado 3 veces]"); } catch {}
+        fire("copy_blocked");
+        return;
+      }
+      copyCountRef.current++;
       fire("copy");
     }
     function onCut(e: ClipboardEvent) {
-      e.preventDefault();
-      try { e.clipboardData?.setData("text/plain", "[Contenido protegido · CIOC]"); } catch {}
+      if (copyCountRef.current >= MAX_COPIES) {
+        e.preventDefault();
+        try { e.clipboardData?.setData("text/plain", "[Límite de copias alcanzado · Ya has copiado 3 veces]"); } catch {}
+        fire("cut_blocked");
+        return;
+      }
+      copyCountRef.current++;
       fire("cut");
     }
 
