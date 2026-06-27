@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { logoutAction } from "@/lib/actions/auth";
 import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
+import { CacheClearButton } from "@/components/cache-clear-button";
 import { OnacBadge } from "@/components/onac-badge";
 import { LegalTimeCO } from "@/components/legal-time-co";
 import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
@@ -76,6 +77,7 @@ export async function DashboardShell({
           <div className="ml-auto flex items-center gap-3">
             <LanguageSwitcher initial={locale} />
             <NotificationBellServer />
+            <CacheClearButton />
             <div className="hidden text-right sm:block">
               <div className="text-sm font-medium text-slate-800">
                 {user.name}
