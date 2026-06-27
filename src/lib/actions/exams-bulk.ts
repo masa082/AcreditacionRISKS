@@ -141,6 +141,12 @@ function validateEnrollmentEligibility(
     if (!practicalAttempts.length) {
       return { isEligible: false, reason: "El candidato aún no ha presentado el caso práctico o no cumple criterios" };
     }
+  } else if (examType === "THEORETICAL") {
+    // Verificar que reprobó examen teórico
+    const theoreticalAttempts = enrollment.attempts.filter((a: any) => a.status === "FAILED");
+    if (!theoreticalAttempts.length) {
+      return { isEligible: false, reason: "El candidato aún no ha presentado el examen teórico o no lo ha reprobado" };
+    }
   }
 
   return { isEligible: true, reason: "" };
