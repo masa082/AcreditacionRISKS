@@ -271,6 +271,7 @@ export default async function CandidatesListPage({
 
     return {
       id: c.id,
+      enrollmentIds: c.enrollments.map((e) => e.id),
       fullName: `${c.firstName} ${c.lastName}`,
       email: c.email,
       documentLabel: c.documentType ? `${c.documentType} ${c.documentNumber ?? ""}`.trim() : (c.documentNumber ?? "—"),

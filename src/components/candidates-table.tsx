@@ -9,6 +9,7 @@ import { PracticalCaseEnableDialog } from "@/components/practical-case-enable-di
 
 export interface CandidateRow {
   id: string;
+  enrollmentIds: string[];
   fullName: string;
   email: string;
   documentLabel: string;
@@ -127,21 +128,26 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     });
   }, [rows, sort, onlyOnline]);
 
-  const allChecked = useMemo(() => visible.length > 0 && visible.every((r) => selected.has(r.id)), [visible, selected]);
+  const allChecked = useMemo(() => visible.length > 0 && visible.every((r) => r.enrollmentIds.some(id => selected.has(id))), [visible, selected]);
   const onlineCount = useMemo(() => rows.filter((r) => r.isOnline).length, [rows]);
 
   function toggleAll() {
+    const allEnrollmentIds = visible.flatMap((r) => r.enrollmentIds);
     if (allChecked) {
-      setSelected(new Set([...selected].filter((id) => !visible.some((r) => r.id === id))));
+      setSelected(new Set([...selected].filter((id) => !allEnrollmentIds.includes(id))));
     } else {
-      setSelected(new Set([...selected, ...visible.map((r) => r.id)]));
+      setSelected(new Set([...selected, ...allEnrollmentIds]));
     }
   }
-  function toggle(id: string) {
+  function toggle(row: CandidateRow) {
     setSelected((s) => {
       const next = new Set(s);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      const isSelected = row.enrollmentIds.some(id => next.has(id));
+      if (isSelected) {
+        row.enrollmentIds.forEach(id => next.delete(id));
+      } else {
+        row.enrollmentIds.forEach(id => next.add(id));
+      }
       return next;
     });
   }
@@ -202,7 +208,7 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
                 return (
                   <tr key={c.id} className={`hover:bg-slate-50 ${selected.has(c.id) ? "bg-brand-50/40" : ""}`}>
                     <td className="px-3 py-2 align-top">
-                      <input type="checkbox" checked={selected.has(c.id)} onChange={() => toggle(c.id)} />
+                      <input type="checkbox" checked={c.enrollmentIds.some(id => selected.has(id))} onChange={() => toggle(c)} />
                     </td>
                     <td className="px-3 py-2 align-top" title={c.isOnline ? "Sesión activa ahora mismo" : "Sin sesión activa"}>
                       {c.isOnline ? (
