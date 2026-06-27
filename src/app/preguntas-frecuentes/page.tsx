@@ -37,6 +37,15 @@ const FAQS = [
   { q: "¿Cómo se protege mi información?", a: "Manejamos cifrado en tránsito (HTTPS), control de acceso por roles, auditoría de operaciones críticas y separación multitenant. Los soportes confidenciales solo se sirven con autenticación." },
   { q: "¿Qué incluye mi certificado?", a: "Nombre del titular, documento de identidad, certificación obtenida, fecha de emisión, fecha de vencimiento, código único, QR de verificación, firma autorizada y estado en tiempo real." },
   { q: "¿La plataforma es multilenguaje?", a: "Actualmente operamos en español. Estamos preparando versiones en inglés y portugués para personas y empresas internacionales." },
+  { q: "¿Si repruebo el examen qué pasa?", a: "Recibirás una constancia de presentación y podrás reintentar según lo permita el esquema. Los reintentos son gratis dentro del periodo establecido (consulta los términos de tu certificación)." },
+  { q: "¿Cuál es el costo de cada certificación?", a: "El precio varía por esquema. SARLAFT es $650.000 COP, SAGRILAFT estará disponible próximamente. Ver /certificaciones para el listado completo de precios." },
+  { q: "¿Cómo sé que puedo confiar en RISKS INTERNATIONAL?", a: "Somos organismo certificador acreditado bajo ISO/IEC 17024 por ONAC. Todos nuestros certificados incluyen firma autorizada, sello oficial y código verificable en okacreditado.com/verificar." },
+  { q: "¿Qué pasa si abandono antes de terminar el examen?", a: "Se registra el intento y reciben una constancia. El abandono no anula reintentos futuros, pero sí consume uno según las reglas del esquema." },
+  { q: "¿Qué empresas aceptan estos certificados?", a: "Bancos, aseguradoras, organismos supervisores y fondos de pensión en Colombia reconocen certificaciones ISO/IEC 17024. El certificado es admisible ante autoridades que exijan competencias verificadas." },
+  { q: "¿Hay descuentos para grupos o empresas?", a: "Sí. Contacta a ventas@risksint.com para consultar sobre paquetes corporativos, descuentos volumen y soluciones personalizadas para empresas." },
+  { q: "¿Puedo compartir mi certificado públicamente?", a: "Sí. El certificado contiene un código verificable y QR. Puedes compartirlo en LinkedIn, CV, portafolio o email — cualquiera podrá validar su autenticidad en /verificar." },
+  { q: "¿Cuánto tiempo tarda emitirse mi certificado?", a: "Una vez aprobado el examen, tu diploma está disponible inmediatamente en /portal/certificados para descargar. El QR de verificación está operativo desde ese momento." },
+  { q: "¿Qué debo hacer antes de presentar el examen?", a: "Completa tu registro, sube todos los documentos requeridos, haz el pago y agenda tu sesión. Te recomendamos tener tu computador, cámara web y conexión estable preparados 15 minutos antes." },
 ];
 
 export default function FaqPage() {
