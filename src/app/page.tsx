@@ -234,15 +234,12 @@ export default async function HomePage() {
             </p>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href={CTAS.certify.href} className="group inline-flex items-center gap-2 rounded-lg btn-grad-navy px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:shadow-premium">
+              <Link href={CTAS.certify.href} className="group inline-flex items-center gap-2 rounded-lg bg-gradient-to-r from-gold-500 to-gold-600 px-6 py-4 text-base font-bold text-brand-900 shadow-lg shadow-gold-500/20 transition hover:from-gold-400 hover:to-gold-500 hover:shadow-gold-500/40">
                 {tr("land.hero.cta.primary")}
                 <span className="transition group-hover:translate-x-0.5">→</span>
               </Link>
-              <Link href={CTAS.certifications.href} className="rounded-lg border border-brand-200 bg-white px-5 py-3 text-sm font-semibold text-brand-800 transition hover:bg-brand-50">
+              <Link href={CTAS.certifications.href} className="rounded-lg border border-brand-200 bg-white px-6 py-4 text-base font-semibold text-brand-800 transition hover:bg-brand-50">
                 {tr("land.hero.cta.secondary")}
-              </Link>
-              <Link href={CTAS.verify.href} className="inline-flex items-center gap-1.5 rounded-lg px-5 py-3 text-sm font-semibold text-brand-700 hover:text-brand-900">
-                <Icon.QR size={16} /> {tr("land.hero.cta.verify")}
               </Link>
             </div>
 
@@ -307,6 +304,17 @@ export default async function HomePage() {
           {/* Microformulario también en mobile bajo el hero */}
           <div className="lg:hidden">
             <HeroMicroForm locale={locale} />
+          </div>
+        </div>
+      </section>
+
+      {/* ════════════════════ GARANTÍA (RISK REVERSAL) ════════════════════ */}
+      <section className="border-b border-slate-100 bg-emerald-50">
+        <div className="mx-auto max-w-6xl px-6 py-8">
+          <div className="rounded-xl border border-emerald-200 bg-white px-6 py-5 text-center">
+            <p className="text-[13px] leading-relaxed text-emerald-900">
+              <strong>✓ Garantía 30 días sin riesgo:</strong> Si no apruebas el examen en tu primer intento, tendrás reintentos gratis. Si no estás satisfecho con el proceso, devolvemos tu dinero sin preguntas.
+            </p>
           </div>
         </div>
       </section>

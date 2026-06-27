@@ -36,7 +36,7 @@ async function resolveDefaultSubscriberId(): Promise<string | null> {
 }
 
 const baseSchema = z.object({
-  fullName: z.string().min(3, "Indique su nombre completo").max(160),
+  fullName: z.string().min(3, "Indique su nombre completo").max(160).optional().nullable(),
   email: z.string().email("Correo inválido").max(160),
   phone: z.string().max(40).optional().nullable(),
   country: z.string().max(80).optional().nullable(),
@@ -86,7 +86,17 @@ export async function createLead(
 
   const m = await meta();
   const subscriberId = await resolveDefaultSubscriberId();
-  const kind = parsed.data.kind ?? "REGISTRATION";
+
+  // Detectar SAGRILAFT_WAITLIST: si el usuario selecciona "notificarme", cambiar a WAITLIST kind
+  let kind = parsed.data.kind ?? "REGISTRATION";
+  let certOfInterest: string | null = parsed.data.certificationOfInterest ?? null;
+  if (certOfInterest === "SAGRILAFT_WAITLIST") {
+    kind = "INFORMATION"; // O crear un nuevo kind WAITLIST si existe en BD
+    certOfInterest = "SAGRILAFT";
+  } else if (certOfInterest === "NOT_SURE") {
+    kind = "INFORMATION";
+    certOfInterest = null;
+  }
 
   // Honeypot anti-bot: si el campo oculto "website" viene con valor, descartamos en silencio.
   const honey = clean(formData.get("website"));
@@ -95,6 +105,8 @@ export async function createLead(
   }
 
   const emailLower = parsed.data.email.toLowerCase();
+  // Si fullName no viene (micro-form de email-only), usar email prefix como nombre temporal
+  const fullName: string = (parsed.data.fullName?.trim()) || emailLower.split("@")[0].replace(/[.\-_]/g, " ");
   // Dedupe + tracking de visitas: si ya existe un lead con el mismo
   // correo y la misma intención (kind) en los últimos 60 días, sumamos
   // visita y refrescamos la huella en vez de duplicar la fila. Eso
@@ -115,7 +127,7 @@ export async function createLead(
   // probable de ser el correcto desde el punto de vista del operador.
   // Para no perder trazabilidad, el nombre anterior queda en la
   // metadata del VISIT_TRACK.
-  const nameChanged = reusable && parsed.data.fullName.trim().toLowerCase() !== existing!.fullName.trim().toLowerCase();
+  const nameChanged = reusable && fullName.trim().toLowerCase() !== existing!.fullName.trim().toLowerCase();
 
   const lead = reusable
     ? await prisma.lead.update({
@@ -127,13 +139,13 @@ export async function createLead(
           // Tomamos el nombre más reciente (corrige el bug previo donde
           // un lead "merged" se quedaba con el primer nombre y el
           // operador no encontraba al prospecto que recién registró).
-          fullName: parsed.data.fullName,
+          fullName: fullName,
           // Permite actualizar campos comerciales si vienen nuevos datos.
           phone: parsed.data.phone ?? existing.phone,
           country: parsed.data.country ?? existing.country,
           company: parsed.data.company ?? existing.company,
           jobTitle: parsed.data.jobTitle ?? existing.jobTitle,
-          certificationOfInterest: parsed.data.certificationOfInterest ?? existing.certificationOfInterest,
+          certificationOfInterest: certOfInterest ?? existing.certificationOfInterest,
           message: parsed.data.message ?? existing.message,
           ip: m.ip,
           userAgent: m.userAgent,
@@ -147,7 +159,7 @@ export async function createLead(
                 // los dos nombres para que el operador del organismo
                 // tenga el contexto de la fusión.
                 ...(nameChanged
-                  ? { fullNameChanged: { from: existing.fullName, to: parsed.data.fullName } }
+                  ? { fullNameChanged: { from: existing.fullName, to: fullName } }
                   : {}),
               },
             },
@@ -158,13 +170,13 @@ export async function createLead(
         data: {
           subscriberId,
           kind,
-          fullName: parsed.data.fullName,
+          fullName: fullName,
           email: emailLower,
           phone: parsed.data.phone,
           country: parsed.data.country,
           company: parsed.data.company,
           jobTitle: parsed.data.jobTitle,
-          certificationOfInterest: parsed.data.certificationOfInterest,
+          certificationOfInterest: certOfInterest,
           message: parsed.data.message,
           suggestedDate: parsed.data.suggestedDate ? new Date(parsed.data.suggestedDate) : null,
           source: parsed.data.source,
@@ -190,9 +202,9 @@ export async function createLead(
     // confunde buscando un "lead nuevo" que en realidad es una nueva
     // visita de un prospecto que ya está en la tabla.
     const title = reusable
-      ? `Nueva visita: ${parsed.data.fullName} (visita #${(existing!.siteVisitCount ?? 1) + 1})`
-      : `Nuevo lead: ${parsed.data.fullName}`;
-    const body = `${kindLabel}${parsed.data.certificationOfInterest ? ` · ${parsed.data.certificationOfInterest}` : ""}`;
+      ? `Nueva visita: ${fullName} (visita #${(existing!.siteVisitCount ?? 1) + 1})`
+      : `Nuevo lead: ${fullName}`;
+    const body = `${kindLabel}${certOfInterest ? ` · ${certOfInterest}` : ""}`;
     await Promise.all(
       staff
         .filter((u) => {
@@ -217,13 +229,13 @@ export async function createLead(
       const orgName = sub?.tradeName ?? sub?.legalName ?? "CIOC";
       const lines = [
         `Tipo: ${kindLabel}`,
-        `Nombre: ${parsed.data.fullName}`,
+        `Nombre: ${fullName}`,
         `Correo: ${parsed.data.email}`,
         parsed.data.phone ? `Teléfono: ${parsed.data.phone}` : null,
         parsed.data.country ? `País: ${parsed.data.country}` : null,
         parsed.data.company ? `Empresa: ${parsed.data.company}` : null,
         parsed.data.jobTitle ? `Cargo: ${parsed.data.jobTitle}` : null,
-        parsed.data.certificationOfInterest ? `Certificación de interés: ${parsed.data.certificationOfInterest}` : null,
+        certOfInterest ? `Certificación de interés: ${certOfInterest}` : null,
         parsed.data.suggestedDate ? `Fecha sugerida: ${parsed.data.suggestedDate}` : null,
         parsed.data.message ? `\nMensaje:\n${parsed.data.message}` : null,
       ].filter(Boolean);

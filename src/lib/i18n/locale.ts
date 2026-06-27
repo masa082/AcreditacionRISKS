@@ -47,12 +47,12 @@ type Dict = Record<string, { es: string; en: string; pt: string; fr?: string; it
 const DICTIONARY: Dict = {
   // Landing — hero
   "hero.eyebrow": {
-    es: "Organismo de Certificación de Personas",
-    en: "Person Certification Body",
-    pt: "Organismo de Certificação de Pessoas",
-    fr: "Organisme de Certification des Personnes",
-    it: "Organismo di Certificazione delle Persone",
-    de: "Personenzertifizierungsstelle",
+    es: "Para compliance officers, analistas y consultores que quieren subir de salario",
+    en: "For compliance officers, analysts and consultants aiming for the next level",
+    pt: "Para oficiais de conformidade, analistas e consultores que querem subir de salário",
+    fr: "Pour les responsables de conformité, les analystes et les consultants qui visent le prochain niveau",
+    it: "Per responsabili della conformità, analisti e consulenti che vogliono salire di livello",
+    de: "Für Compliance-Beauftragte, Analysten und Berater, die die nächste Stufe anstreben",
   },
   "hero.h1.1": {
     es: "Usted ya sabe hacerlo.",
@@ -385,7 +385,7 @@ const DICTIONARY: Dict = {
     it: "Una credenziale secondo la ISO/IEC 17024 in antiriciclaggio, sanzioni e due diligence — rilasciata con esame sorvegliato, QR pubblico e firma autorizzata.",
     de: "Ein Nachweis nach ISO/IEC 17024 in Geldwäscheprävention, Sanktionen und Sorgfaltspflicht — ausgestellt mit beaufsichtigter Prüfung, öffentlichem QR und autorisierter Unterschrift.",
   },
-  "land.hero.cta.primary": { es: "Empezar mi certificación", en: "Start my certification", pt: "Iniciar minha certificação", fr: "Démarrer ma certification", it: "Avvia la mia certificazione", de: "Meine Zertifizierung starten" },
+  "land.hero.cta.primary": { es: "Iniciar inscripción", en: "Start enrollment", pt: "Iniciar inscrição", fr: "Commencer l'inscription", it: "Inizia l'iscrizione", de: "Anmeldung starten" },
   "land.hero.cta.secondary": { es: "Ver certificaciones", en: "View certifications", pt: "Ver certificações", fr: "Voir les certifications", it: "Vedi le certificazioni", de: "Zertifizierungen ansehen" },
   "land.hero.cta.verify": { es: "Verificar un certificado", en: "Verify a certificate", pt: "Verificar um certificado", fr: "Vérifier un certificat", it: "Verifica un certificato", de: "Zertifikat überprüfen" },
   "land.hero.disclaimer": {
@@ -450,8 +450,10 @@ const DICTIONARY: Dict = {
     it: "Ricevi informazioni in meno di 60 secondi",
     de: "Infos in unter 60 Sekunden erhalten",
   },
-  "micro.fullName": { es: "Nombre y apellido", en: "Full name", pt: "Nome completo", fr: "Nom et prénom", it: "Nome e cognome", de: "Vor- und Nachname" },
   "micro.email": { es: "Correo electrónico", en: "Email", pt: "E-mail", fr: "E-mail", it: "Email", de: "E-Mail" },
+  "micro.cert.sarlaft": { es: "SARLAFT (Supertransporte)", en: "SARLAFT (Transportation)", pt: "SARLAFT (Transporte)", fr: "SARLAFT (Transport)", it: "SARLAFT (Trasporto)", de: "SARLAFT (Verkehr)" },
+  "micro.cert.sagrilaft.waitlist": { es: "SAGRILAFT — Notificarme cuando lance", en: "SAGRILAFT — Notify me when live", pt: "SAGRILAFT — Notificar-me quando lançar", fr: "SAGRILAFT — Me notifier au lancement", it: "SAGRILAFT — Notificami quando esce", de: "SAGRILAFT — Benachrichtige mich beim Start" },
+  "micro.cert.notsure": { es: "No sé aún", en: "Not sure yet", pt: "Ainda não sei", fr: "Je ne suis pas sûr", it: "Non sono sicuro", de: "Bin mir noch nicht sicher" },
   "micro.consent.before": {
     es: "Acepto la ",
     en: "I accept the ",

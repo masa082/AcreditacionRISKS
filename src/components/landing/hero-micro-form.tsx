@@ -46,13 +46,6 @@ export function HeroMicroForm({ locale }: { locale?: Locale }) {
       </p>
       <div className="space-y-2">
         <input
-          name="fullName"
-          required
-          maxLength={160}
-          placeholder={tr("micro.fullName")}
-          className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
-        />
-        <input
           name="email"
           required
           type="email"
@@ -62,11 +55,12 @@ export function HeroMicroForm({ locale }: { locale?: Locale }) {
         />
         <select
           name="certificationOfInterest"
-          defaultValue="SARLAFT (Supertransporte)"
+          defaultValue="SARLAFT"
           className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-brand-600 focus:ring-2 focus:ring-brand-100"
         >
-          <option>SARLAFT (Supertransporte)</option>
-          <option>SAGRILAFT (Supersociedades) · Próximamente</option>
+          <option value="SARLAFT">{tr("micro.cert.sarlaft")}</option>
+          <option value="SAGRILAFT_WAITLIST">{tr("micro.cert.sagrilaft.waitlist")}</option>
+          <option value="NOT_SURE">{tr("micro.cert.notsure")}</option>
         </select>
       </div>
 
