@@ -64,7 +64,7 @@ export function BulkEnableExamButton({
             result.ok ? "text-emerald-600" : "text-rose-600"
           }`}
         >
-          {result.ok ? "✓ Completado" : `✗ ${result.error}`}
+          {result.ok ? "✓ Completado" : `✗ ${result.error || "Error al procesar"}`}
         </span>
       )}
     </div>
