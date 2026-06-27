@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { BulkEmailComposer } from "@/components/bulk-email-composer";
+import { BulkEnableExamButton } from "@/components/candidatos/bulk-enable-exam-button";
 
 const STATUS_OPTS = [
   { v: "", l: "Todos los estados" },
@@ -127,6 +128,16 @@ export function CandidatesToolbar({ selected, allInView }: { selected: string[];
           >
             ✉ Enviar correo a {selected.length || "0"}
           </button>
+          <BulkEnableExamButton
+            selectedEnrollmentIds={selected}
+            examType="PRACTICAL"
+            disabled={selected.length === 0}
+          />
+          <BulkEnableExamButton
+            selectedEnrollmentIds={selected}
+            examType="THEORETICAL"
+            disabled={selected.length === 0}
+          />
         </div>
       </div>
 
