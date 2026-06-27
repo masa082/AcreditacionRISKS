@@ -155,7 +155,7 @@ function buildPersonas(tr: Tr): Array<{
     { icon: "ChartUp", who: tr("persona.analyst.who"), pain: tr("persona.analyst.pain"), promise: tr("persona.analyst.promise") },
     { icon: "Handshake", who: tr("persona.consultant.who"), pain: tr("persona.consultant.pain"), promise: tr("persona.consultant.promise") },
     { icon: "Sparkles", who: tr("persona.transition.who"), pain: tr("persona.transition.pain"), promise: tr("persona.transition.promise") },
-    { icon: "Search", who: tr("persona.hr.who"), pain: tr("persona.hr.pain"), promise: tr("persona.hr.promise") },
+    { icon: "Users", who: tr("persona.hr.who"), pain: tr("persona.hr.pain"), promise: tr("persona.hr.promise") },
   ];
 }
 
