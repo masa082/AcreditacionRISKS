@@ -1064,7 +1064,7 @@ export async function enablePracticalCase(
       portalUrl: `${process.env.APP_URL || "https://okacreditado.com"}/portal/mi-proceso`,
     });
 
-    // Registrar el envío en el historial de correos
+    // Registrar el envío en el historial de correos (UNO A UNO, no MASIVO)
     await prisma.emailLog.create({
       data: {
         subscriberId,
@@ -1072,7 +1072,9 @@ export async function enablePracticalCase(
         toEmail: enrollment.candidate.email,
         subject: `${enrollment.exam.name} habilitado nuevamente`,
         bodyPreview: `El caso práctico ha sido habilitado nuevamente`,
+        bodyHtml: `<p>El ${reason === "practical" ? "caso práctico" : "examen teórico"} ha sido habilitado nuevamente</p>`,
         template: "examReenabled",
+        kind: "TRANSACTIONAL", // Uno a uno, no masivo
         status: "SENT",
         sentById: ctx.userId,
       },
