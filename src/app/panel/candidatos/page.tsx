@@ -5,6 +5,7 @@ import { PERMISSIONS } from "@/lib/permissions";
 import { prisma } from "@/lib/prisma";
 import { PageHeader, Card } from "@/components/ui";
 import { CandidatesTable, type CandidateRow } from "@/components/candidates-table";
+import { DebugEligibility } from "@/components/debug-eligibility";
 import { money, dateOnly, dateTime } from "@/lib/format";
 
 export const metadata = { title: "Candidatos" };
@@ -391,8 +392,23 @@ export default async function CandidatesListPage({
 
   const totalPendingDocs = rows.reduce((s, r) => s + r.docsPending, 0);
 
+  // Crear datos de debug para pasar al componente cliente
+  const debugData = rows.flatMap(row =>
+    row.elegibleForPractical.map(enrollmentId => ({
+      candidateName: row.fullName,
+      enrollmentId,
+      examType: "PRACTICAL" as const,
+      docsApproved: 0, // Esto se calcula en el servidor, pero lo dejamos como ejemplo
+      totalDocs: 0,
+      attempts: [],
+      isEligible: true,
+      reason: "Visible en logs del navegador"
+    }))
+  );
+
   return (
     <>
+      <DebugEligibility data={debugData} />
       <PageHeader
         title="Candidatos"
         subtitle={`${rows.length} de ${totalCount} mostrados · ${totalPendingDocs} documento(s) por revisar`}
