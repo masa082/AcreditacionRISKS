@@ -1,8 +1,8 @@
-import { getServerContext } from "@/lib/auth/server-context";
+import { getCurrentUser } from "@/lib/session";
 import { prisma } from "@/lib/prisma";
 
 export async function GET() {
-  const ctx = await getServerContext();
+  const ctx = await getCurrentUser();
   if (!ctx) return Response.json({ error: "Unauthorized" }, { status: 401 });
 
   const candidates = await prisma.candidate.findMany({
