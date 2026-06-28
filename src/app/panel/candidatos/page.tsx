@@ -272,8 +272,8 @@ export default async function CandidatesListPage({
     const elegibleForPractical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
-        // Verificar si ya está aprobado
-        const isPracticalPassed = e.attempts?.some((a) => a.status === "PASSED");
+        // Verificar si ya está aprobado (passed = true)
+        const isPracticalPassed = e.attempts?.some((a) => a.passed === true);
         if (isPracticalPassed) return false; // Si está aprobado, NO es elegible
 
         // Elegible si está en 0% o REPROBADO
@@ -288,8 +288,8 @@ export default async function CandidatesListPage({
     const elegibleForTheoretical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
-        // Verificar si ya está aprobado
-        const isTheoreticalPassed = e.attempts?.some((a) => a.status === "PASSED");
+        // Verificar si ya está aprobado (passed = true)
+        const isTheoreticalPassed = e.attempts?.some((a) => a.passed === true);
         if (isTheoreticalPassed) return false; // Si está aprobado, NO es elegible
 
         // Elegible si está REPROBADO
