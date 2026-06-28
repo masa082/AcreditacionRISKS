@@ -280,6 +280,20 @@ export default async function CandidatesListPage({
         const hasPracticalAttempt = e.attempts?.some(
           (a) => a.status === "FAILED" || (Number(a.scorePercent) === 0 && a.status === "SUBMITTED")
         );
+
+        // DEBUG
+        const isDEBUG = c.firstName === "Estefany" || c.firstName === "OMAR ANDRES";
+        if (isDEBUG) {
+          console.log(`[DEBUG PRACTICAL] ${c.firstName}:`, {
+            docsApproved,
+            attemptCount: e.attempts?.length ?? 0,
+            attempts: e.attempts?.map(a => ({ status: a.status, scorePercent: a.scorePercent, passed: a.passed })),
+            hasPracticalAttempt,
+            isPracticalPassed,
+            eligible: docsApproved > 0 && hasPracticalAttempt,
+          });
+        }
+
         return docsApproved > 0 && hasPracticalAttempt;
       })
       .map((e) => e.id);
