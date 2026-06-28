@@ -125,12 +125,11 @@ function validateEnrollmentEligibility(
   enrollment: any,
   examType: ExamType,
 ): { isEligible: boolean; reason: string } {
-  // Validar pago + documentos + hoja de vida (simulado)
-  // En producción, verificar estado real del enrollment
-  const hasDocuments = enrollment.documents && enrollment.documents.length > 0;
+  // Validar documentos APROBADOS
+  const docsApproved = enrollment.documents?.filter((d: any) => d.status === "APPROVED").length ?? 0;
 
-  if (!hasDocuments) {
-    return { isEligible: false, reason: "Falta subir documentos requeridos" };
+  if (docsApproved === 0) {
+    return { isEligible: false, reason: "Falta subir documentos aprobados" };
   }
 
   if (examType === "PRACTICAL") {
