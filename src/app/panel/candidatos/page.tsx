@@ -270,88 +270,136 @@ export default async function CandidatesListPage({
 
     // Calcular enrollments elegibles para cada tipo de examen
     // REGLA: Elegible para PRACTICAL si está en 0% o REPROBADO (y NO está aprobado)
+    const practicalEligibilityData: Array<{ enrollmentId: string; isEligible: boolean; docsApproved: number; totalDocs: number; attempts: Array<{ status: string; scorePercent: number | null; passed: boolean | null }>; reason: string }> = [];
+
     const elegibleForPractical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        const totalDocs = e.documents?.length ?? 0;
+        const attempts = e.attempts ?? [];
 
         // LOGGING DETALLADO - SIEMPRE mostrar para todos los candidatos
         console.log(`\n=== ELIGIBILITY DEBUG: ${c.firstName} ${c.lastName} (PRACTICAL) ===`);
         console.log("Documentos:", {
-          total: e.documents?.length ?? 0,
+          total: totalDocs,
           aprobados: docsApproved,
           detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
         });
         console.log("Intentos:", {
-          total: e.attempts?.length ?? 0,
-          detalles: e.attempts?.map(a => ({
+          total: attempts.length,
+          detalles: attempts.map(a => ({
             status: a.status,
             scorePercent: a.scorePercent,
             passed: a.passed
           }))
         });
 
+        let isEligible = false;
+        let reason = "";
+
         if (docsApproved === 0) {
           console.log("❌ NO elegible: Sin documentos aprobados");
-          return false;
+          reason = "Sin documentos aprobados";
+        } else {
+          // Verificar si ya está aprobado (passed = true)
+          const isPracticalPassed = attempts.some((a) => a.passed === true);
+          if (isPracticalPassed) {
+            console.log("❌ NO elegible: Ya está aprobado (passed=true)");
+            reason = "Ya está aprobado";
+          } else {
+            // Elegible si está en 0% o REPROBADO
+            const hasPracticalAttempt = attempts.some(
+              (a) => a.status === "FAILED" || Number(a.scorePercent) === 0
+            );
+
+            if (hasPracticalAttempt) {
+              console.log(`✅ ELEGIBLE`);
+              isEligible = true;
+              reason = "Elegible - 0% o REPROBADO";
+            } else {
+              console.log(`❌ NO elegible: Ningún intento FAILED o 0%`);
+              reason = "Ningún intento FAILED o 0%";
+            }
+          }
         }
 
-        // Verificar si ya está aprobado (passed = true)
-        const isPracticalPassed = e.attempts?.some((a) => a.passed === true);
-        if (isPracticalPassed) {
-          console.log("❌ NO elegible: Ya está aprobado (passed=true)");
-          return false;
-        }
+        // Guardar datos para debug
+        practicalEligibilityData.push({
+          enrollmentId: e.id,
+          isEligible,
+          docsApproved,
+          totalDocs,
+          attempts,
+          reason
+        });
 
-        // Elegible si está en 0% o REPROBADO
-        const hasPracticalAttempt = e.attempts?.some(
-          (a) => a.status === "FAILED" || Number(a.scorePercent) === 0
-        );
-
-        console.log(`${hasPracticalAttempt ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasPracticalAttempt=${hasPracticalAttempt}`);
-
-        return hasPracticalAttempt;
+        return isEligible;
       })
       .map((e) => e.id);
 
     // REGLA: Elegible para THEORETICAL si está REPROBADO (y NO está aprobado)
+    const theoreticalEligibilityData: Array<{ enrollmentId: string; isEligible: boolean; docsApproved: number; totalDocs: number; attempts: Array<{ status: string; scorePercent: number | null; passed: boolean | null }>; reason: string }> = [];
+
     const elegibleForTheoretical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        const totalDocs = e.documents?.length ?? 0;
+        const attempts = e.attempts ?? [];
 
         // LOGGING DETALLADO - SIEMPRE mostrar para todos los candidatos
         console.log(`\n=== ELIGIBILITY DEBUG: ${c.firstName} ${c.lastName} (THEORETICAL) ===`);
         console.log("Documentos:", {
-          total: e.documents?.length ?? 0,
+          total: totalDocs,
           aprobados: docsApproved,
           detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
         });
         console.log("Intentos:", {
-          total: e.attempts?.length ?? 0,
-          detalles: e.attempts?.map(a => ({
+          total: attempts.length,
+          detalles: attempts.map(a => ({
             status: a.status,
             scorePercent: a.scorePercent,
             passed: a.passed
           }))
         });
 
+        let isEligible = false;
+        let reason = "";
+
         if (docsApproved === 0) {
           console.log("❌ NO elegible: Sin documentos aprobados");
-          return false;
+          reason = "Sin documentos aprobados";
+        } else {
+          // Verificar si ya está aprobado (passed = true)
+          const isTheoreticalPassed = attempts.some((a) => a.passed === true);
+          if (isTheoreticalPassed) {
+            console.log("❌ NO elegible: Ya está aprobado (passed=true)");
+            reason = "Ya está aprobado";
+          } else {
+            // Elegible si está REPROBADO
+            const hasFailedTheoretical = attempts.some((a) => a.status === "FAILED");
+
+            if (hasFailedTheoretical) {
+              console.log(`✅ ELEGIBLE`);
+              isEligible = true;
+              reason = "Elegible - REPROBADO";
+            } else {
+              console.log(`❌ NO elegible: Ningún intento FAILED`);
+              reason = "Ningún intento FAILED";
+            }
+          }
         }
 
-        // Verificar si ya está aprobado (passed = true)
-        const isTheoreticalPassed = e.attempts?.some((a) => a.passed === true);
-        if (isTheoreticalPassed) {
-          console.log("❌ NO elegible: Ya está aprobado (passed=true)");
-          return false;
-        }
+        // Guardar datos para debug
+        theoreticalEligibilityData.push({
+          enrollmentId: e.id,
+          isEligible,
+          docsApproved,
+          totalDocs,
+          attempts,
+          reason
+        });
 
-        // Elegible si está REPROBADO
-        const hasFailedTheoretical = e.attempts?.some((a) => a.status === "FAILED");
-
-        console.log(`${hasFailedTheoretical ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasFailedTheoretical=${hasFailedTheoretical}`);
-
-        return hasFailedTheoretical;
+        return isEligible;
       })
       .map((e) => e.id);
 
@@ -392,19 +440,80 @@ export default async function CandidatesListPage({
 
   const totalPendingDocs = rows.reduce((s, r) => s + r.docsPending, 0);
 
-  // Crear datos de debug para pasar al componente cliente
-  const debugData = rows.flatMap(row =>
-    row.elegibleForPractical.map(enrollmentId => ({
-      candidateName: row.fullName,
-      enrollmentId,
-      examType: "PRACTICAL" as const,
-      docsApproved: 0, // Esto se calcula en el servidor, pero lo dejamos como ejemplo
-      totalDocs: 0,
-      attempts: [],
-      isEligible: true,
-      reason: "Visible en logs del navegador"
-    }))
-  );
+  // Crear datos de debug para pasar al componente cliente - CON DATOS REALES
+  const debugData = candidates.flatMap(c => {
+    // Recalcular los datos de elegibilidad con información real
+    const practicalData: Array<{ candidateName: string; enrollmentId: string; examType: "PRACTICAL"; docsApproved: number; totalDocs: number; attempts: Array<{ status: string; scorePercent: number | null; passed: boolean | null }>; isEligible: boolean; reason: string }> = [];
+    const theoreticalData: Array<{ candidateName: string; enrollmentId: string; examType: "THEORETICAL"; docsApproved: number; totalDocs: number; attempts: Array<{ status: string; scorePercent: number | null; passed: boolean | null }>; isEligible: boolean; reason: string }> = [];
+
+    c.enrollments.forEach(e => {
+      const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+      const totalDocs = e.documents?.length ?? 0;
+      const attempts = e.attempts ?? [];
+
+      // PRACTICAL
+      let practicalIsEligible = false;
+      let practicalReason = "";
+      if (docsApproved === 0) {
+        practicalReason = "Sin documentos aprobados";
+      } else {
+        const isPracticalPassed = attempts.some((a) => a.passed === true);
+        if (isPracticalPassed) {
+          practicalReason = "Ya está aprobado";
+        } else {
+          const hasPracticalAttempt = attempts.some((a) => a.status === "FAILED" || Number(a.scorePercent) === 0);
+          if (hasPracticalAttempt) {
+            practicalIsEligible = true;
+            practicalReason = "Elegible - 0% o REPROBADO";
+          } else {
+            practicalReason = "Ningún intento FAILED o 0%";
+          }
+        }
+      }
+      practicalData.push({
+        candidateName: `${c.firstName} ${c.lastName}`,
+        enrollmentId: e.id,
+        examType: "PRACTICAL",
+        docsApproved,
+        totalDocs,
+        attempts,
+        isEligible: practicalIsEligible,
+        reason: practicalReason
+      });
+
+      // THEORETICAL
+      let theoreticalIsEligible = false;
+      let theoreticalReason = "";
+      if (docsApproved === 0) {
+        theoreticalReason = "Sin documentos aprobados";
+      } else {
+        const isTheoreticalPassed = attempts.some((a) => a.passed === true);
+        if (isTheoreticalPassed) {
+          theoreticalReason = "Ya está aprobado";
+        } else {
+          const hasFailedTheoretical = attempts.some((a) => a.status === "FAILED");
+          if (hasFailedTheoretical) {
+            theoreticalIsEligible = true;
+            theoreticalReason = "Elegible - REPROBADO";
+          } else {
+            theoreticalReason = "Ningún intento FAILED";
+          }
+        }
+      }
+      theoreticalData.push({
+        candidateName: `${c.firstName} ${c.lastName}`,
+        enrollmentId: e.id,
+        examType: "THEORETICAL",
+        docsApproved,
+        totalDocs,
+        attempts,
+        isEligible: theoreticalIsEligible,
+        reason: theoreticalReason
+      });
+    });
+
+    return [...practicalData, ...theoreticalData];
+  });
 
   return (
     <>

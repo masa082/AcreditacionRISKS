@@ -17,6 +17,11 @@ interface EligibilityData {
   reason: string;
 }
 
+interface DocumentInfo {
+  fileName?: string;
+  status: string;
+}
+
 export function DebugEligibility({
   data,
 }: {
@@ -25,29 +30,47 @@ export function DebugEligibility({
   useEffect(() => {
     if (data && data.length > 0) {
       console.log(
-        "%c========== ELIGIBILITY DEBUG ==========",
-        "color: blue; font-weight: bold; font-size: 14px"
+        "%c📊 ELIGIBILITY DEBUG - DATOS REALES DEL SERVIDOR",
+        "color: #2563eb; font-weight: bold; font-size: 14px; background: #eff6ff; padding: 8px;"
       );
+
       data.forEach((item) => {
+        const statusColor = item.isEligible ? "#10b981" : "#ef4444";
+        const statusSymbol = item.isEligible ? "✅" : "❌";
+
         console.group(
-          `%c${item.candidateName} - ${item.examType}`,
-          `color: ${item.isEligible ? "green" : "red"}; font-weight: bold`
+          `%c${statusSymbol} ${item.candidateName} › ${item.examType}`,
+          `color: ${statusColor}; font-weight: bold; font-size: 12px`
         );
-        console.log("Documentos:", {
-          aprobados: item.docsApproved,
-          total: item.totalDocs,
-        });
-        console.log("Intentos:", item.attempts);
+
         console.log(
-          `%c${item.isEligible ? "✅ ELEGIBLE" : "❌ NO ELEGIBLE"}`,
-          `color: ${item.isEligible ? "green" : "red"}; font-weight: bold`
+          `%cDocumentos: ${item.docsApproved}/${item.totalDocs} aprobados`,
+          "color: #6b7280"
         );
-        console.log("Razón:", item.reason);
+
+        console.log(
+          "%cIntentos cargados:",
+          "color: #6b7280; font-weight: bold"
+        );
+        item.attempts.forEach((att, idx) => {
+          console.log(
+            `  [${idx}] status=${att.status}, score=${att.scorePercent}%, passed=${att.passed}`
+          );
+        });
+
+        console.log(
+          `%c${statusSymbol} ${item.isEligible ? "ELEGIBLE" : "NO ELEGIBLE"}`,
+          `color: ${statusColor}; font-weight: bold`
+        );
+        console.log(`%cRazón: ${item.reason}`, "color: #6b7280; font-style: italic");
+        console.log(`%cEnrollmentId: ${item.enrollmentId}`, "color: #9ca3af; font-size: 11px");
+
         console.groupEnd();
       });
+
       console.log(
-        "%c=====================================",
-        "color: blue; font-weight: bold; font-size: 14px"
+        "%c✓ FIN DE DEBUG - TOTAL: " + data.length + " registros",
+        "color: #2563eb; font-weight: bold; font-size: 12px; background: #eff6ff; padding: 8px;"
       );
     }
   }, [data]);
