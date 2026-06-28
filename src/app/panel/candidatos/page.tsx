@@ -470,13 +470,19 @@ export default async function CandidatesListPage({
           }
         }
       }
+      const convertedAttemptsForPractical = attempts.map(a => ({
+        status: a.status,
+        scorePercent: a.scorePercent ? Number(a.scorePercent) : null,
+        passed: a.passed
+      }));
+
       practicalData.push({
         candidateName: `${c.firstName} ${c.lastName}`,
         enrollmentId: e.id,
         examType: "PRACTICAL",
         docsApproved,
         totalDocs,
-        attempts,
+        attempts: convertedAttemptsForPractical,
         isEligible: practicalIsEligible,
         reason: practicalReason
       });
@@ -500,13 +506,19 @@ export default async function CandidatesListPage({
           }
         }
       }
+      const convertedAttempts = attempts.map(a => ({
+        status: a.status,
+        scorePercent: a.scorePercent ? Number(a.scorePercent) : null,
+        passed: a.passed
+      }));
+
       theoreticalData.push({
         candidateName: `${c.firstName} ${c.lastName}`,
         enrollmentId: e.id,
         examType: "THEORETICAL",
         docsApproved,
         totalDocs,
-        attempts,
+        attempts: convertedAttempts,
         isEligible: theoreticalIsEligible,
         reason: theoreticalReason
       });
