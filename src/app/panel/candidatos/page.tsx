@@ -269,9 +269,30 @@ export default async function CandidatesListPage({
     // Enrollments deshabilitados para este candidato.
     const disabledPracticalCases = disabledByEnrollment.get(c.id) ?? [];
 
+    // Calcular enrollments elegibles para cada tipo de examen
+    const elegibleForPractical = c.enrollments
+      .filter((e) => {
+        const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        const hasPracticalAttempt = e.attempts?.some(
+          (a) => a.status === "FAILED" || (a.scorePercent === 0 && a.status === "SUBMITTED")
+        );
+        return docsApproved > 0 && hasPracticalAttempt;
+      })
+      .map((e) => e.id);
+
+    const elegibleForTheoretical = c.enrollments
+      .filter((e) => {
+        const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        const hasFailedTheoretical = e.attempts?.some((a) => a.status === "FAILED");
+        return docsApproved > 0 && hasFailedTheoretical;
+      })
+      .map((e) => e.id);
+
     return {
       id: c.id,
       enrollmentIds: c.enrollments.map((e) => e.id),
+      elegibleForPractical,
+      elegibleForTheoretical,
       fullName: `${c.firstName} ${c.lastName}`,
       email: c.email,
       documentLabel: c.documentType ? `${c.documentType} ${c.documentNumber ?? ""}`.trim() : (c.documentNumber ?? "—"),

@@ -34,11 +34,24 @@ const CONSENT_OPTS = [
   { v: "no", l: "Sin autorización" },
 ];
 
-export function CandidatesToolbar({ selected, allInView }: { selected: string[]; allInView: number }) {
+export function CandidatesToolbar({
+  selected,
+  allInView,
+  eligibleForPractical = [],
+  eligibleForTheoretical = [],
+}: {
+  selected: string[];
+  allInView: number;
+  eligibleForPractical?: string[];
+  eligibleForTheoretical?: string[];
+}) {
   const router = useRouter();
   const sp = useSearchParams();
   const [pending, startTransition] = useTransition();
   const [openBulk, setOpenBulk] = useState(false);
+
+  const hasEligiblePractical = selected.some((id) => eligibleForPractical.includes(id));
+  const hasEligibleTheoretical = selected.some((id) => eligibleForTheoretical.includes(id));
 
   function updateParam(name: string, value: string) {
     const u = new URLSearchParams(sp.toString());
@@ -131,12 +144,12 @@ export function CandidatesToolbar({ selected, allInView }: { selected: string[];
           <BulkEnableExamButton
             selectedEnrollmentIds={selected}
             examType="PRACTICAL"
-            disabled={selected.length === 0}
+            disabled={!hasEligiblePractical}
           />
           <BulkEnableExamButton
             selectedEnrollmentIds={selected}
             examType="THEORETICAL"
-            disabled={selected.length === 0}
+            disabled={!hasEligibleTheoretical}
           />
         </div>
       </div>

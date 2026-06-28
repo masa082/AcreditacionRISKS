@@ -10,6 +10,8 @@ import { PracticalCaseEnableDialog } from "@/components/practical-case-enable-di
 export interface CandidateRow {
   id: string;
   enrollmentIds: string[];
+  elegibleForPractical: string[];
+  elegibleForTheoretical: string[];
   fullName: string;
   email: string;
   documentLabel: string;
@@ -152,9 +154,23 @@ export function CandidatesTable({ rows }: { rows: CandidateRow[] }) {
     });
   }
 
+  const eligibleForPractical = useMemo(() =>
+    visible.flatMap((r) => r.elegibleForPractical),
+    [visible]
+  );
+  const eligibleForTheoretical = useMemo(() =>
+    visible.flatMap((r) => r.elegibleForTheoretical),
+    [visible]
+  );
+
   return (
     <div className="space-y-4">
-      <CandidatesToolbar selected={Array.from(selected)} allInView={visible.length} />
+      <CandidatesToolbar
+        selected={Array.from(selected)}
+        allInView={visible.length}
+        eligibleForPractical={eligibleForPractical}
+        eligibleForTheoretical={eligibleForTheoretical}
+      />
 
       <div className="flex flex-wrap items-center gap-3 text-xs">
         <label className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-1.5 transition ${
