@@ -9,6 +9,7 @@ import { LegalTimeCO } from "@/components/legal-time-co";
 import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
 import { FeedbackButton } from "@/components/feedback-button";
 import { LanguageSwitcher } from "@/components/language-switcher";
+import { VersionBadge } from "@/components/version-badge";
 import { getServerLocale } from "@/lib/i18n/server";
 
 const APP_NAME = "CIOC";
@@ -64,11 +65,14 @@ export async function DashboardShell({
           {area}
         </div>
         <SidebarNav items={nav} />
-        <div className="border-t border-slate-200 p-3 space-y-3">
+        <div className="border-t border-slate-200 p-3 space-y-2">
           <LegalTimeCO variant="compact" />
           <OnacBadge variant="compact" />
           <div className="text-center text-[10px] text-slate-400">ISO/IEC 17024</div>
           <CacheClearButton />
+          <div className="flex justify-center">
+            <VersionBadge />
+          </div>
         </div>
       </aside>
 
