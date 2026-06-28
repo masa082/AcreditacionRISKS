@@ -324,12 +324,18 @@ export default async function CandidatesListPage({
         }
 
         // Guardar datos para debug
+        const convertedAttempts = attempts.map(a => ({
+          status: a.status,
+          scorePercent: a.scorePercent ? Number(a.scorePercent) : null,
+          passed: a.passed
+        }));
+
         practicalEligibilityData.push({
           enrollmentId: e.id,
           isEligible,
           docsApproved,
           totalDocs,
-          attempts,
+          attempts: convertedAttempts,
           reason
         });
 
@@ -390,12 +396,18 @@ export default async function CandidatesListPage({
         }
 
         // Guardar datos para debug
+        const convertedAttemptsTheoretical = attempts.map(a => ({
+          status: a.status,
+          scorePercent: a.scorePercent ? Number(a.scorePercent) : null,
+          passed: a.passed
+        }));
+
         theoreticalEligibilityData.push({
           enrollmentId: e.id,
           isEligible,
           docsApproved,
           totalDocs,
-          attempts,
+          attempts: convertedAttemptsTheoretical,
           reason
         });
 
