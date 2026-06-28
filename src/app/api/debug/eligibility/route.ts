@@ -8,7 +8,11 @@ export async function GET() {
   const candidates = await prisma.candidate.findMany({
     where: {
       subscriberId: ctx.subscriberId,
-      firstName: { in: ["OMAR", "Wilgen", "Estefany"] },
+      OR: [
+        { firstName: { contains: "OMAR", mode: "insensitive" } },
+        { firstName: { contains: "Wilgen", mode: "insensitive" } },
+        { firstName: { contains: "Estefany", mode: "insensitive" } },
+      ],
     },
     include: {
       enrollments: {
