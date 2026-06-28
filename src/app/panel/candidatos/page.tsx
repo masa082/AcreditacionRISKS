@@ -272,17 +272,46 @@ export default async function CandidatesListPage({
     const elegibleForPractical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
-        if (docsApproved === 0) return false; // Sin docs aprobados, NO es elegible
+
+        // LOGGING DETALLADO
+        const isDebug = ["Estefany", "OMAR", "Manuel", "Mariano", "PEDRO"].some(name => c.firstName.includes(name));
+        if (isDebug) {
+          console.log(`\n=== PRACTICAL DEBUG: ${c.firstName} ${c.lastName} ===`);
+          console.log("Documentos:", {
+            total: e.documents?.length ?? 0,
+            aprobados: docsApproved,
+            detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
+          });
+          console.log("Intentos:", {
+            total: e.attempts?.length ?? 0,
+            detalles: e.attempts?.map(a => ({
+              status: a.status,
+              scorePercent: a.scorePercent,
+              passed: a.passed
+            }))
+          });
+        }
+
+        if (docsApproved === 0) {
+          if (isDebug) console.log("❌ NO elegible: Sin documentos aprobados");
+          return false;
+        }
 
         // Verificar si ya está aprobado (passed = true)
         const isPracticalPassed = e.attempts?.some((a) => a.passed === true);
-        if (isPracticalPassed) return false; // Si está aprobado, NO es elegible
+        if (isPracticalPassed) {
+          if (isDebug) console.log("❌ NO elegible: Ya está aprobado (passed=true)");
+          return false;
+        }
 
         // Elegible si está en 0% o REPROBADO
-        // IMPORTANTE: scorePercent puede estar en cualquier status (AUTO_GRADED, GRADED, etc.)
         const hasPracticalAttempt = e.attempts?.some(
           (a) => a.status === "FAILED" || Number(a.scorePercent) === 0
         );
+
+        if (isDebug) {
+          console.log(`${hasPracticalAttempt ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasPracticalAttempt=${hasPracticalAttempt}`);
+        }
 
         return hasPracticalAttempt;
       })
@@ -292,14 +321,45 @@ export default async function CandidatesListPage({
     const elegibleForTheoretical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
-        if (docsApproved === 0) return false; // Sin docs aprobados, NO es elegible
+        const isDebug = ["Estefany", "OMAR", "Manuel", "Mariano", "PEDRO"].some(name => c.firstName.includes(name));
+
+        // LOGGING DETALLADO
+        if (isDebug) {
+          console.log(`\n=== THEORETICAL DEBUG: ${c.firstName} ${c.lastName} ===`);
+          console.log("Documentos:", {
+            total: e.documents?.length ?? 0,
+            aprobados: docsApproved,
+            detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
+          });
+          console.log("Intentos:", {
+            total: e.attempts?.length ?? 0,
+            detalles: e.attempts?.map(a => ({
+              status: a.status,
+              scorePercent: a.scorePercent,
+              passed: a.passed
+            }))
+          });
+        }
+
+        if (docsApproved === 0) {
+          if (isDebug) console.log("❌ NO elegible: Sin documentos aprobados");
+          return false;
+        }
 
         // Verificar si ya está aprobado (passed = true)
         const isTheoreticalPassed = e.attempts?.some((a) => a.passed === true);
-        if (isTheoreticalPassed) return false; // Si está aprobado, NO es elegible
+        if (isTheoreticalPassed) {
+          if (isDebug) console.log("❌ NO elegible: Ya está aprobado (passed=true)");
+          return false;
+        }
 
         // Elegible si está REPROBADO
         const hasFailedTheoretical = e.attempts?.some((a) => a.status === "FAILED");
+
+        if (isDebug) {
+          console.log(`${hasFailedTheoretical ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasFailedTheoretical=${hasFailedTheoretical}`);
+        }
+
         return hasFailedTheoretical;
       })
       .map((e) => e.id);
