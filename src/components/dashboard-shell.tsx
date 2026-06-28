@@ -4,6 +4,7 @@ import { logoutAction } from "@/lib/actions/auth";
 import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
 import { CacheClearButton } from "@/components/cache-clear-button";
+import { FullCleanupButton } from "@/components/full-cleanup-button";
 import { OnacBadge } from "@/components/onac-badge";
 import { LegalTimeCO } from "@/components/legal-time-co";
 import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
@@ -69,9 +70,12 @@ export async function DashboardShell({
           <LegalTimeCO variant="compact" />
           <OnacBadge variant="compact" />
           <div className="text-center text-[10px] text-slate-400">ISO/IEC 17024</div>
-          <CacheClearButton />
-          <div className="flex justify-center">
-            <VersionBadge />
+          <div className="border-t border-slate-100 pt-2 space-y-2">
+            <CacheClearButton />
+            <FullCleanupButton />
+            <div className="flex justify-center">
+              <VersionBadge />
+            </div>
           </div>
         </div>
       </aside>
