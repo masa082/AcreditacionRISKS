@@ -8,10 +8,15 @@ let commitSha = process.env.VERCEL_GIT_COMMIT_SHA || process.env.GITHUB_SHA || '
 // Si no está disponible, intentar obtenerlo de git
 if (!commitSha) {
   try {
-    commitSha = execSync('git rev-parse --short HEAD', { encoding: 'utf-8' }).trim();
+    commitSha = execSync('git rev-parse HEAD', { encoding: 'utf-8' }).trim();
   } catch (e) {
     commitSha = 'unknown';
   }
+}
+
+// IMPORTANTE: Acortar a 7 caracteres (como aparece en Vercel)
+if (commitSha !== 'unknown' && commitSha.length > 7) {
+  commitSha = commitSha.substring(0, 7);
 }
 
 // Crear el archivo de versión
