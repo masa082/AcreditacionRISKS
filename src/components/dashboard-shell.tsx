@@ -68,6 +68,7 @@ export async function DashboardShell({
           <LegalTimeCO variant="compact" />
           <OnacBadge variant="compact" />
           <div className="text-center text-[10px] text-slate-400">ISO/IEC 17024</div>
+          <CacheClearButton />
         </div>
       </aside>
 
@@ -77,7 +78,6 @@ export async function DashboardShell({
           <div className="ml-auto flex items-center gap-3">
             <LanguageSwitcher initial={locale} />
             <NotificationBellServer />
-            <CacheClearButton />
             <div className="hidden text-right sm:block">
               <div className="text-sm font-medium text-slate-800">
                 {user.name}
