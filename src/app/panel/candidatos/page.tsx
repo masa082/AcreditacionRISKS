@@ -272,29 +272,19 @@ export default async function CandidatesListPage({
     const elegibleForPractical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        if (docsApproved === 0) return false; // Sin docs aprobados, NO es elegible
+
         // Verificar si ya está aprobado (passed = true)
         const isPracticalPassed = e.attempts?.some((a) => a.passed === true);
         if (isPracticalPassed) return false; // Si está aprobado, NO es elegible
 
         // Elegible si está en 0% o REPROBADO
+        // IMPORTANTE: scorePercent puede estar en cualquier status (AUTO_GRADED, GRADED, etc.)
         const hasPracticalAttempt = e.attempts?.some(
-          (a) => a.status === "FAILED" || (Number(a.scorePercent) === 0 && a.status === "SUBMITTED")
+          (a) => a.status === "FAILED" || Number(a.scorePercent) === 0
         );
 
-        // DEBUG
-        const isDEBUG = c.firstName === "Estefany" || c.firstName === "OMAR ANDRES";
-        if (isDEBUG) {
-          console.log(`[DEBUG PRACTICAL] ${c.firstName}:`, {
-            docsApproved,
-            attemptCount: e.attempts?.length ?? 0,
-            attempts: e.attempts?.map(a => ({ status: a.status, scorePercent: a.scorePercent, passed: a.passed })),
-            hasPracticalAttempt,
-            isPracticalPassed,
-            eligible: docsApproved > 0 && hasPracticalAttempt,
-          });
-        }
-
-        return docsApproved > 0 && hasPracticalAttempt;
+        return hasPracticalAttempt;
       })
       .map((e) => e.id);
 
@@ -302,13 +292,15 @@ export default async function CandidatesListPage({
     const elegibleForTheoretical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        if (docsApproved === 0) return false; // Sin docs aprobados, NO es elegible
+
         // Verificar si ya está aprobado (passed = true)
         const isTheoreticalPassed = e.attempts?.some((a) => a.passed === true);
         if (isTheoreticalPassed) return false; // Si está aprobado, NO es elegible
 
         // Elegible si está REPROBADO
         const hasFailedTheoretical = e.attempts?.some((a) => a.status === "FAILED");
-        return docsApproved > 0 && hasFailedTheoretical;
+        return hasFailedTheoretical;
       })
       .map((e) => e.id);
 
