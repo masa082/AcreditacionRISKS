@@ -143,6 +143,12 @@ function validateEnrollmentEligibility(
   } else if (examType === "THEORETICAL") {
     // Verificar que reprobó examen teórico
     const theoreticalAttempts = enrollment.attempts.filter((a: any) => a.status === "FAILED");
+    console.log(`[VALIDATION THEORETICAL] ${enrollment.candidate.firstName}:`, {
+      totalAttempts: enrollment.attempts.length,
+      attempts: enrollment.attempts,
+      failedAttempts: theoreticalAttempts.length,
+      isEligible: theoreticalAttempts.length > 0,
+    });
     if (!theoreticalAttempts.length) {
       return { isEligible: false, reason: "El candidato aún no ha presentado el examen teórico o no lo ha reprobado" };
     }
