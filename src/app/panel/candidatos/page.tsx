@@ -98,8 +98,7 @@ export default async function CandidatesListPage({
               select: { status: true, amount: true, currency: true },
             },
             documents: { select: { status: true, fileName: true } },
-            // Attempts del candidato para esta inscripción — para mostrar
-            // los puntajes obtenidos por evaluación.
+            // Cargar TODOS los intentos para validar elegibilidad correctamente
             attempts: {
               orderBy: { createdAt: "desc" },
               select: {
@@ -108,7 +107,6 @@ export default async function CandidatesListPage({
                 passed: true,
                 submittedAt: true,
               },
-              take: 1,
             },
             certificates: { select: { id: true, status: true } },
           },
