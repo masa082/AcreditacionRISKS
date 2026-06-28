@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 export function CacheClearButton() {
   const [loading, setLoading] = useState(false);
@@ -10,8 +10,10 @@ export function CacheClearButton() {
   const handleClearCache = async () => {
     setLoading(true);
     setMessage(null);
+
     try {
-      const response = await fetch("/api/cache/purge", {
+      // 1. Llamar al endpoint de limpieza completa
+      const response = await fetch("/api/cleanup/full", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
@@ -19,21 +21,38 @@ export function CacheClearButton() {
       const data = await response.json();
 
       if (response.ok && data.ok) {
-        setSuccess(true);
-        setMessage(`✓ ${data.message}`);
+        // 2. Limpiar localStorage y sessionStorage del cliente
+        try {
+          localStorage.clear();
+          sessionStorage.clear();
 
-        // Recargar página después de 2 segundos
+          // Eliminar todas las cookies
+          document.cookie.split(";").forEach((c) => {
+            const eqPos = c.indexOf("=");
+            const name = eqPos > -1 ? c.substr(0, eqPos).trim() : c.trim();
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;`;
+            document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/;domain=${window.location.hostname};`;
+          });
+        } catch (e) {
+          console.warn("Nota: Limpieza local parcial:", e);
+        }
+
+        setSuccess(true);
+        setMessage("✓ Caché, cookies y sesiones limpiados\n🔄 Recargando...");
+
+        // 3. Recargar página después de 2 segundos
         setTimeout(() => {
-          window.location.reload();
+          window.location.href = window.location.pathname;
         }, 2000);
       } else {
-        const errorMsg = data.error || "Error desconocido al limpiar caché";
+        const errorMsg = data.error || "Error al limpiar";
         setMessage(`✗ ${errorMsg}`);
-        console.error("Cache purge failed:", data);
+        console.error("Cleanup failed:", data);
       }
     } catch (error) {
-      console.error("Error clearing cache:", error);
-      const errorMsg = error instanceof Error ? error.message : "Error de conexión";
+      console.error("Error during cleanup:", error);
+      const errorMsg =
+        error instanceof Error ? error.message : "Error de conexión";
       setMessage(`✗ ${errorMsg}`);
     } finally {
       setLoading(false);
@@ -45,8 +64,12 @@ export function CacheClearButton() {
       <button
         onClick={handleClearCache}
         disabled={loading || success}
-        title={success ? "Caché purgado - recargando..." : "Limpiar caché"}
-        className={`flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition ${
+        title={
+          success
+            ? "Sistema limpiado - recargando..."
+            : "Limpiar caché, cookies y sesiones"
+        }
+        className={`flex items-center justify-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-sm transition ${
           success
             ? "border-emerald-300 bg-emerald-50 text-emerald-600 cursor-default"
             : "border-slate-300 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-60"
@@ -58,11 +81,13 @@ export function CacheClearButton() {
         </span>
       </button>
       {message && (
-        <div className={`text-xs text-center py-1 px-2 rounded ${
-          success
-            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-            : "bg-rose-50 text-rose-700 border border-rose-200"
-        }`}>
+        <div
+          className={`text-xs text-center py-1 px-2 rounded whitespace-pre-wrap ${
+            success
+              ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+              : "bg-rose-50 text-rose-700 border border-rose-200"
+          }`}
+        >
           {message}
         </div>
       )}
