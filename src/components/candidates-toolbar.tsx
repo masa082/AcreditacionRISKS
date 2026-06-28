@@ -53,6 +53,17 @@ export function CandidatesToolbar({
   const hasEligiblePractical = selected.some((id) => eligibleForPractical.includes(id));
   const hasEligibleTheoretical = selected.some((id) => eligibleForTheoretical.includes(id));
 
+  // DEBUG: Log para verificar qué se está seleccionando
+  if (selected.length > 0) {
+    console.log("DEBUG Toolbar:", {
+      selected,
+      eligibleForPractical,
+      eligibleForTheoretical,
+      hasEligiblePractical,
+      hasEligibleTheoretical,
+    });
+  }
+
   function updateParam(name: string, value: string) {
     const u = new URLSearchParams(sp.toString());
     if (value) u.set(name, value);
