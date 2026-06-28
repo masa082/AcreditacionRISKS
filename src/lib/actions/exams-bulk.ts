@@ -116,6 +116,7 @@ export async function bulkEnableExam(opts: BulkEnableExamOpts) {
     ok: failed === 0,
     enabled,
     failed,
+    error: errors.length > 0 ? errors[0] : undefined,
     errors: errors.slice(0, 10),
     message: `${enabled} habilitado(s), ${failed} fallaron`,
   };
