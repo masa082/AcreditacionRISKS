@@ -1,9 +1,9 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { logoutAction } from "@/lib/actions/auth";
 import { SidebarNav, type NavItem } from "@/components/sidebar-nav";
 import { NotificationBellServer } from "@/components/notification-bell-server";
 import { CacheClearButton } from "@/components/cache-clear-button";
+import { LogoutButton } from "@/components/logout-button";
 import { OnacBadge } from "@/components/onac-badge";
 import { LegalTimeCO } from "@/components/legal-time-co";
 import { SubscriberLogoHeader } from "@/components/subscriber-logo-header";
@@ -73,6 +73,7 @@ export async function DashboardShell({
           <div className="flex justify-center">
             <VersionBadge />
           </div>
+          <LogoutButton variant="sidebar" />
         </div>
       </aside>
 
@@ -95,14 +96,7 @@ export async function DashboardShell({
                 {(subscriberName ?? user.name).slice(0, 1).toUpperCase()}
               </div>
             )}
-            <form action={logoutAction}>
-              <button
-                type="submit"
-                className="rounded-lg border border-slate-300 px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50"
-              >
-                Salir
-              </button>
-            </form>
+            <LogoutButton variant="header" />
           </div>
         </header>
         <main className="flex-1 overflow-auto p-6">{children}</main>
