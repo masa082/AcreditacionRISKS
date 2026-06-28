@@ -274,7 +274,7 @@ export default async function CandidatesListPage({
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
         const hasPracticalAttempt = e.attempts?.some(
-          (a) => a.status === "FAILED" || (a.scorePercent === 0 && a.status === "SUBMITTED")
+          (a) => a.status === "FAILED" || (Number(a.scorePercent) === 0 && a.status === "SUBMITTED")
         );
         return docsApproved > 0 && hasPracticalAttempt;
       })
