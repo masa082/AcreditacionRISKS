@@ -268,9 +268,15 @@ export default async function CandidatesListPage({
     const disabledPracticalCases = disabledByEnrollment.get(c.id) ?? [];
 
     // Calcular enrollments elegibles para cada tipo de examen
+    // REGLA: Elegible para PRACTICAL si está en 0% o REPROBADO (y NO está aprobado)
     const elegibleForPractical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        // Verificar si ya está aprobado
+        const isPracticalPassed = e.attempts?.some((a) => a.status === "PASSED");
+        if (isPracticalPassed) return false; // Si está aprobado, NO es elegible
+
+        // Elegible si está en 0% o REPROBADO
         const hasPracticalAttempt = e.attempts?.some(
           (a) => a.status === "FAILED" || (Number(a.scorePercent) === 0 && a.status === "SUBMITTED")
         );
@@ -278,9 +284,15 @@ export default async function CandidatesListPage({
       })
       .map((e) => e.id);
 
+    // REGLA: Elegible para THEORETICAL si está REPROBADO (y NO está aprobado)
     const elegibleForTheoretical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
+        // Verificar si ya está aprobado
+        const isTheoreticalPassed = e.attempts?.some((a) => a.status === "PASSED");
+        if (isTheoreticalPassed) return false; // Si está aprobado, NO es elegible
+
+        // Elegible si está REPROBADO
         const hasFailedTheoretical = e.attempts?.some((a) => a.status === "FAILED");
         return docsApproved > 0 && hasFailedTheoretical;
       })
