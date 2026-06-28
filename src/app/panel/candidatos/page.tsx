@@ -273,34 +273,31 @@ export default async function CandidatesListPage({
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
 
-        // LOGGING DETALLADO
-        const isDebug = ["Estefany", "OMAR", "Manuel", "Mariano", "PEDRO"].some(name => c.firstName.includes(name));
-        if (isDebug) {
-          console.log(`\n=== PRACTICAL DEBUG: ${c.firstName} ${c.lastName} ===`);
-          console.log("Documentos:", {
-            total: e.documents?.length ?? 0,
-            aprobados: docsApproved,
-            detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
-          });
-          console.log("Intentos:", {
-            total: e.attempts?.length ?? 0,
-            detalles: e.attempts?.map(a => ({
-              status: a.status,
-              scorePercent: a.scorePercent,
-              passed: a.passed
-            }))
-          });
-        }
+        // LOGGING DETALLADO - SIEMPRE mostrar para todos los candidatos
+        console.log(`\n=== ELIGIBILITY DEBUG: ${c.firstName} ${c.lastName} (PRACTICAL) ===`);
+        console.log("Documentos:", {
+          total: e.documents?.length ?? 0,
+          aprobados: docsApproved,
+          detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
+        });
+        console.log("Intentos:", {
+          total: e.attempts?.length ?? 0,
+          detalles: e.attempts?.map(a => ({
+            status: a.status,
+            scorePercent: a.scorePercent,
+            passed: a.passed
+          }))
+        });
 
         if (docsApproved === 0) {
-          if (isDebug) console.log("❌ NO elegible: Sin documentos aprobados");
+          console.log("❌ NO elegible: Sin documentos aprobados");
           return false;
         }
 
         // Verificar si ya está aprobado (passed = true)
         const isPracticalPassed = e.attempts?.some((a) => a.passed === true);
         if (isPracticalPassed) {
-          if (isDebug) console.log("❌ NO elegible: Ya está aprobado (passed=true)");
+          console.log("❌ NO elegible: Ya está aprobado (passed=true)");
           return false;
         }
 
@@ -309,9 +306,7 @@ export default async function CandidatesListPage({
           (a) => a.status === "FAILED" || Number(a.scorePercent) === 0
         );
 
-        if (isDebug) {
-          console.log(`${hasPracticalAttempt ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasPracticalAttempt=${hasPracticalAttempt}`);
-        }
+        console.log(`${hasPracticalAttempt ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasPracticalAttempt=${hasPracticalAttempt}`);
 
         return hasPracticalAttempt;
       })
@@ -321,44 +316,39 @@ export default async function CandidatesListPage({
     const elegibleForTheoretical = c.enrollments
       .filter((e) => {
         const docsApproved = e.documents?.filter((d) => d.status === "APPROVED").length ?? 0;
-        const isDebug = ["Estefany", "OMAR", "Manuel", "Mariano", "PEDRO"].some(name => c.firstName.includes(name));
 
-        // LOGGING DETALLADO
-        if (isDebug) {
-          console.log(`\n=== THEORETICAL DEBUG: ${c.firstName} ${c.lastName} ===`);
-          console.log("Documentos:", {
-            total: e.documents?.length ?? 0,
-            aprobados: docsApproved,
-            detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
-          });
-          console.log("Intentos:", {
-            total: e.attempts?.length ?? 0,
-            detalles: e.attempts?.map(a => ({
-              status: a.status,
-              scorePercent: a.scorePercent,
-              passed: a.passed
-            }))
-          });
-        }
+        // LOGGING DETALLADO - SIEMPRE mostrar para todos los candidatos
+        console.log(`\n=== ELIGIBILITY DEBUG: ${c.firstName} ${c.lastName} (THEORETICAL) ===`);
+        console.log("Documentos:", {
+          total: e.documents?.length ?? 0,
+          aprobados: docsApproved,
+          detalles: e.documents?.map(d => ({ name: d.fileName, status: d.status }))
+        });
+        console.log("Intentos:", {
+          total: e.attempts?.length ?? 0,
+          detalles: e.attempts?.map(a => ({
+            status: a.status,
+            scorePercent: a.scorePercent,
+            passed: a.passed
+          }))
+        });
 
         if (docsApproved === 0) {
-          if (isDebug) console.log("❌ NO elegible: Sin documentos aprobados");
+          console.log("❌ NO elegible: Sin documentos aprobados");
           return false;
         }
 
         // Verificar si ya está aprobado (passed = true)
         const isTheoreticalPassed = e.attempts?.some((a) => a.passed === true);
         if (isTheoreticalPassed) {
-          if (isDebug) console.log("❌ NO elegible: Ya está aprobado (passed=true)");
+          console.log("❌ NO elegible: Ya está aprobado (passed=true)");
           return false;
         }
 
         // Elegible si está REPROBADO
         const hasFailedTheoretical = e.attempts?.some((a) => a.status === "FAILED");
 
-        if (isDebug) {
-          console.log(`${hasFailedTheoretical ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasFailedTheoretical=${hasFailedTheoretical}`);
-        }
+        console.log(`${hasFailedTheoretical ? "✅ ELEGIBLE" : "❌ NO elegible"}: hasFailedTheoretical=${hasFailedTheoretical}`);
 
         return hasFailedTheoretical;
       })
