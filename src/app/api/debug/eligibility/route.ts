@@ -9,9 +9,9 @@ export async function GET() {
     where: {
       subscriberId: ctx.subscriberId,
       OR: [
-        { firstName: { contains: "OMAR", mode: "insensitive" } },
-        { firstName: { contains: "Wilgen", mode: "insensitive" } },
-        { firstName: { contains: "Estefany", mode: "insensitive" } },
+        { firstName: { contains: "OMAR" } },
+        { firstName: { contains: "Wilgen" } },
+        { firstName: { contains: "Estefany" } },
       ],
     },
     include: {
