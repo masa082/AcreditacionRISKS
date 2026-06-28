@@ -50,19 +50,9 @@ export function CandidatesToolbar({
   const [pending, startTransition] = useTransition();
   const [openBulk, setOpenBulk] = useState(false);
 
-  const hasEligiblePractical = selected.some((id) => eligibleForPractical.includes(id));
-  const hasEligibleTheoretical = selected.some((id) => eligibleForTheoretical.includes(id));
-
-  // DEBUG: Log para verificar qué se está seleccionando
-  if (selected.length > 0) {
-    console.log("DEBUG Toolbar:", {
-      selected,
-      eligibleForPractical,
-      eligibleForTheoretical,
-      hasEligiblePractical,
-      hasEligibleTheoretical,
-    });
-  }
+  // Los botones se habilitan si hay candidatos seleccionados
+  // La validación detallada de elegibilidad ocurre en el backend
+  const hasSelected = selected.length > 0;
 
   function updateParam(name: string, value: string) {
     const u = new URLSearchParams(sp.toString());
@@ -155,12 +145,12 @@ export function CandidatesToolbar({
           <BulkEnableExamButton
             selectedEnrollmentIds={selected}
             examType="PRACTICAL"
-            disabled={!hasEligiblePractical}
+            disabled={!hasSelected}
           />
           <BulkEnableExamButton
             selectedEnrollmentIds={selected}
             examType="THEORETICAL"
-            disabled={!hasEligibleTheoretical}
+            disabled={!hasSelected}
           />
         </div>
       </div>

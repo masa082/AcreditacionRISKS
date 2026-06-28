@@ -274,21 +274,7 @@ export default async function CandidatesListPage({
         const hasPracticalAttempt = e.attempts?.some(
           (a) => a.status === "FAILED" || (Number(a.scorePercent) === 0 && a.status === "SUBMITTED")
         );
-        const isEligible = docsApproved > 0 && hasPracticalAttempt;
-        // DEBUG
-        if (c.firstName === "OMAR" || c.firstName === "Wilgen" || c.firstName === "Estefany") {
-          console.log(`[DEBUG ${c.firstName}] enrollmentId=${e.id}:`, {
-            docsApproved,
-            hasPracticalAttempt,
-            attempts: e.attempts?.map((a) => ({
-              status: a.status,
-              scorePercent: a.scorePercent,
-              numScorePercent: Number(a.scorePercent),
-            })),
-            isEligible,
-          });
-        }
-        return isEligible;
+        return docsApproved > 0 && hasPracticalAttempt;
       })
       .map((e) => e.id);
 
