@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireSubscriberAction } from "@/lib/guards";
-import { audit } from "@/lib/audit";
+import { revalidatePath } from "next/cache";
+import { getCurrentUser } from "@/lib/session";
 
 /**
  * POST /api/cache/purge
@@ -9,9 +9,16 @@ import { audit } from "@/lib/audit";
  */
 export async function POST(req: NextRequest) {
   try {
-    const { ctx, subscriberId } = await requireSubscriberAction("*");
+    // Verificar autenticación
+    const ctx = await getCurrentUser();
+    if (!ctx || !ctx.subscriberId) {
+      return NextResponse.json(
+        { ok: false, error: "No autorizado" },
+        { status: 401 }
+      );
+    }
 
-    // Revalidar rutas críticas del panel
+    // Rutas críticas a revalidar
     const routes = [
       "/panel",
       "/panel/candidatos",
@@ -22,36 +29,37 @@ export async function POST(req: NextRequest) {
       "/panel/reportes",
     ];
 
+    // Revalidar cada ruta usando Next.js ISR
+    let revalidatedCount = 0;
+    const errors: string[] = [];
+
     for (const route of routes) {
       try {
-        // Next.js revalidation API (ISR)
-        await fetch(`http://localhost:3000${route}`, {
-          method: "HEAD",
-          headers: { "x-prerender-revalidate": "secret_token" },
-        }).catch(() => {
-          // Silently ignore if can't reach (no prerender-bypass token)
-        });
-      } catch {}
+        revalidatePath(route);
+        revalidatedCount++;
+      } catch (error) {
+        console.error(`[cache/purge] Error revalidating ${route}:`, error);
+        errors.push(`${route}: ${error instanceof Error ? error.message : 'Error desconocido'}`);
+      }
     }
 
-    // Registrar en auditoría
-    await audit(ctx, {
-      action: "cache.purge",
-      entity: "System",
-      subscriberId,
-      after: { routes: routes.length, timestamp: new Date().toISOString() },
-    });
-
     return NextResponse.json({
-      ok: true,
-      message: "Caché purgado exitosamente",
-      routes: routes.length,
+      ok: errors.length === 0,
+      message: errors.length === 0
+        ? "Caché purgado exitosamente"
+        : `Caché purgado parcialmente (${revalidatedCount}/${routes.length})`,
+      revalidated: revalidatedCount,
+      total: routes.length,
+      errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
     console.error("[cache/purge] Error:", error);
     return NextResponse.json(
-      { ok: false, error: "No autorizado" },
-      { status: 401 }
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Error al limpiar caché",
+      },
+      { status: 500 }
     );
   }
 }

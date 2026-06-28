@@ -11,21 +11,30 @@ export function CacheClearButton() {
     setLoading(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/cache/purge", { method: "POST" });
-      if (response.ok) {
+      const response = await fetch("/api/cache/purge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.ok) {
         setSuccess(true);
-        setMessage("✓ Caché limpio correctamente");
+        setMessage(`✓ ${data.message}`);
 
         // Recargar página después de 2 segundos
         setTimeout(() => {
           window.location.reload();
         }, 2000);
       } else {
-        setMessage("Error al limpiar caché");
+        const errorMsg = data.error || "Error desconocido al limpiar caché";
+        setMessage(`✗ ${errorMsg}`);
+        console.error("Cache purge failed:", data);
       }
     } catch (error) {
       console.error("Error clearing cache:", error);
-      setMessage("Error al conectar con el servidor");
+      const errorMsg = error instanceof Error ? error.message : "Error de conexión";
+      setMessage(`✗ ${errorMsg}`);
     } finally {
       setLoading(false);
     }
