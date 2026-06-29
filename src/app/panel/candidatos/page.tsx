@@ -417,9 +417,9 @@ export default async function CandidatesListPage({
 
     return {
       id: c.id,
-      enrollmentIds: c.enrollments.map((e) => e.id),
-      elegibleForPractical,
-      elegibleForTheoretical,
+      enrollmentIds: c.enrollments.map((e) => e.id), // todos (para compatibilidad)
+      elegibleForPractical, // solo elegibles para PRACTICAL
+      elegibleForTheoretical, // solo elegibles para THEORETICAL
       fullName: `${c.firstName} ${c.lastName}`,
       email: c.email,
       documentLabel: c.documentType ? `${c.documentType} ${c.documentNumber ?? ""}`.trim() : (c.documentNumber ?? "—"),

@@ -143,12 +143,12 @@ export function CandidatesToolbar({
             ✉ Enviar correo a {selected.length || "0"}
           </button>
           <BulkEnableExamButton
-            selectedEnrollmentIds={selected}
+            selectedEnrollmentIds={eligibleForPractical}
             examType="PRACTICAL"
             disabled={!hasEligiblePractical}
           />
           <BulkEnableExamButton
-            selectedEnrollmentIds={selected}
+            selectedEnrollmentIds={eligibleForTheoretical}
             examType="THEORETICAL"
             disabled={!hasEligibleTheoretical}
           />
