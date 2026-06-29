@@ -135,8 +135,9 @@ function validateEnrollmentEligibility(
 
   if (examType === "PRACTICAL") {
     // Verificar que presentó caso práctico en 0% O lo reprobó
+    // NOTA: scorePercent puede estar en cualquier status (MANUAL_GRADING, GRADED, AUTO_GRADED, etc)
     const practicalAttempts = enrollment.attempts.filter(
-      (a: any) => a.status === "FAILED" || (Number(a.scorePercent) === 0 && a.status === "SUBMITTED"),
+      (a: any) => a.status === "FAILED" || Number(a.scorePercent) === 0,
     );
     if (!practicalAttempts.length) {
       return { isEligible: false, reason: "El candidato aún no ha presentado el caso práctico o no cumple criterios" };
